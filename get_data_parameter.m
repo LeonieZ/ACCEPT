@@ -5,8 +5,8 @@ function dataP = get_data_parameter
 dataP.name = [];
 
 % directories (if empty, Matlab asks to specify them later)
-dataP.input_folder = '/Users/ZeuneL/Documents/MATLAB/CTC_project/Data/single_data_set'; %path containing cartridge dirs
-dataP.output_folder = [pwd filesep 'results']; %directory to save files
+dataP.input_folder = []; %'/Users/ZeuneL/Documents/MATLAB/CTC_project/Data/single_data_set'; %path containing cartridge dirs
+dataP.output_folder = []; %[pwd filesep 'results']; %directory to save files
 
 % number of frames
 dataP.numFrames = 4;

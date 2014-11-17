@@ -2,11 +2,6 @@ function [res, stat, dataP, algP] = CTC_detection(dataP, algP)
 
 stat = [];
 
-%%% get directory to save files 
-if isempty(dataP.output_folder)
-    dataP.output_folder = uigetdir(pwd, 'Choose path to safe files...');
-end
-
 % param = strcat('segMethod=',func2str(algP.segMethod),'_EM=',num2str(algP.maxEMIts),'_Breg=',num2str(algP.maxBregIts),'_w=',num2str(algP.w),'_mu_v=',num2str(algP.mu_v),'_recAccur=',num2str(algP.regAccur));
 param = strcat('segMethod=',func2str(algP.segMethod));
 resPath = fullfile(dataP.output_folder, param);
@@ -28,13 +23,6 @@ while ii  <= numel_processed_cartridges
        names_processed_cartridges{ii} = processed_cartridges(ii).name;
     end
     ii = ii + 1;
-end
-
-
-%%% get directory where cartridge directories are located in
-
-if isempty(dataP.input_folder)
-    dataP.input_folder = uigetdir(pwd, 'Choose path containing cartridge directories...');
 end
 
 input_cartridges = dir(dataP.input_folder);
