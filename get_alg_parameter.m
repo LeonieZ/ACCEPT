@@ -25,6 +25,8 @@ algP.segMethod = @triangle_method;
 % process xml file if available?
 algP.processXML = true;
 
+% classify results?
+algP.classify = true;
 
 end
 

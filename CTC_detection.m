@@ -113,7 +113,11 @@ tic;
         if algP.processXML == true
             [res.success, res.Msr, res.xml] = processXML(fullfile(dataP.input_folder, carts_to_process(jj).name), res);
         end
-        
+
+        if algP.classify == true
+            [res.success, res.Msr] = classification(res);
+        end
+
         %%% save results and statistics as mat file
         if nargout == 0
             %%% create string with current date and time as result filename
