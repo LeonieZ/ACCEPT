@@ -8,27 +8,24 @@ Success_out = 'Cartridge ok';
 algP.thresh = zeros(dataP.numFrames,1);
 Msr = [];
 
-%% Find images and xml in input path
+%% Find images in input path
 % determine in which directory the tiff files are located.
-path_input_cartridge = fullfile(dataP.input_folder, input_cartridge);
 
-tiff_dir  = FindTiffDir(path_input_cartridge);
+[dataP, Success_out] = get_image_filenames(dataP, input_cartridge);
 
-if strcmp(tiff_dir, 'No Tiff dir found') || strcmp(tiff_dir, 'More than one dir found')
-    Success_out = tiff_dir;
-    return
-else
-    TiffFiles = dir([tiff_dir filesep '*.tif']);
-    TiffCount = length(TiffFiles);
+if strcmp(Success_out, 'No Tiff dir found') || strcmp(Success_out, 'More than one dir found')
+   return 
 end
 
+dataP = get_image_info(dataP);
 % determine image size
-[sizeX, sizeY] = size(imread([tiff_dir filesep TiffFiles(1).name],1));
+sizeX = dataP.temp.imageinfos{1}(1).Width;
+sizeY = dataP.temp.imageinfos{1}(1).Height;
 
 %% Detect cartridge edge
 if dataP.removeEdges == true
     % Get scan area: exclude border of cartridge
-    [MaskEdgesCartridge, BorderCheckSuccess]= GetScanArea(tiff_dir, dataP, algP);
+    [MaskEdgesCartridge, BorderCheckSuccess]= GetScanArea(dataP, algP);
 
     if strcmp(BorderCheckSuccess, 'error reading FITC image in function GetScanArea')
         Success_out = BorderCheckSuccess;

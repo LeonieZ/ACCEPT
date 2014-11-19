@@ -22,8 +22,15 @@ dataP.channelEdgeremoval = 2;
 % dataP.SizeMinThumb = 25;
 % dataP.SizeMaxThumb = 10000;
 
+%A set of temperary file names which will be reused for each sample.
+dataP.temp.imageFileNames   = [];
+dataP.temp.imageinfos       = [];
+dataP.temp.imagesAreFromCT  = [];
+dataP.temp.imagesHaveOffset = [];
+
 % scale data back to pseudo 12 bit?
 dataP.scaleData = true;
+
 % remove cartridge boundaries before processing? (CellSearch)
 dataP.removeEdges = true;
 % save segmented images?
