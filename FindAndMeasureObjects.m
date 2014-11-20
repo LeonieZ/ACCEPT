@@ -21,7 +21,7 @@ dataP = get_image_info(dataP);
 % determine image size
 sizeX = dataP.temp.imageinfos{1}(1).Width;
 sizeY = dataP.temp.imageinfos{1}(1).Height;
-
+keyboard
 %% Detect cartridge edge
 if dataP.removeEdges == true
     % Get scan area: exclude border of cartridge
