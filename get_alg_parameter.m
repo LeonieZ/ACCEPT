@@ -23,7 +23,7 @@ algP.numCores = 2; % number of cores, if not specified Matlab uses the number of
 algP.segMethod = @triangle_method;
 
 % process xml file if available?
-algP.processXML = true;
+algP.processXML = false;
 
 % classify results?
 algP.classify = false;
