@@ -121,7 +121,7 @@ tic;
         %%% save results and statistics as mat file
         if nargout == 0
             %%% create string with current date and time as result filename
-            resFileName = datestr(now, 'yyyy_mmmm_dd_HH:MM:SS'); 
+            resFileName = datestr(now, 'yyyy_mmmm_dd'); 
             save(fullfile([resPath filesep res.name filesep 'measurements'],strcat(resFileName,'.mat')),'algP', 'dataP','res','stat');
         end
     end

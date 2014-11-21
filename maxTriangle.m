@@ -1,4 +1,4 @@
-function [Success_out, varargout] = maxTriangle(input_tiff_dir, MaskEdgesCartridge, dataP, algP)
+function [Success_out, varargout] = maxTriangle(MaskEdgesCartridge, dataP, algP)
 %Determine treshold by maxtriangle
 %dist - based on ACTC Scripts FindObjectsinCartridge, MaxTriangleDist
 %% parameters and initialization
@@ -7,8 +7,8 @@ varargout = cell(dataP.numFrames,1);
 %% Threshold
 for ii = 1:dataP.numFrames
     % determine global threshold for all images, by creating one big histogram
-    [HistTotal, BinsTriangleThreshold, Success_out] = CreateBigHist(input_tiff_dir, MaskEdgesCartridge,...
-        ii, dataP, algP);
+    [HistTotal, BinsTriangleThreshold, Success_out] = CreateBigHist(MaskEdgesCartridge,...
+                                                      ii, dataP, algP);
 %     bar(HistTotal);
 
     % get global cartridge threshold value

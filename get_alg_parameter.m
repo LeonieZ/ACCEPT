@@ -9,7 +9,7 @@ algP.threshMeth = @maxTriangle;
 algP.thresh = [];
 
 % profile on?
-algP.profile_on = false;
+algP.profile_on = true;
 
 % algP.feedback = true;
 algP.save_result = true;
@@ -26,7 +26,7 @@ algP.segMethod = @triangle_method;
 algP.processXML = true;
 
 % classify results?
-algP.classify = true;
+algP.classify = false;
 
 end
 

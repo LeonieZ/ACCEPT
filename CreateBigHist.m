@@ -1,9 +1,8 @@
-function [Hist_out, BinsTriangleThreshold_out, Succes_out] = CreateBigHist(DirectoryNameTiffs_in, MaskEdgesCartridge_in, ...
-    ChannelToThreshold_in, dataP, algP)
+function [Hist_out, BinsTriangleThreshold_out, Succes_out] = CreateBigHist(MaskEdgesCartridge_in, ...
+                                                                           ChannelToThreshold_in, dataP, algP)
 
 Hist_out = 0;
-TiffFiles = dir([DirectoryNameTiffs_in filesep '*.tif']);
-TifCount = length(TiffFiles);
+TifCount = numel(dataP.temp.imageFileNames);
 Succes_out = [];
 
 BinsTriangleThreshold_out = 1:1:4095;
@@ -11,8 +10,7 @@ BinsTriangleThreshold_out = 1:1:4095;
 for ii = 1:TifCount
             
     % read tiffs from threshold channel
-    FileNameTif = [DirectoryNameTiffs_in filesep TiffFiles(ii).name];
-    [ScaledImage, ErrorTiff] = ReadImmcTiffAndScale(FileNameTif, ChannelToThreshold_in, dataP, algP);
+    [ScaledImage, ErrorTiff] = readImAndScale(dataP,ii,ChannelToThreshold_in);
     
     if strcmp(ErrorTiff, 'Tiff is not an IMMC tiff!')
         Succes_out = ErrorTiff;
