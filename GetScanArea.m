@@ -160,7 +160,7 @@ for ii = 1:TifCount
         CurrentRow = CurrentRow + Directiony;
     end
 end
-
+keyboard
 se = strel('disk',20);
 TotalCartridgeImage = imopen(TotalCartridgeImage,se);
 % dipshow(TotalCartridgeImage);

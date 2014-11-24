@@ -9,7 +9,7 @@ algP.threshMeth = @maxTriangle;
 algP.thresh = [];
 
 % profile on?
-algP.profile_on = false;
+algP.profile_on = true;
 
 % algP.feedback = true;
 algP.save_result = true;
@@ -23,10 +23,10 @@ algP.numCores = 2; % number of cores, if not specified Matlab uses the number of
 algP.segMethod = @triangle_method;
 
 % process xml file if available?
-algP.processXML = true;
+algP.processXML = false;
 
 % classify results?
-algP.classify = true;
+algP.classify = false;
 
 end
 
