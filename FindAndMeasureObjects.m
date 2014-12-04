@@ -1,6 +1,6 @@
 function [Success_out, Msr, algP] = FindAndMeasureObjects(input_cartridge,dataP, algP)
 % Function to find actc and wbc in a cartridge
-tic
+
 disp(['starting on ' input_cartridge] )
 %% variable initialization
 
@@ -21,9 +21,6 @@ dataP = get_image_info(dataP);
 % determine image size
 sizeX = dataP.temp.imageinfos{1}(1).Width;
 sizeY = dataP.temp.imageinfos{1}(1).Height;
-toc
-tic
-disp('image info gathered')
 %% Detect cartridge edge
 if dataP.removeEdges == true
     % Get scan area: exclude border of cartridge
@@ -44,22 +41,18 @@ if dataP.removeEdges == true
 else
     MaskEdgesCartridge = ones(sizeX, sizeY, TiffCount);
 end
-toc
-tic
-disp('get scan area done')
 %% Determine threshold if segmentation method is thresholding
 if strcmp(func2str(algP.segMeth),'thresholding')
-    [Error_Tiff, algP.thresh(1),algP.thresh(2),algP.thresh(3),algP.thresh(4)] = algP.threshMeth(MaskEdgesCartridge, dataP, algP); % wie laesst sich das besser loesen, ohne das man die 4 einsetzt??
+    [Error_Tiff, algP] = algP.threshMeth(MaskEdgesCartridge, dataP, algP); 
     
     if ~(isempty(Error_Tiff))
         Success_out = Error_Tiff;
         return
     end
 end
-toc
-tic
-disp('bighist done start measuring')
 %% process each tiff - prepare images for segmentation (read in/scale back/apply mask/...) 
+image_to_seg=zeros(sizeY,sizeX,dataP.numFrames,'uint16');
+MaskEdge=false(sizeY,sizeX,dataP.numFrames);
 for ii = 1:numel(dataP.temp.imageFileNames)
     [scaled_image ErrorTiff] = readImAndScale(dataP,ii);
     if strcmp(ErrorTiff, 'Tiff is not an IMMC tiff!')
@@ -73,12 +66,10 @@ for ii = 1:numel(dataP.temp.imageFileNames)
     end    
     % resample border image, create dummy image for transferring mask
     if dataP.removeEdges == true
-        MaskEdge = squeeze(MaskEdgesCartridge(:,:,ii)); 
-        MaskEdge = repmat(imresize(MaskEdge, [sizeY sizeX]),1,1,dataP.numFrames);
+        MaskEdge = repmat(imresize(squeeze(MaskEdgesCartridge(:,:,ii)), [sizeY sizeX]),1,1,dataP.numFrames);
     end
-
     % create image without edges if removeEdges is activated
-    image_to_seg=zeros(sizeY,sizeX,dataP.numFrames,'uint16');
+    image_to_seg(:)=0;
     if dataP.removeEdges == true
         image_to_seg(MaskEdge) = scaled_image(MaskEdge);
     else
@@ -86,7 +77,7 @@ for ii = 1:numel(dataP.temp.imageFileNames)
     end
     
 %     icy_im3show(image_to_seg)
-    
+   
 %% segmentation step       
     seg_image = algP.segMeth(image_to_seg, dataP, algP);
 %     icy_im3show(seg_image);
@@ -123,4 +114,3 @@ for ii = 1:numel(dataP.temp.imageFileNames)
     end
     
 end
-toc

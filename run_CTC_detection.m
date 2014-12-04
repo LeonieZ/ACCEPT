@@ -29,12 +29,8 @@ if isempty(dataP.output_folder)
     dataP.output_folder = uigetdir(pwd, 'Choose path to safe files...');
 end
 
-tic;
-
 if algP.save_result == true
     CTC_detection(dataP, algP);
 else
     [res, stat, dataP, algP] = CTC_detection(dataP, algP); 
 end
-
-toc;

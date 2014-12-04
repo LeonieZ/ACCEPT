@@ -35,12 +35,16 @@ end
 
 function [imageout,Error_out]=loadOneChannel(dataP,imageNumber,channel)
     %check if this preallocation is needed? \G
+    imagetemp = zeros(dataP.temp.imageinfos{imageNumber}(channel).Height,...
+                     dataP.temp.imageinfos{imageNumber}(channel).Width,...
+                     1, 'uint8');
     imageout = zeros(dataP.temp.imageinfos{imageNumber}(channel).Height,...
                      dataP.temp.imageinfos{imageNumber}(channel).Width,...
                      1, 'uint16');
     Error_out = '';
     try
-        imageout = imread(dataP.temp.imageFileNames{imageNumber}, channel, 'info',dataP.temp.imageinfos{imageNumber});
+        imagetemp = imread(dataP.temp.imageFileNames{imageNumber}, channel, 'info',dataP.temp.imageinfos{imageNumber});
+        imageout  = uint16(imagetemp);
     catch
         Error_out = ['Tiff from channel ' num2str(ch) ' is not readable!'];
     return
@@ -53,6 +57,6 @@ function [imageout,Error_out]=loadOneChannel(dataP,imageNumber,channel)
         
             
         % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
-        imageout = LowValue + round(double(imageout) * ((HighValue-LowValue)/max(double(imageout(:)))));
+        imageout = LowValue + imageout * ((HighValue-LowValue)/max(imageout(:)));
     end
 end

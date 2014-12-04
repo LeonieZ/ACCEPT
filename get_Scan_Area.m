@@ -84,7 +84,7 @@ end
 % We are preallocating here but i dont know if the data types are correct \G
 % now length and width of image is known, create big image and output image
 TotalCartridgeImage = zeros(XLength*ColsRowsScan(2), YLength*ColsRowsScan(1),'uint16');
-MaskAreaToScan_out = zeros(XLength, YLength, TifCount);
+MaskAreaToScan_out = zeros(XLength, YLength, TifCount,'uint8');
 
 
 % create total cartridge image by inserting the images from the cartridge

@@ -71,7 +71,7 @@ res = struct;
 %%% process cartridges
 
 if algP.profile_on == true
-    profile on;
+    profile -memory on;
 end
 tic;
 
