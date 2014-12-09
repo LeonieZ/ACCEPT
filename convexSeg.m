@@ -9,7 +9,7 @@ end
 % use a do-nothing edge detector
 edge = ones(size(image(:,:,1)));
 
-for ch = 1:dataP.numFrames
+for ch = 1:dataP.numChannels
     % process image and convert to binary
     seg_image(:,:,ch) = (sbseg(image(:,:,ch),edge,9e-1)>0.9);
 end

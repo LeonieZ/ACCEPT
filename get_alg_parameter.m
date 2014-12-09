@@ -9,7 +9,7 @@ algP.threshMeth = @maxTriangle;
 algP.thresh = [];
 
 % profile on?
-algP.profile_on = true;
+algP.profile_on = false;
 
 % algP.feedback = true;
 algP.save_result = true;

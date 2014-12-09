@@ -5,7 +5,7 @@ disp(['starting on ' input_cartridge] )
 %% variable initialization
 
 Success_out = 'Cartridge ok';
-algP.thresh = zeros(dataP.numFrames,1);
+algP.thresh = zeros(dataP.numChannels,1);
 Msr = [];
 
 %% Find images in input path
@@ -51,8 +51,8 @@ if strcmp(func2str(algP.segMeth),'thresholding')
     end
 end
 %% process each tiff - prepare images for segmentation (read in/scale back/apply mask/...) 
-image_to_seg=zeros(sizeY,sizeX,dataP.numFrames,'uint16');
-MaskEdge=false(sizeY,sizeX,dataP.numFrames);
+image_to_seg=zeros(sizeY,sizeX,dataP.numChannels,'uint16');
+MaskEdge=false(sizeY,sizeX,dataP.numChannels);
 for ii = 1:numel(dataP.temp.imageFileNames)
     [scaled_image ErrorTiff] = readImAndScale(dataP,ii);
     if strcmp(ErrorTiff, 'Tiff is not an IMMC tiff!')
@@ -66,7 +66,7 @@ for ii = 1:numel(dataP.temp.imageFileNames)
     end    
     % resample border image, create dummy image for transferring mask
     if dataP.removeEdges == true
-        MaskEdge = repmat(imresize(squeeze(MaskEdgesCartridge(:,:,ii)), [sizeY sizeX]),1,1,dataP.numFrames);
+        MaskEdge = repmat(imresize(squeeze(MaskEdgesCartridge(:,:,ii)), [sizeY sizeX]),1,1,dataP.numChannels);
     end
     % create image without edges if removeEdges is activated
     image_to_seg(:)=0;
@@ -90,12 +90,12 @@ for ii = 1:numel(dataP.temp.imageFileNames)
     image_number = dataP.temp.imageFileNames{ii}(ending-3:ending-1);
     
     % measure features for each single cell
-    New_msr = measurements(seg_image, image_to_seg, image_number, dataP, algP);
+    New_msr = measurements(seg_image, scaled_image, image_number, dataP, algP);
 
     if ii ==1
         Msr = New_msr;
-    elseif max(max(seg_image)) > 0
-        Msr = [Msr, New_msr];     
+    elseif height(New_msr)>0
+        Msr = [Msr; New_msr];     
     end
     
 %% save results of segmentation if wanted    
@@ -108,7 +108,7 @@ for ii = 1:numel(dataP.temp.imageFileNames)
 
         [dir,file,extension]=fileparts(dataP.temp.imageFileNames{ii});
         imwrite(seg_image(:,:,1), [resPath filesep file extension]);
-        for ch = 2:dataP.numFrames
+        for ch = 2:dataP.numChannels
             imwrite(seg_image(:,:,ch), [resPath filesep file extension], 'writemode', 'append');
         end
     end

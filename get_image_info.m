@@ -17,3 +17,6 @@ end
 
 %Have to add a check for the 2^15 offset.
 dataP.temp.imagesHaveOffset=false;
+%have to add a comparison for the number of channels found and provided in
+%dataP.
+dataP.temp.imageSize=[dataP.temp.imageinfos{1}(1).Height dataP.temp.imageinfos{1}(1).Width numel(dataP.temp.imageinfos{1})];

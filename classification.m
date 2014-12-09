@@ -7,8 +7,6 @@ Msr = res.Msr;
 % load gates
 gates
     
-    
-    
 %First Gatingate
 isACTC = isGatedBy(Msr,Breast);
 isWBC = isGatedBy(Msr,WBC);
