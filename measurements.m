@@ -42,10 +42,10 @@ y=dataP.temp.imageSize(2);
 for k=1:CC.NumObjects
 xdim = Msr(k).BoundingBox(3)+9;
 ydim = Msr(k).BoundingBox(4)+9;
-lower_x = floor(min(max(round(Msr(k).BoundingBox(1)-5),1), y-xdim-1));
-lower_y = floor(min(max(round(Msr(k).BoundingBox(2)-5),1), x-ydim-1));
-higher_x = ceil(max(1+xdim,min(lower_x+xdim,y)));
-higher_y = ceil(max(1+ydim,min(lower_y+ydim,x)));
+lower_x = floor(max(min(max(round(Msr(k).BoundingBox(1)-5),1), y-xdim-1),1));
+lower_y = floor(max(min(max(round(Msr(k).BoundingBox(2)-5),1), x-ydim-1),1));
+higher_x = ceil(min(max(1+xdim,min(lower_x+xdim,y)),y));
+higher_y = ceil(min(max(1+ydim,min(lower_y+ydim,x)),x));
 thumbs{k} = scaled_image(lower_y:higher_y,lower_x:higher_x,:);
 end
 end
