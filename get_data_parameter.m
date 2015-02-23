@@ -16,9 +16,9 @@ dataP.channelTargets={'DNA','Empty','CK','CD45'};
 
 % Threshold and Mask 
 dataP.samplefactor = 8;
-dataP.thresholdChannel = 3;
-dataP.maskForChannel = [1, 3, 3, 3]; %a 3d mask is made so make sure that masks that should be connected are next to eachother
-dataP.thresholdOffset = [50; 25; 25; 0]; %[50 -- 20 --]
+%dataP.thresholdChannel = 3;
+dataP.maskForChannel = [1, 3, 3, 4]; %a 3d mask is made so make sure that masks that should be connected are next to eachother
+dataP.thresholdOffset = [50, 0, 30, 70]; %[50 -- 20 --]
 dataP.DNAChannel = 1;
 dataP.channelEdgeremoval = 2;
 % dataP.SizeMinFragment = 25; %was 9 /g 12 april 2013

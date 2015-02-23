@@ -5,6 +5,7 @@ function [Success_out, Msr, xml] = processXML( path_input_cartridge, res )
 Success_out = res.success;
 NoXML = 0;
 Msr = res.Msr;
+xml = [];
 
 % find directory where xml file is located in
 xml_dir  = FindXMLDir(path_input_cartridge);
@@ -17,44 +18,46 @@ else
 end
 
 %% Load & process XML file
-xml=xml2struct([xml_dir filesep XMLFile.name]);
-if isfield(xml,'archive')
-    xml.num_events = size(xml.archive{2}.events.record,2);
-    xml.CellSearchIds = zeros(xml.num_events,1);
-    locations = zeros(xml.num_events,4);
-    for i=1:xml.num_events
-        xml.CellSearchIds(i)=str2num(xml.archive{2}.events.record{i}.eventnum.Text); %#ok<*ST2NM>
-        tempstr=xml.archive{2}.events.record{i}.location.Text;
-        start=strfind(tempstr,'(');
-        finish=strfind(tempstr,')');
-        to=str2num(tempstr(start(1)+1:finish(1)-1));
-        from=str2num(tempstr(start(2)+1:finish(2)-1));
-        locations(i,:)=[from,to];
+if NoXML == 0
+    xml=xml2struct([xml_dir filesep XMLFile.name]);
+    if isfield(xml,'archive')
+        xml.num_events = size(xml.archive{2}.events.record,2);
+        xml.CellSearchIds = zeros(xml.num_events,1);
+        locations = zeros(xml.num_events,4);
+        for i=1:xml.num_events
+            xml.CellSearchIds(i)=str2num(xml.archive{2}.events.record{i}.eventnum.Text); %#ok<*ST2NM>
+            tempstr=xml.archive{2}.events.record{i}.location.Text;
+            start=strfind(tempstr,'(');
+            finish=strfind(tempstr,')');
+            to=str2num(tempstr(start(1)+1:finish(1)-1));
+            from=str2num(tempstr(start(2)+1:finish(2)-1));
+            locations(i,:)=[from,to];
+        end
+        xml.columns=str2num(xml.archive{2}.runs.record.numcols.Text);
+        xml.rows=str2num(xml.archive{2}.runs.record.numrows.Text);
+        xml.camYSize=str2num(xml.archive{2}.runs.record.camysize.Text);
+        xml.camXSize=str2num(xml.archive{2}.runs.record.camxsize.Text);
+    elseif isfield(xml, 'export')
+        xml.num_events = size(xml.export{2}.events.record,2);
+        xml.CellSearchIds = zeros(xml.num_events,1);
+        locations = zeros(xml.num_events,4);
+        for i=1:xml.num_events
+            xml.CellSearchIds(i)=str2num(xml.export{2}.events.record{i}.eventnum.Text);
+            tempstr=xml.export{2}.events.record{i}.location.Text;
+            start=strfind(tempstr,'(');
+            finish=strfind(tempstr,')');
+            to=str2num(tempstr(start(1)+1:finish(1)-1));
+            from=str2num(tempstr(start(2)+1:finish(2)-1));
+            locations(i,:)=[from,to];
+        end
+        xml.columns=str2num(xml.export{2}.runs.record.numcols.Text);
+        %     rows=str2num(xml.export{2}.runs.record.numrows.Text);
+        xml.camYSize=str2num(xml.export{2}.runs.record.camysize.Text);
+        xml.camXSize=str2num(xml.export{2}.runs.record.camxsize.Text);
+    else
+        Success_out='unable to read xml';
+        return
     end
-    xml.columns=str2num(xml.archive{2}.runs.record.numcols.Text);
-    xml.rows=str2num(xml.archive{2}.runs.record.numrows.Text);
-    xml.camYSize=str2num(xml.archive{2}.runs.record.camysize.Text);
-    xml.camXSize=str2num(xml.archive{2}.runs.record.camxsize.Text);
-elseif isfield(xml, 'export')
-    xml.num_events = size(xml.export{2}.events.record,2);
-    xml.CellSearchIds = zeros(xml.num_events,1);
-    locations = zeros(xml.num_events,4);
-    for i=1:xml.num_events
-        xml.CellSearchIds(i)=str2num(xml.export{2}.events.record{i}.eventnum.Text);
-        tempstr=xml.export{2}.events.record{i}.location.Text;
-        start=strfind(tempstr,'(');
-        finish=strfind(tempstr,')');
-        to=str2num(tempstr(start(1)+1:finish(1)-1));
-        from=str2num(tempstr(start(2)+1:finish(2)-1));
-        locations(i,:)=[from,to];
-    end
-    xml.columns=str2num(xml.export{2}.runs.record.numcols.Text);
-%     rows=str2num(xml.export{2}.runs.record.numrows.Text);
-    xml.camYSize=str2num(xml.export{2}.runs.record.camysize.Text);
-    xml.camXSize=str2num(xml.export{2}.runs.record.camxsize.Text);
-else
-    Success_out='unable to read xml';
-    return
 end
 
 

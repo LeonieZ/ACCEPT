@@ -2,11 +2,36 @@ function [Msr, Thumbs] = measurements(seg_image, scaled_image, image_number, dat
     
 Thumbs = [];
 Msr = table();
+channelsToThreshold=unique(dataP.maskForChannel);
 
+
+%%%%%%%%%%%%% test %%%%%%%%%%%%%
 % Look for connecting components in 3d. Make sure that mask layers touch eachother 
-CC = bwconncomp(seg_image,6);
-Mask = labelmatrix(CC);
+if (sum(ismember(dataP.channelNames(channelsToThreshold),'DAPI') + ismember(dataP.channelNames(channelsToThreshold),'PE')+ismember(dataP.channelNames(channelsToThreshold),'APC')) == 3)
+    seg_image_permut = zeros(size(seg_image));
+    seg_image_permut(:,:,1) = seg_image(:,:,find(ismember(dataP.channelNames,'PE')));
+    seg_image_permut(:,:,2) = seg_image(:,:,find(ismember(dataP.channelNames,'DAPI')));
+    seg_image_permut(:,:,3) = seg_image(:,:,find(ismember(dataP.channelNames,'APC')));
+    others = find(ones(1,dataP.numChannels) - ismember(dataP.channelNames,'PE') - ismember(dataP.channelNames,'DAPI') - ismember(dataP.channelNames,'APC'));
+    for i = 1:numel(others)
+        seg_image_permut(:,:,3+i) = seg_image(:,:,others(i));
+    end
+    CC = bwconncomp(seg_image_permut,6);
+    Mask_permut = labelmatrix(CC);
+    Mask(:,:,find(ismember(dataP.channelNames,'PE'))) = Mask_permut(:,:,1);
+    Mask(:,:,find(ismember(dataP.channelNames,'DAPI'))) = Mask_permut(:,:,2);
+    Mask(:,:,find(ismember(dataP.channelNames,'APC'))) = Mask_permut(:,:,3);
+    for i = 1:numel(others)
+        Mask(:,:,others(i)) = Mask_permut(:,:,3+i);
+    end
+    
+else
+    CC = bwconncomp(seg_image,6);
+    Mask = labelmatrix(CC);
+end
+    
 
+%P2A missing!
 if CC.NumObjects > 0
     for ch=1:dataP.numChannels
         MsrTemp = regionprops(Mask(:,:,ch),scaled_image(:,:,ch)-min(min(scaled_image(:,:,ch))),...
