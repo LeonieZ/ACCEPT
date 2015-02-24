@@ -43,9 +43,14 @@ if CC.NumObjects > 0
         for i=1:numel(MsrTemp)
             MsrTemp(i).StandardDeviation=std2(MsrTemp(i).PixelValues);
             MsrTemp(i).Mass=sum(MsrTemp(i).PixelValues(:));
-            MsrTemp=rmfield(MsrTemp,'PixelValues');
             %MsrTemp(i).PixelValues=NaN;
+            if MsrTemp(i).Area > 1
+                MsrTemp(i).P2A=MsrTemp(i).Perimeter^2/(4*pi*MsrTemp(i).Area);
+            else
+                MsrTemp(i).P2A=NaN;
+            end
         end
+        MsrTemp=rmfield(MsrTemp,'PixelValues');
         %fill structure so tables can be concatonated.
         MsrTemp=fillStructure(MsrTemp,CC.NumObjects);
         names=strcat(dataP.channelTargets(ch),'_',fieldnames(MsrTemp));
@@ -81,19 +86,19 @@ numMsr=numel(MsrTemp);
 if numMsr~=NumObjects
     if numMsr==0;
         MsrTemp=struct('Area',NaN ,'Perimeter',NaN,...
-            'PixelValues',NaN,'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
-            'StandardDeviation' ,NaN , 'Mass',NaN);
+            'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
+            'StandardDeviation' ,NaN , 'Mass',NaN,'P2A',NaN );
         MsrTemp(1:NumObjects)=struct('Area',NaN ,'Perimeter',NaN,...
-            'PixelValues',NaN,'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
-            'StandardDeviation' ,NaN , 'Mass',NaN);
+            'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
+            'StandardDeviation' ,NaN , 'Mass',NaN,'P2A',NaN );
     else
         MsrTemp(numMsr+1:NumObjects)=struct('Area',NaN ,'Perimeter',NaN,...
-            'PixelValues',NaN,'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
-            'StandardDeviation' ,NaN , 'Mass',NaN);
+            'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
+            'StandardDeviation' ,NaN , 'Mass',NaN,'P2A',NaN);
     end
 end
     idx=arrayfun(@(x) isempty(x.MaxIntensity),MsrTemp);
     MsrTemp(idx)=struct('Area',NaN ,'Perimeter',NaN,...
-        'PixelValues',NaN,'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
-        'StandardDeviation' ,NaN , 'Mass',NaN);
+        'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
+        'StandardDeviation' ,NaN , 'Mass',NaN,'P2A',NaN);
 end
