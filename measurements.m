@@ -37,13 +37,14 @@ if CC.NumObjects > 0
         MsrTemp = regionprops(Mask(:,:,ch),scaled_image(:,:,ch)-min(min(scaled_image(:,:,ch))),...
                 'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter');
         %i've tried arrayfun as an alternative for this loop but did
-        %not get it to work properly. Usually a loop is vaster so it
+        %not get it to work properly. Usually a loop is faster so it
         %should not be a problem 
         %StandardDeviation = arrayfun(@(x) std2(x.PixelValues),MsrTemp);
         for i=1:numel(MsrTemp)
             MsrTemp(i).StandardDeviation=std2(MsrTemp(i).PixelValues);
             MsrTemp(i).Mass=sum(MsrTemp(i).PixelValues(:));
-            MsrTemp(i).PixelValues=NaN;
+            MsrTemp=rmfield(MsrTemp,'PixelValues');
+            %MsrTemp(i).PixelValues=NaN;
         end
         %fill structure so tables can be concatonated.
         MsrTemp=fillStructure(MsrTemp,CC.NumObjects);
