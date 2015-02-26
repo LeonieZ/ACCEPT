@@ -50,7 +50,7 @@ if CC.NumObjects > 0
                 MsrTemp(i).P2A=NaN;
             end
         end
-        MsrTemp=rmfield(MsrTemp,'PixelValues')
+        MsrTemp=rmfield(MsrTemp,'PixelValues');
         %fill structure so tables can be concatonated.
         MsrTemp=fillStructure(MsrTemp,CC.NumObjects);
         names=strcat(dataP.channelTargets(ch),'_',fieldnames(MsrTemp));
@@ -58,9 +58,10 @@ if CC.NumObjects > 0
         tempTable.Properties.VariableNames=names;
         Msr=[Msr tempTable];
     end
+    Msr_BoundingBox = regionprops(CC,'BoundingBox');
     thumbs = makeThumbnail(CC,scaled_image,dataP);
     ID=[str2double(image_number)*10000+1:1:str2double(image_number)*10000+CC.NumObjects];
-    Msr=[Msr array2table(ID','VariableNames',{'ID'}),cell2table(thumbs','VariableNames',{'ThumbNail'})];
+    Msr=[Msr array2table(ID','VariableNames',{'ID'}), array2table(str2double(image_number)*ones(CC.NumObjects,1),'VariableNames',{'ImgNum'}), struct2table(Msr_BoundingBox), cell2table(thumbs','VariableNames',{'ThumbNail'})];
 end
 
 end
@@ -71,8 +72,8 @@ Msr=regionprops(CC,'BoundingBox');
 x=dataP.temp.imageSize(1);
 y=dataP.temp.imageSize(2);
 for k=1:CC.NumObjects
-xdim = Msr(k).BoundingBox(3)+9;
-ydim = Msr(k).BoundingBox(4)+9;
+xdim = Msr(k).BoundingBox(4)+9;
+ydim = Msr(k).BoundingBox(5)+9;
 lower_x = floor(max(min(max(round(Msr(k).BoundingBox(1)-5),1), y-xdim-1),1));
 lower_y = floor(max(min(max(round(Msr(k).BoundingBox(2)-5),1), x-ydim-1),1));
 higher_x = ceil(min(max(1+xdim,min(lower_x+xdim,y)),y));

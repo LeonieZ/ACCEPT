@@ -4,7 +4,6 @@ function [Success_out, Msr, xml] = processXML( path_input_cartridge, res )
 
 Success_out = res.success;
 NoXML = 0;
-Msr = res.Msr;
 xml = [];
 
 % find directory where xml file is located in
@@ -62,18 +61,23 @@ end
 
 
 %% see if we can find a cellsearch id to assossiate.
-if NoXML==0 && size(res.Msr,2) > 0
-    for jj = 1:size(res.Msr,2)
+if NoXML==0 && size(res.Msr,1) > 0
+%     Msr = [res.Msr array2table(zeros(size(res.Msr,1),1),'VariableNames',{'CellSearchID'})];
+    CellSearchID{size(res.Msr,1),1} = '--';
+    Msr = [res.Msr cell2table(CellSearchID, 'VariableNames',{'CellSearchID'})];
+
+
+    for jj = 1:size(res.Msr,1)
         
-        xdim = res.Msr(jj).BoundingBox(3);
-        ydim = res.Msr(jj).BoundingBox(4);
-        lower_x = res.Msr(jj).BoundingBox(1);
-        lower_y = res.Msr(jj).BoundingBox(2);
+        xdim = res.Msr.BoundingBox(jj,4);
+        ydim = res.Msr.BoundingBox(jj,5);
+        lower_x = res.Msr.BoundingBox(jj,1);
+        lower_y = res.Msr.BoundingBox(jj,2);
         higher_x = lower_x+xdim;
         higher_y = lower_y+ydim;
         
-        minloc=pixelsToCoordinates([lower_x, lower_y], res.Msr(jj).ImgNum, xml.columns, xml.camXSize, xml.camYSize);
-        maxloc=pixelsToCoordinates([higher_x, higher_y], res.Msr(jj).ImgNum, xml.columns, xml.camXSize, xml.camYSize);
+        minloc=pixelsToCoordinates([lower_x, lower_y], res.Msr.ImgNum(jj), xml.columns, xml.camXSize, xml.camYSize);
+        maxloc=pixelsToCoordinates([higher_x, higher_y], res.Msr.ImgNum(jj), xml.columns, xml.camXSize, xml.camYSize);
         
         overlaps = 0;
         overlap=[];
@@ -85,11 +89,11 @@ if NoXML==0 && size(res.Msr,2) > 0
         end
         if overlaps
             [a,kk]=max(overlap);
-            Msr(jj).CellSearchID=xml.CellSearchIds(kk);
-            Msr(jj).CellSearchIDOverlap=a;
+            Msr.CellSearchID(jj)=num2cell(xml.CellSearchIds(kk));
+            Msr.CellSearchIDOverlap(jj)=a;
         else
-            Msr(jj).CellSearchID='--';
-            Msr(jj).CellSearchIDOverlap=0;
+            Msr.CellSearchID(jj)=cellstr('--');
+            Msr.CellSearchIDOverlap(jj)=0;
             
         end
     end

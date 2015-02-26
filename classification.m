@@ -15,16 +15,17 @@ isWBC = isGatedBy(Msr,WBC);
 % isCKCD45 = isGatedBy(Msr,CKCD45);
 % isNucleus = isGatedBy(Msr,Nucleus);
 isCellline = isGatedBy(Msr,Cellline);
-
+size(isACTC)
+size(Msr)
 % add classification results to measurement output
-for jj = 1:size(res.Msr,2)
-    Msr(jj).ACTC = isACTC(jj);
-    Msr(jj).WBC = isWBC(jj);
-%     Msr(jj).CKCD45 = isCKCD45(jj);
-%     Msr(jj).Nucleus = isNucleus(jj);
-%     Msr(jj).ONLYFITC = isONLYFITC(jj);
-%     Msr(jj).ONLYFITC2 = isONLYFITC2(jj);
-    Msr(jj).Cellline = isCellline(jj);
+for jj = 1:size(res.Msr,1)
+    Msr.ACTC(jj) = isACTC(jj);
+    Msr.WBC(jj) = isWBC(jj);
+%     Msr.CKCD45(jj) = isCKCD45(jj);
+%     Msr.Nucleus(jj) = isNucleus(jj);
+%     Msr.ONLYFITC(jj) = isONLYFITC(jj);
+%     Msr.ONLYFITC2(jj) = isONLYFITC2(jj);
+    Msr.Cellline(jj) = isCellline(jj);
 end    
     
 
@@ -51,14 +52,14 @@ end
 if nargin == 3;
     bool=true;
     for ii = 1:size(gateStr,1)
-        include_event = Msr(index).(gateStr{ii,1}) > gate_valuesl(ii) & Msr(index).(gateStr{ii,1}) < gate_valuesu(ii);
+        include_event = Msr.(gateStr{ii,1})(index) > gate_valuesl(ii) & Msr.(gateStr{ii,1})(index) < gate_valuesu(ii);
         bool = bool & include_event;
     end
 else
-    bool=ones(size(Msr,2),1);
-    for index=1:size(Msr,2)
+    bool=ones(size(Msr,1),1);
+    for index=1:size(Msr,1)
         for ii = 1:size(gateStr,1)
-            include_event = Msr(index).(gateStr{ii,1}) > gate_valuesl(ii) & Msr(index).(gateStr{ii,1}) < gate_valuesu(ii);
+            include_event = Msr.(gateStr{ii,1})(index) > gate_valuesl(ii) & Msr.(gateStr{ii,1})(index) < gate_valuesu(ii);
             bool(index) = bool(index) & include_event;
         end
     end
