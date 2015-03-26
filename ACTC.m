@@ -16,7 +16,7 @@ clear global ACTC
 
 global ACTC
 %% store some kind of version label
-ACTC.ProgP.version='0.1';
+ACTC.Program.version='0.1';
 
 %% Display some kind of message about the program
 % printmessage();
@@ -25,8 +25,8 @@ ACTC.ProgP.version='0.1';
 
 %% Add subdirectories to path
 file = which('ACTC.m');
-ACTC.ProgP.install_dir = fileparts(file);
-addpath(genpath(ACTC.ProgP.install_dir));
+ACTC.Program.install_dir = fileparts(file);
+addpath(genpath(ACTC.Program.install_dir));
 
 %% Load default algoritm and data parameters
 
