@@ -26,23 +26,63 @@ ACTC.Program.version='0.1';
 %% Add subdirectories to path
 file = which('ACTC.m');
 ACTC.Program.install_dir = fileparts(file);
-addpath(genpath(ACTC.Program.install_dir));
+addpath(genpath_exclude(ACTC.Program.install_dir));
 
 %% Load default algoritm and data parameters
+set_default_parameters;
 
-set_default_parameteters;
+%% Display some kind of message about the program
+% Some kind of logging might also be a good idea. 
+log_entry(['>>>> Session started <<<< actc version: ', ACTC.Program.version],1,1);
+
+%% start a parpool using default parameters if needed
+if ACTC.Program.parallelProcessing && isempty(gcp('nocreate'))
+    parpool;
+end
 
 %% Check the number of arguments in and launch the appropriate script.
 if nargin > 0
     %Batch Mode
-    ACTC.ProgP.batch_mode = 1;
-    ACTC_batchanalysis(varargin{:});
+    ACTC.Program.batchMode = 1;
+    actc_batch_analysis(varargin{:});
 
 else
     %GUI mode
-    ACTC.PropP.batch_mode = 0;
+    ACTC.Program.batchMode = 0;
     %display_logo;
-    ACTC_gui;
+    actc_gui;
     
 end
+log_entry('>>>> Session stopped <<<< ',1,1);
+end
+
+%% Helper functions
+function p = genpath_exclude(d)
+    % extension of the genpath function of matlab, inspired by the
+    % genpath_exclude.m written by jhopkin posted on matlab central.  We use
+    % a regexp to also exclude .git directories from our path.
+    
+    files = dir(d);
+	if isempty(files)
+	  return
+	end
+
+	% Add d to the path even if it is empty.
+	p = [d pathsep];
+
+	% set logical vector for subdirectory entries in d
+	isdir = logical(cat(1,files.isdir));
+	%
+	% Recursively descend through directories which are neither
+	% private nor "class" directories.
+	%
+	dirs = files(isdir); % select only directory entries from the current listing
+
+	for i=1:length(dirs)
+		dirname = dirs(i).name;
+		%NOTE: regexp ignores '.', '..', '@.*', and 'private' directories by default. 
+		if ~any(regexp(dirname,'^\.$|^\.\.$|^\@*|^\+*|^\.git|^private$|','start'))
+		  p = [p genpath_exclude(fullfile(d,dirname))]; % recursive calling of this function.
+		end
+	end
 end

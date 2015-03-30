@@ -1,4 +1,4 @@
-function logEntry(entry,saveToFile,display)
+function log_entry(entry,saveToFile,display)
 % General function to log events to a text file for easy debuging and
 % bookkeeping. Can also display the entry if required.
  
@@ -20,8 +20,8 @@ entry = [datestr(now,13),': ',entry];
 
 if saveToFile
     fid = fopen(fullfile(ACTC.Program.install_dir,ACTC.Program.logfile),'a');
-    fprintf(fid_ll,'%s\r\n', entry);
-    fclose(fid_ll);   
+    fprintf(fid,'%s\r\n', entry);
+    fclose(fid);   
 end
 
 if display

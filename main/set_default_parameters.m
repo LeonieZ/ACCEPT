@@ -15,11 +15,14 @@ global ACTC;
 ACTC.Program.logfile='actc_log.txt';  
 ACTC.Program.input_folder= [pwd filesep 'example' filesep 'test_images']; %path containing image folders
 ACTC.Program.output_folder= [pwd filesep 'example' filesep 'results'];    %directory to save files
+ACTC.Program.parallelProcessing = true; % use parallel processing toolbox? true or false
+
+
 
 
 ACTC.Data.removeEdges = true; % do we need to removeEdges using this datatype (for example CellSearch )
 
-ACTC.Data.type='Default' % this can be replaced with a specific data type such as CellSearch. 
+ACTC.Data.type='Default'; % this can be replaced with a specific data type such as CellSearch. 
 ACTC.Data.scaleData = true;   % scale data back to pseudo 12 bit?
 
 % We will have to discuss our naming convention. I think we should keep
@@ -44,9 +47,6 @@ algP.profile_on = false;
 algP.save_result = true;
 algP.ignore_existing_results = true;
 
-% parallel processing
-algP.parallelProcessing = false; % use parallel processing toolbox? true or false
-algP.numCores = 2; % number of cores, if not specified Matlab uses the number of physcial cores
 
 % segmentation method
 algP.segMethod = @triangle_method;
