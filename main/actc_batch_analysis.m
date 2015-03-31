@@ -30,7 +30,7 @@ expectedUseCases={'FullAuto','SemiSupervised','QuantifyMarkerExpression'};
 input.addRequired('useCase',@(a) any(validatestring(a,expectedUseCases)));
 %parse input to get useCase and load defaults
 parse(input,varargin{:});
-load_use_case(input.Results.useCase);
+ACTC.Program.loadUseCaseFunction(input.Results.useCase);
 
 %optional parameters:
 %input.addParameter('preprocessing_alpha',1);

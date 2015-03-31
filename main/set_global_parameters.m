@@ -1,4 +1,4 @@
-function set_default_parameters();
+function set_global_parameters();
 % Set default parameters to the global for the actc program.
 % the following substruct are defined:
 % Program   -> contains all values relevant to the general program such as
@@ -15,10 +15,11 @@ global ACTC;
 ACTC.Program.logfile='actc_log.txt';  
 ACTC.Program.input_folder= [pwd filesep 'example' filesep 'test_images']; %path containing image folders
 ACTC.Program.output_folder= [pwd filesep 'example' filesep 'results'];    %directory to save files
-ACTC.Program.parallelProcessing = true; % use parallel processing toolbox? true or false
+ACTC.Program.parallelProcessing = false; % use parallel processing toolbox? true or false
 
 
-
+ACTC.Program.expectedUseCases={'FullAuto','SemiSupervised','QuantifyMarkerExpression'};
+ACTC.Program.loadUseCaseFunction=@load_use_case;
 
 ACTC.Data.removeEdges = true; % do we need to removeEdges using this datatype (for example CellSearch )
 
@@ -82,6 +83,31 @@ ACTC.Data.thresholdOffset = [50, 0, 30, 70]; %[50 -- 20 --]
  
 end
 
+function load_use_case(usecase)
+%Helper function to load default algorithm parameters for each use case to the global.
+
+global ACTC
+ACTC.Program.useCase=input.Results.useCase;
+switch useCase
+    case 'FullAuto'
+        ACTC.Algorithm.preProcessFunction=[];
+        ACTC.Algorithm.segmentationFunction=[];
+        ACTC.Algorithm.measurementFunction=[];
+        ACTC.Algorithm.segmentationFunction=[];
+    case 'SemiSupervised'
+        ACTC.Algorithm.preProcessFunction=[];
+        ACTC.Algorithm.segmentationFunction=[];
+        ACTC.Algorithm.measurementFunction=[];
+        ACTC.Algorithm.segmentationFunction=[];
+    case 'QuantifyMarkerExpression'
+        ACTC.Algorithm.preProcessFunction=[];
+        ACTC.Algorithm.segmentationFunction=[];
+        ACTC.Algorithm.measurementFunction=[];
+        ACTC.Algorithm.segmentationFunction=[];
+end
+
+
+end
 
 
 
