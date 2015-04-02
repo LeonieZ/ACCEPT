@@ -25,11 +25,11 @@ ACTC.Program.version='0.1';
 
 %% Add subdirectories to path
 file = which('ACTC.m');
-ACTC.Program.install_dir = fileparts(file);
-addpath(genpath_exclude(ACTC.Program.install_dir));
+ACTC.Program.installDir = fileparts(file);
+addpath(genpath_exclude(ACTC.Program.installDir));
 
 %% Load default algoritm and data parameters
-set_default_parameters;
+set_global_parameters;
 
 %% Display some kind of message about the program
 % Some kind of logging might also be a good idea. 

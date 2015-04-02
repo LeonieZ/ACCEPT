@@ -19,7 +19,7 @@ end
 entry = [datestr(now,13),': ',entry];
 
 if saveToFile
-    fid = fopen(fullfile(ACTC.Program.install_dir,ACTC.Program.logfile),'a');
+    fid = fopen(fullfile(ACTC.Program.installDir,ACTC.Program.logfile),'a');
     fprintf(fid,'%s\r\n', entry);
     fclose(fid);   
 end
