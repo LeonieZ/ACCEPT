@@ -17,9 +17,9 @@ end
 
 keyboard
 for i=1:numel(sampleList)
-    imageList=preload_priors_and_imageList(sampleList(i));
-    Results=run_analysis(imageList,ACTC);
-    ACTC.Program.saveResults(ACTC,Results,sampleList(i),outputList);
+    Temp=preload_priors_and_imageList(sampleList(i));
+    Results=run_analysis(Temp);
+    ACTC.Program.saveResults(Results,sampleList(i),outputList(i));
 end
 
 %Turn of profiler and show results

@@ -23,7 +23,8 @@ ACTC.Program.expectedUseCases={'FullAuto','SemiSupervised','QuantifyMarkerExpres
 ACTC.Program.loadUseCaseFunction=@load_use_case;
 
 
-
+% Lets make a data class that can contain these variables and some loading
+% specific functions as it gets kindof confussing.
 ACTC.Data.type='Default'; % this can be replaced with a specific data type such as CellSearch. 
 ACTC.Data.scaleData = true;   % scale data back to pseudo 12 bit?
 ACTC.Data.removeEdges = true; % do we need to removeEdges using this datatype (for example CellSearch )
