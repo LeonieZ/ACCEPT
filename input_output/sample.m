@@ -1,11 +1,10 @@
-classdef Data < handle
-    %This class will hold all essential data related variables and
-    %functions. 
+classdef sample < handle
+    %This class will hold all essential data related variables 
     
     properties
         type='Default'; % this can be replaced with a specific data type such as CellSearch. 
-        availableTypes={}; % this variable will be filled with the available subclasses
-        scaleData = true;   % scale data back to pseudo 12 bit?
+        
+        scaledData = true;   % scale data back to pseudo 12 bit?
         removeEdges = true; % do we need to removeEdges using this datatype (for example CellSearch )
 
         % We will have to discuss our naming convention. I think we should keep
