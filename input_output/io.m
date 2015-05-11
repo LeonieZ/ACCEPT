@@ -1,21 +1,49 @@
 classdef io < handle
-    %abstract class for various input classes
+    %the toplevel that handles the various input and output operations. It
+    %allows for easy loading of different sample types
     
     properties
-        data = dataframe(); % this variable will be filled with the available subclasses
-        sample = sample()
+        dataFrame
+        sample
+        loader
+        loaderTypesAvailable={};
+        samplePath
+        imagePath
+        priorPath
+        savePath
     end
     
     methods
-        function self = io()
+        function obj = io(samplepath)
+            obj.populate_available_input_types();
         end
+        
         function new_sample(path)
         end
-        function data = load_data_frame(frameNr)
+        
+        function data = load_data_frame(obj,frameNr)
+            data=obj.loader.load_data_frame(frameNr);
+            obj.data=data;
         end
+        
         function save_data_frame(data)
         end
     end
-    
+    methods (Access = private)
+        function populate_available_input_types(obj)
+            % list of all folders in FilterFunctions:
+            temp = what('Loaders');
+            flist = temp.m;
+
+            for i=1:numel(flist)
+               [~,filename,fileext]=fileparts(flist{i}); % get just the filename
+               if exist(filename, 'class') && ismember('loader', superclasses(filename))
+                 obj.loaderTypesAvailable{end+1} = filename ;
+               end
+             end
+         end
+    end
 end
+        
+
 
