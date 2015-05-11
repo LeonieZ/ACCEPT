@@ -1,5 +1,5 @@
 classdef io < handle
-    %the toplevel that handles the various input and output operations. It
+    %the toplevel class that handles the various input and output operations. It
     %allows for easy loading of different sample types
     
     properties
@@ -14,8 +14,9 @@ classdef io < handle
     end
     
     methods
-        function obj = io(samplepath)
+        function obj = io(samplePath)
             obj.populate_available_input_types();
+            
         end
         
         function new_sample(path)
@@ -38,10 +39,16 @@ classdef io < handle
             for i=1:numel(flist)
                [~,filename,fileext]=fileparts(flist{i}); % get just the filename
                if exist(filename, 'class') && ismember('loader', superclasses(filename))
-                 obj.loaderTypesAvailable{end+1} = filename ;
+                 obj.loaderTypesAvailable{end+1} = @filename ;
                end
              end
-         end
+        end
+        
+        function check_sample_type(obj,samplePath)
+            for i=1:numel(obj.loaderTypesAvailable)
+                eval(obj.loaderTypesAvailable{i})
+            end
+        end
     end
 end
         
