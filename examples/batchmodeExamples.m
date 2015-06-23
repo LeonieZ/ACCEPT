@@ -1,0 +1,1 @@
+%Example of batch mode

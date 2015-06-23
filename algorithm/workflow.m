@@ -3,6 +3,7 @@ classdef workflow < handle
     %   Detailed explanation goes here
     
     properties
+        loopResults={};
         algorithm=cell(0);
     end
     
