@@ -3,7 +3,7 @@ classdef io < handle
     %allows for easy loading of different sample types
     
     properties
-        loaderTypesAvailable={@default,@celltracks,@mcbp};
+        loaderTypesAvailable={celltracks(),mcbp(),default()}; % beware of the order, the first loader type that can load a dir wil be used.
         samplesPath
         savePath
         sampleList
@@ -20,8 +20,15 @@ classdef io < handle
             self.savePath=savePath;
         end
         
-        function next_sample()
+        function sampleOut=load_next_sample(self)
+            %Will load the next sample in the sampleList
+            self.currentSample=self.currentSample+1;
+            samplePath=fullfile(self.samplesPath,self.sampleList{self.currentSample});
+            loaderHandle=self.check_sample_type(samplePath);
+            sampleOut=loaderHandle.load_sample();
         end
+        
+        
         
         function create_sample_list(self)
             %creates list of samples from input dir. It also checks if
@@ -47,28 +54,36 @@ classdef io < handle
                 self.sampleList=setdiff({inputList.name},sampleProccessed);
             else
                 self.sampleList=inputList;
+                self.nrOfSamples=numel(inputList);
+                self.currentSample=0;
             end
         end
 
     end
+    
+    
     methods (Access = private)
         function populate_available_input_types(self)
-            % list of all folders in FilterFunctions:
+            % populate available inputs 
+            % Function not used atm /g
             temp = what('Loaders');
             flist = temp.m;
 
             for i=1:numel(flist)
                [~,filename,fileext]=fileparts(flist{i}); % get just the filename
                if exist(filename, 'class') && ismember('loader', superclasses(filename))
-                 self.loaderTypesAvailable{end+1} = ['@',filename];
+                 self.loaderTypesAvailable{end+1} = filename();
                end
              end
         end
         
-        function check_sample_type(self,samplePath)
+        function loaderHandle=check_sample_type(self,samplePath)
+            %Checks which loader types can load the sample path and chooses
+            %the first one on the list. 
             for i=1:numel(self.loaderTypesAvailable)
-                eval(self.loaderTypesAvailable{i})
+                canLoad[i]=self.loadeTypesAvailable{i}.can_load_this_folder(samplePath)
             end
+            loaderHandle=self.loaderTypesAvailable{find(canLoad,1)}(samplePath);
         end
     end
 end

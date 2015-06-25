@@ -130,7 +130,7 @@ classdef celltracks < loader
         
     end
     methods(Static)
-        function bool = can_load_this_folder(path)
+        function bool = can_load_this_folder(self,path)
             %function that must be persent in all loader types to test
             %if the current sample can be loaded by this class. 
             bool=true;

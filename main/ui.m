@@ -1,4 +1,4 @@
-classdef ui
+classdef ui < handle
     %UI superclass to deal with basic things such as: class attributes and turning on profiling
     %or parralel processing
     

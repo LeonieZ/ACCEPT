@@ -1,4 +1,4 @@
-classdef default
+classdef default < loader
     %DEFAULT Summary of this class goes here
     %   Detailed explanation goes here
     

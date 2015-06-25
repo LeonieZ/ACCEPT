@@ -1,4 +1,4 @@
-classdef mcbp
+classdef mcbp < loader
     %MCBP Summary of this class goes here
     %   Detailed explanation goes here
     

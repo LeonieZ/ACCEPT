@@ -14,7 +14,7 @@ classdef sample < handle
     
     
     properties (SetAccess=private)
-        io;
+        loaderHandle;
         type='Default'; % this can be replaced with a specific data type such as CellSearch. 
         removeEdges = false; % do we need to removeEdges using this datatype (for example CellSearch )
 
@@ -23,13 +23,14 @@ classdef sample < handle
         channelNames={'CD45','DNA','CK','Empty'};
         numChannels = 4;
         channelEdgeRemoval=4;
+        numberOfFrames;
         measurements=table();
         classeficationResults=table();
     end
 
     methods
-        function obj=sample(io,type,removeEdges,channelNames,channelEdgeRemoval)
-            obj.io=io;
+        function obj=sample(loaderHandle,type,removeEdges,channelNames,channelEdgeRemoval)
+            obj.loaderHandle=loaderHandle;
             obj.type=type;
             obj.removeEdges=removeEdges;
             obj.channelNames=channelNames;
