@@ -29,7 +29,7 @@ classdef (Abstract) loader < handle
     end
     methods(Static)
         function bool = can_load_this_folder(self,path)
-            %function that must be persent in all loader types to test
+            %function that must be present in all loader types to test
             %if the current sample can be loaded by this class. 
             bool=false;
         end

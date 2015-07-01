@@ -11,11 +11,16 @@ classdef logger < handle
     methods
         function self=logger(programLocation)
             self.logPath=[programLocation,filesep,'log',filesep];
+            
+            if ~exist([programLocation filesep 'log'], 'dir') 
+                mkdir(programLocation, 'log');
+            end
+            
             self.fid = fopen(fullfile(self.logPath,self.logFile),'a');
         end
         
         function entry(self,entry,saveToFile,display)
-            % General function to log events to a text file for easy debuging and
+            % General function to log events to a text file for easy debugging and
             % bookkeeping. Can also display the entry if required.
             switch nargin 
                 case 0

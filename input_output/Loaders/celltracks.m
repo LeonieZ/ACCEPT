@@ -4,15 +4,13 @@ classdef celltracks < loader
     
     properties
         tiffDir
-        xmlDir
-        
+        xmlDir   
     end
     
     methods
-        function obj = cellsearch(samplePath)
-            obj.tiffDir = find_dir(samplePath,'tif',100);
-            obj.xmlDir = find_dir(samplePath,'xml',1);
-            
+        function self = celltracks(samplePath) 
+            self.tiffDir = find_dir(samplePath,'tif',100);
+            self.xmlDir = find_dir(samplePath,'xml',1);  
         end
         
         function sample=load_sample(obj)
@@ -21,7 +19,7 @@ classdef celltracks < loader
         function dataFrame=load_data_frame(obj)
         end
        
-        function [curr_image, Error_out]= readImAndScale(dataP, varargin)
+        function [curr_image, Error_out]= readImAndScale(self,dataP, varargin)
             % use the previously gathered imageinfo and read all images in a multipage
             % tiff. read only one channel if a channel is specified. Rescale and
             % stretch values and rescale to approx old values if the image is a
@@ -43,21 +41,28 @@ classdef celltracks < loader
                 [curr_image(:,:,i),Error_out] = loadOneChannel(dataP,imageNumber,i);
                 end
 
-            elseif numel(varargin)==2
+            elseif numel(varargin)==2 
                 imageNumber=varargin{1};
                 allChannels=false;
-                channel=varargin{2};
-                [curr_image(:,:),Error_out] = loadOneChannel(dataP,imageNumber,channel);
+                channel_subset = varargin{2};
+                channels=numel(channel_subset);
+                
+                curr_image = zeros(dataP.temp.imageinfos{imageNumber}(1).Height,...
+                                   dataP.temp.imageinfos{imageNumber}(1).Width,...
+                                   channels, 'uint16');
+                for i=1:channels
+                [curr_image(:,:,i),Error_out] = loadOneChannel(dataP,imageNumber,channel_subset(i));
+                end
+           
             else
                 curr_image=[];
                 Error_out='incorrect number of variables passed to readImAndScale';
                 return
-            end %function
+            end 
 
-            end
+        end %function
 
-        function [imageout,Error_out]=loadOneChannel(dataP,imageNumber,channel)
-                %check if this preallocation is needed? \G
+        function [imageout,Error_out]=loadOneChannel(self,dataP,imageNumber,channel) 
                 imagetemp = zeros(dataP.temp.imageinfos{imageNumber}(channel).Height,...
                                  dataP.temp.imageinfos{imageNumber}(channel).Width,...
                                  1, 'uint8');
@@ -84,7 +89,7 @@ classdef celltracks < loader
                 end
         end
             
-        function [dataP, Success_out] = get_image_filenames(dataP, input_cartridge)
+        function [dataP, Success_out] = get_image_filenames(self,dataP, input_cartridge)
             % find tiff dir and place file names in dataP.temp Struct.
 
             path_input_cartridge = fullfile(dataP.input_folder, input_cartridge);
@@ -104,7 +109,7 @@ classdef celltracks < loader
             end
         end
         
-        function dataP = get_image_info(dataP)
+        function dataP = get_image_info(self,dataP)
             %function to fill the dataP.temp.imageinfos variable
 
             for i=1:numel(dataP.temp.imageFileNames)
@@ -131,7 +136,7 @@ classdef celltracks < loader
     end
     methods(Static)
         function bool = can_load_this_folder(self,path)
-            %function that must be persent in all loader types to test
+            %function that must be present in all loader types to test
             %if the current sample can be loaded by this class. 
             bool=true;
         end
@@ -142,7 +147,7 @@ classdef celltracks < loader
     end
 end
 
-function Dir_out = find_dir(Dir_in,fileExtension,numberOfFiles)
+function Dir_out = find_dir(self,Dir_in,fileExtension,numberOfFiles)
             % function to verify in which directory the tiff files are located. There
             % are a few combinations present in the immc databases:
             % immc38: dirs with e.g. .1.2 have a dir "processed" in cartridge dir, dirs

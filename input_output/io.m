@@ -3,7 +3,7 @@ classdef io < handle
     %allows for easy loading of different sample types
     
     properties
-        loaderTypesAvailable={celltracks(),mcbp(),default()}; % beware of the order, the first loader type that can load a dir wil be used.
+        loaderTypesAvailable={celltracks(),mcbp(),default()}; % beware of the order, the first loader type that can load a dir will be used.
         samplesPath
         savePath
         sampleList
@@ -36,27 +36,27 @@ classdef io < handle
             %overwriteResults attribute is set to false. 
             files = dir(self.samplesPath);
             if isempty(files)
-                self.log.entry('inputDir is empty cannot continue',1,1);
-                error('inputDir is empty cannot continue');
+                self.log.entry('inputDir is empty; cannot continue',1,1);
+                error('inputDir is empty; cannot continue');
             end
 
             % select only directory entries from the input listing and remove
             % anything that starts with a .*.
             inputList = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
 
-            %Check in results dir if any samples are already done.
+            %Check in results dir if any samples are already processed.
             if self.overwriteResults==false
                 try load([self.savePath filesep processed.mat],samplesProccesed)
                 catch 
-                    %appears to be no lest so lets create a empty sampleProccesed variable
+                    %appears to be no lest (?) so lets create an empty sampleProccesed variable
                     sampleProccessed=['empty'];
                 end
                 self.sampleList=setdiff({inputList.name},sampleProccessed);
             else
                 self.sampleList=inputList;
-                self.nrOfSamples=numel(inputList);
-                self.currentSample=0;
             end
+            self.nrOfSamples=numel(inputList);
+            self.currentSample=0;
         end
 
     end
@@ -81,7 +81,7 @@ classdef io < handle
             %Checks which loader types can load the sample path and chooses
             %the first one on the list. 
             for i=1:numel(self.loaderTypesAvailable)
-                canLoad[i]=self.loadeTypesAvailable{i}.can_load_this_folder(samplePath)
+                canLoad(i) = self.loaderTypesAvailable{i}.can_load_this_folder(samplePath);
             end
             loaderHandle=self.loaderTypesAvailable{find(canLoad,1)}(samplePath);
         end

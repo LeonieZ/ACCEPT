@@ -8,9 +8,9 @@ classdef workflow < handle
     end
     
     methods
-        function obj=workflow(savedWorkflow)
+        function self=workflow(savedWorkflow)
             if isa(savedWorkflow,'workflow_object')
-                obj.algorithm=savedWorkflow;
+                self.algorithm=savedWorkflow;
             else
                 %give error message
                 

@@ -5,7 +5,7 @@ classdef ui < handle
     properties
         programVersion= '0.1';
         profiler=false;
-        parralelProcessing=false;
+        parallelProcessing=false;
         ioHandle;
         samples;
         currentSample;
@@ -17,7 +17,7 @@ classdef ui < handle
     methods
         function self=ui()
             %constructor will be called without arguments by children. It
-            %starts the logging, profiler and parralel pool when turned on.
+            %starts the logging, profiler and parallel pool when turned on.
             installDir = fileparts(which('ACTC.m'));
             self.log=logger(installDir);
             self.log.entry(['>>>> Session started <<<< actc version: ', self.programVersion],1,1);
@@ -25,7 +25,7 @@ classdef ui < handle
             if self.profiler
                 profile -memory on;
             end
-            if self.parralelProcessing==1
+            if self.parallelProcessing==1
                 self.pool=parpool;    
             end
         end
@@ -38,7 +38,7 @@ classdef ui < handle
                 profile off;
                 profile viewer;
             end
-            if self.parralelProcessing==1
+            if self.parallelProcessing==1
                 self.pool.delete()
             end
         end

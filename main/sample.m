@@ -5,7 +5,7 @@ classdef sample < handle
     
     
     %Raw image dimensions:[x-axis,y-axis,fluophore]
-    %the channel order should be discussed as a starting point the
+    %the channel order should be discussed, as a starting point the
     %following convention is used:
     %The first channel = exclusion marker
     %second channel = DNA marker
@@ -25,23 +25,23 @@ classdef sample < handle
         channelEdgeRemoval=4;
         numberOfFrames;
         measurements=table();
-        classeficationResults=table();
+        classificationResults=table();
     end
 
     methods
-        function obj=sample(loaderHandle,type,removeEdges,channelNames,channelEdgeRemoval)
-            obj.loaderHandle=loaderHandle;
-            obj.type=type;
-            obj.removeEdges=removeEdges;
-            obj.channelNames=channelNames;
-            obj.numChannels=numel(channelNames);
-            obj.channelEdgeRemoval=channelEdgeRemoval;
+        function self=sample(loaderHandle,type,removeEdges,channelNames,channelEdgeRemoval)
+            self.loaderHandle=loaderHandle;
+            self.type=type;
+            self.removeEdges=removeEdges;
+            self.channelNames=channelNames;
+            self.numChannels=numel(channelNames);
+            self.channelEdgeRemoval=channelEdgeRemoval;
         end
-        function add_measurements(obj,frameNr,measurements)
-            obj.measurements=cat(obj.measurements,measurements);
+        function add_measurements(self,frameNr,measurements)
+            self.measurements=cat(self.measurements,measurements);
         end
-        function add_classefication_results(obj,frameNr,classeficationResults)
-            obj.classeficationResults=cat(obj.classeficationResults,classeficationResults);
+        function add_classification_results(self,frameNr,classificationResults)
+            self.classificationResults=cat(self.classificationResults,classificationResults);
         end
     end
 end
