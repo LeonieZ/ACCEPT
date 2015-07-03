@@ -29,12 +29,19 @@ classdef dataframe < handle
         adjacentFrameNrs=[];
         rawImage=[];
         priorLocations=[];
+        % need class (uint8, uint12,...), private or public?
+%         class = [];
+
     end
     properties(Access = public)
         preProcessedImage=[];
         labelImage=[];
         measurements=table();
-        classificationResults=table();
+        classificationResults=table();        
+        % mask if we want to remove edge (logicals)
+        mask = [];
+        % need class (uint8, uint12,...), private or public?
+        class = [];
     end
       
     methods
