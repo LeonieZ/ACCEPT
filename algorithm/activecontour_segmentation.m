@@ -32,10 +32,9 @@ classdef activecontour_segmentation < workflow_object
             end  
         end
         
-        function bin = bregman_cv(self, img)
+        function bin = bregman_cv(self, f)
         %BREGMAN_CV Summary of this function goes here
         %   Detailed explanation goes here
-        f = single(img);
         f_scale = f/max(f(:));
         level = graythresh(f_scale);
         BW = im2bw(f_scale,level);
