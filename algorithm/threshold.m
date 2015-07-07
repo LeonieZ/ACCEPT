@@ -2,16 +2,21 @@ classdef threshold < workflow_object
     %THRESHOLD Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties
+    properties (SetAccess = private)
         thresholds = [];
         maskForChannels = [];
         histogram = [];
+        meth = [];
+        range = [];
     end
     
     methods
         function self = threshold(meth, range, currentFrame, varargin)
             %varargin(1) = masksforchannels, varargin(2) = offsets varargin(3) =
             %thresholds of manual ones
+            
+            self.meth = meth;
+            self.range = range;
             
             if nargin > 3
                 self.maskForChannels = varargin{1};
