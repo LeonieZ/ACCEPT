@@ -4,16 +4,20 @@ classdef (Abstract) loader < handle
     %   defines the functions which must be implemented in its subclasses
     %   so that the io class is able to load the appropriate data. 
     
-    properties(SetAccess=private)
+    properties
         loaderType
-        samplePath
         imagePath
         priorPath
-        savePath
-        sample
-        dataFrame
         nrOfFrames
+        nrOfChannels
+        imageSize
+        sample
     end
+    
+    events
+        logMessage
+    end
+    
     
     methods
         function sample=load_sample(self,samplePath)
@@ -23,10 +27,7 @@ classdef (Abstract) loader < handle
         function dataFrame = load_data_frame(self,frameNr)
 
         end
-        
-        function save_data_frame(self,dataFrame)
-        end
-    end
+   end
     methods(Static)
         function bool = can_load_this_folder(self,path)
             %function that must be present in all loader types to test

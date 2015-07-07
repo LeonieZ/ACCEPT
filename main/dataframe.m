@@ -22,32 +22,33 @@ classdef dataframe < handle
     %additional channels = extra markers
     
     properties(SetAccess = private)
-        sample;
-        io;
+        sample; %might remove this for better structur
         frameNr=NaN;
         frameHasEdge=false;
-        adjacentFrameNrs=[];
         rawImage=[];
         priorLocations=[];
-        % need class (uint8, uint12,...), private or public?
-%         class = [];
-
+        dataTypeOriginalImage=uint16();
     end
+    
     properties(Access = public)
+        adjacentFrames=[];
         preProcessedImage=[];
         labelImage=[];
         measurements=table();
         classificationResults=table();        
         % mask if we want to remove edge (logicals)
         mask = [];
-        % need class (uint8, uint12,...), private or public?
-        class = [];
     end
-      
+    
+    events
+        loadNeigbouringFrames
+        logMessage
+        saveSegentation
+    end
+          
     methods
-        function self = dataframe(Sample,io,frameNr,frameHasEdge,rawImage,priorLocations)
+        function self = dataframe(Sample,frameNr,frameHasEdge,rawImage,priorLocations)
                 self.sample=Sample;
-                self.io=io;
                 self.frameNr=frameNr;
                 self.frameHasEdge=frameHasEdge;
                 self.rawImage=rawImage;

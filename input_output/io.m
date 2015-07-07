@@ -8,21 +8,23 @@ classdef io < handle
         savePath
         sampleList
         nrOfSamples
-        currentSample
+        currentSampleNr
         overwriteResults=false;
-        log
+    end
+    
+    events
+        logMessage
     end
     
     methods
-        function self = io(log,samplesPath,savePath)
-            self.log=log;
+        function self = io(samplesPath,savePath)
             self.samplesPath=samplesPath;
             self.savePath=savePath;
         end
         
         function sampleOut=load_next_sample(self)
             %Will load the next sample in the sampleList
-            self.currentSample=self.currentSample+1;
+            self.currentSampleNr=self.currentSampleNr+1;
             samplePath=fullfile(self.samplesPath,self.sampleList{self.currentSample});
             loaderHandle=self.check_sample_type(samplePath);
             sampleOut=loaderHandle.load_sample();
@@ -56,7 +58,7 @@ classdef io < handle
                 self.sampleList=inputList;
             end
             self.nrOfSamples=numel(inputList);
-            self.currentSample=0;
+            self.currentSampleNr=0;
         end
 
     end

@@ -14,7 +14,7 @@ classdef sample < handle
     
     
     properties (SetAccess=private)
-        loaderHandle;
+        name='Empty' %the sample name or identifier.
         type='Default'; % this can be replaced with a specific data type such as CellSearch. 
         removeEdges = false; % do we need to removeEdges using this datatype (for example CellSearch )
 
@@ -22,26 +22,41 @@ classdef sample < handle
         % track of both the flouphore and its target, but it gets confusing \G.
         channelNames={'CD45','DNA','CK','Empty'};
         numChannels = 4;
+        pixelSize=1;
         channelEdgeRemoval=4;
-        numberOfFrames;
+        numberOfFrames=0;
         measurements=table();
         classificationResults=table();
     end
+    
+    events
+        saveResults
+        logMessage
+    end
+    
 
     methods
-        function self=sample(loaderHandle,type,removeEdges,channelNames,channelEdgeRemoval)
-            self.loaderHandle=loaderHandle;
-            self.type=type;
-            self.removeEdges=removeEdges;
-            self.channelNames=channelNames;
-            self.numChannels=numel(channelNames);
-            self.channelEdgeRemoval=channelEdgeRemoval;
+        function self=sample(name,type,pixelSize,removeEdges,channelNames,channelEdgeRemoval)
+            if nargin==6
+                self.name=name;
+                self.type=type;
+                self.pixelSize=pixelSize;
+                self.removeEdges=removeEdges;
+                self.channelNames=channelNames;
+                self.numChannels=numel(channelNames);
+                self.channelEdgeRemoval=channelEdgeRemoval;
+            end
+            notify(self,'logMessage',logmessage(4,['New sample: ',self.name, ' is constructed.']));
+                     
         end
         function add_measurements(self,frameNr,measurements)
             self.measurements=cat(self.measurements,measurements);
         end
         function add_classification_results(self,frameNr,classificationResults)
             self.classificationResults=cat(self.classificationResults,classificationResults);
+        end
+        function save_results(self)
+        notify(self,'saveResults');
         end
     end
 end

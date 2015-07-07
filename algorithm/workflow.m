@@ -3,18 +3,21 @@ classdef workflow < handle
     %   Detailed explanation goes here
     
     properties
+        name='Empty'
         loopResults={};
         algorithm=cell(0);
     end
     
+    events
+        logMessage
+    end
+    
     methods
-        function self=workflow(savedWorkflow)
-            if isa(savedWorkflow,'workflow_object')
-                self.algorithm=savedWorkflow;
-            else
-                %give error message
-                
+        function self=workflow(inputWorkflow)
+            if nargin==1
+                validateattributes(inputWorkflow,{'workflow'},{'nonempty'},'','inputWorkflow');
             end
+            notify(self,'logMessage',logmessage(4,[self.name,' workflow is constructed.']));
         end
         
         function returnFrame=run_workflow(self,data)

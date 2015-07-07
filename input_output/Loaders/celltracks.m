@@ -3,151 +3,44 @@ classdef celltracks < loader
     %   Detailed explanation goes here
     
     properties
-        tiffDir
-        xmlDir   
+        rescaleTiffs=true;
+        pixelSize=0.64;
+        imageFileNames
+        tiffHeaders
+        channelNames={'DNA','CK','Empty','CD45'};
+        
     end
+   
+    events
+        logMessage
+    end
+    
     
     methods
-        function self = celltracks(samplePath) 
-            self.tiffDir = find_dir(samplePath,'tif',100);
-            self.xmlDir = find_dir(samplePath,'xml',1);  
-        end
-        
-        function sample=load_sample(obj)
-        end
-        
-        function dataFrame=load_data_frame(obj)
-        end
-       
-        function [curr_image, Error_out]= readImAndScale(self,dataP, varargin)
-            % use the previously gathered imageinfo and read all images in a multipage
-            % tiff. read only one channel if a channel is specified. Rescale and
-            % stretch values and rescale to approx old values if the image is a
-            % celltracks tiff: scales IMMC images back to 0..4095 scale. Otherwise a
-            % normal tiff is returned.
-
-
-            Error_out = '';
-
-            if numel(varargin)==1
-                imageNumber=varargin{1};
-                allChannels=true;
-                channels=numel(dataP.temp.imageinfos{imageNumber});
-
-                curr_image = zeros(dataP.temp.imageinfos{imageNumber}(1).Height,...
-                                   dataP.temp.imageinfos{imageNumber}(1).Width,...
-                                   channels, 'uint16');
-                for i=1:channels
-                [curr_image(:,:,i),Error_out] = loadOneChannel(dataP,imageNumber,i);
-                end
-
-            elseif numel(varargin)==2 
-                imageNumber=varargin{1};
-                allChannels=false;
-                channel_subset = varargin{2};
-                channels=numel(channel_subset);
-                
-                curr_image = zeros(dataP.temp.imageinfos{imageNumber}(1).Height,...
-                                   dataP.temp.imageinfos{imageNumber}(1).Width,...
-                                   channels, 'uint16');
-                for i=1:channels
-                [curr_image(:,:,i),Error_out] = loadOneChannel(dataP,imageNumber,channel_subset(i));
-                end
-           
-            else
-                curr_image=[];
-                Error_out='incorrect number of variables passed to readImAndScale';
-                return
-            end 
-
-        end %function
-
-        function [imageout,Error_out]=loadOneChannel(self,dataP,imageNumber,channel) 
-                imagetemp = zeros(dataP.temp.imageinfos{imageNumber}(channel).Height,...
-                                 dataP.temp.imageinfos{imageNumber}(channel).Width,...
-                                 1, 'uint8');
-                imageout = zeros(dataP.temp.imageinfos{imageNumber}(channel).Height,...
-                                 dataP.temp.imageinfos{imageNumber}(channel).Width,...
-                                 1, 'uint16');
-                Error_out = '';
-                try
-                    imagetemp = imread(dataP.temp.imageFileNames{imageNumber}, channel, 'info',dataP.temp.imageinfos{imageNumber});
-                    imageout  = uint16(imagetemp);
-                catch
-                    Error_out = ['Tiff from channel ' num2str(ch) ' is not readable!'];
-                return
-                end
-                if dataP.scaleData == true && dataP.temp.imagesAreFromCT == true
-                    UnknownTags = dataP.temp.imageinfos{imageNumber}(channel).UnknownTags;
-
-                    LowValue  =  UnknownTags(2).Value;
-                    HighValue =  UnknownTags(3).Value;
-
-
-                    % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
-                    imageout = LowValue + imageout * ((HighValue-LowValue)/max(imageout(:)));
-                end
-        end
-            
-        function [dataP, Success_out] = get_image_filenames(self,dataP, input_cartridge)
-            % find tiff dir and place file names in dataP.temp Struct.
-
-            path_input_cartridge = fullfile(dataP.input_folder, input_cartridge);
-
-            tiff_dir  = FindTiffDir(path_input_cartridge);
-
-            if strcmp(tiff_dir, 'No Tiff dir found') || strcmp(tiff_dir, 'More than one dir found')
-                Success_out = tiff_dir;
-                return
-            else
-                imageFileNames = dir([tiff_dir filesep '*.tif']);
-                Success_out='tiff dir found';
-            end
-
-            for i=1:numel(imageFileNames)
-             dataP.temp.imageFileNames{i} = [tiff_dir filesep imageFileNames(i).name];  
+        function self = celltracks(samplePath)
+            self.loaderType='celltracks';
+            if nargin == 1
+            self.imagePath = self.find_dir(samplePath,'tif',100);
+            self.priorPath = self.find_dir(samplePath,'xml',1);
+            self.preload_tiff_headers();
             end
         end
         
-        function dataP = get_image_info(self,dataP)
-            %function to fill the dataP.temp.imageinfos variable
-
-            for i=1:numel(dataP.temp.imageFileNames)
-                dataP.temp.imageinfos{i}=imfinfo(dataP.temp.imageFileNames{i});
-            end
-
-            %check if image is CellTracks image
-            try tags=dataP.temp.imageinfos{1}(1).UnknownTags;
-                for i=1:numel(tags)
-                    if tags(i).ID==754
-                        dataP.temp.imagesAreFromCT=true;
-                    end
-                end
-            catch dataP.temp.imagesAreFromCT=false;
-            end
-
-            %Have to add a check for the 2^15 offset.
-            dataP.temp.imagesHaveOffset=false;
-            %have to add a comparison for the number of channels found and provided in
-            %dataP.
-            dataP.temp.imageSize=[dataP.temp.imageinfos{1}(1).Height dataP.temp.imageinfos{1}(1).Width numel(dataP.temp.imageinfos{1})];
-        end   
+        function load_sample(self)
+        end
         
+        function dataFrame=load_data_frame(self,frameNr)
+            dataFrame=dataframe(self.sample,frameNr,...
+                self.does_frame_have_edge(frameNr),...
+                self.read_im_and_scale(frameNr),...
+                self.prior_locations_in_frame(frameNr));
+            addlistener(dataFrame,'loadNeigbouringFrames',@self.load_neigbouring_frames);
+        end
+        
+         
     end
-    methods(Static)
-        function bool = can_load_this_folder(self,path)
-            %function that must be present in all loader types to test
-            %if the current sample can be loaded by this class. 
-            bool=true;
-        end
- 
-    end
-    methods(Access=Private)
-    
-    end
-end
-
-function Dir_out = find_dir(self,Dir_in,fileExtension,numberOfFiles)
+    methods(Access=private)
+        function Dir_out = find_dir(self,Dir_in,fileExtension,numberOfFiles)
             % function to verify in which directory the tiff files are located. There
             % are a few combinations present in the immc databases:
             % immc38: dirs with e.g. .1.2 have a dir "processed" in cartridge dir, dirs
@@ -166,7 +59,7 @@ function Dir_out = find_dir(self,Dir_in,fileExtension,numberOfFiles)
 
             while it < 10
                 it = it + 1;
-                if size(dir([CurrentDir filesep '*.' fileExtension]),1) > numberOfFiles
+                if numel(dir([CurrentDir filesep '*.' fileExtension])) >= numberOfFiles
                     Dir_out = CurrentDir;
                     break
                 else
@@ -192,3 +85,84 @@ function Dir_out = find_dir(self,Dir_in,fileExtension,numberOfFiles)
                 end
             end
         end
+        
+        function preload_tiff_headers(self)
+            tempImageFileNames = dir([self.imagePath filesep '*.tif']);
+            for i=1:numel(tempImageFileNames)
+             self.imageFileNames{i} = [self.imagePath filesep tempImageFileNames(i).name];  
+            end
+            %function to fill the dataP.temp.imageinfos variable
+
+            for i=1:numel(self.imageFileNames)
+                self.tiffHeaders{i}=imfinfo(self.imageFileNames{i});
+            end
+
+            %Have to add a check for the 2^15 offset.
+            %dataP.temp.imagesHaveOffset=false;
+            self.imageSize=[self.tiffHeaders{1}(1).Height self.tiffHeaders{1}(1).Width numel(self.tiffHeaders{1})];
+            self.nrOfFrames=numel(self.imageFileNames);
+            self.nrOfChannels=numel(self.tiffHeaders{1});
+        end
+        
+        function rawImage=read_im_and_scale(self,imageNr)
+            % use the previously gathered imageinfo and read all images in a multipage
+            % tiff. read only one channel if a channel is specified. Rescale and
+            % stretch values and rescale to approx old values if the image is a
+            % celltracks tiff: scales IMMC images back to 0..4095 scale. Otherwise a
+            % normal tiff is returned.
+            rawImage = zeros(self.imageSize);
+            for i=1:self.nrOfChannels;
+                try
+                    imagetemp = imread(self.imageFileNames{imageNr},i, 'info',self.tiffHeaders{imageNr});
+                catch
+                    notify(self,'logMessage',logmessage(2,['Tiff from channel ' num2str(ch) ' is not readable!'])) ;
+                    return
+                end
+                if  self.rescaleTiffs 
+                    
+                    UnknownTags = self.tiffHeaders{imageNr}(channel).UnknownTags;
+
+                    LowValue  =  UnknownTags(2).Value;
+                    HighValue =  UnknownTags(3).Value;
+
+
+                    % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
+                    rawImage(:,:,i) = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
+                else
+                    rawImage(:,:,i)=imagetemp;
+                end
+            end
+        end
+
+        function hasEdge=does_frame_have_edge(self,frameNr)
+        hasEdge=false;
+        end
+        
+        function locations=prior_location_inFrame(self,frameNr)
+        locations=[];
+        end
+        
+        function load_neighbouring_frames(self,sourceFrame,~)
+        neigbouring_frames=self.calculate_neighbouring_frames();
+        
+        end
+    end
+    methods(Static)
+        function bool = can_load_this_folder(self,path)
+            %function that must be present in all loader types to test
+            %if the current sample can be loaded by this class. 
+            bool=true;
+%                         %check if image is CellTracks image
+%             try tags=dataP.temp.imageinfos{1}(1).UnknownTags;
+%                 for i=1:numel(tags)
+%                     if tags(i).ID==754
+%                         dataP.temp.imagesAreFromCT=true;
+%                     end
+%                 end
+%             catch dataP.temp.imagesAreFromCT=false;
+%             end
+        end
+ 
+    end
+end
+

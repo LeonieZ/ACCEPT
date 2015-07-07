@@ -6,10 +6,15 @@ classdef logger < handle
         logFile='log.txt'
         fid
         sessionlog
+        level=4; % There are 4 log levels with increasing detail. 
+                 % Level 1=critical contains messages that are always displayed. 
+                 % Level 2=logging containts messages of important steps. 
+                 % Level 3=verbose contains all information on data processing.
+                 % Level 4=debugging contains everthing. 
     end
     
     methods
-        function self=logger(programLocation)
+        function self=logger(programLocation,level)
             self.logPath=[programLocation,filesep,'log',filesep];
             
             if ~exist([programLocation filesep 'log'], 'dir') 
@@ -17,31 +22,23 @@ classdef logger < handle
             end
             
             self.fid = fopen(fullfile(self.logPath,self.logFile),'a');
+            if nargin==2
+            self.level=level;
+            end
         end
         
-        function entry(self,entry,saveToFile,display)
-            % General function to log events to a text file for easy debugging and
-            % bookkeeping. Can also display the entry if required.
-            switch nargin 
-                case 0
-                    error('actc:logger.entry:TooManyInputs', ...
-                        'requires at most 3 optional inputs');
-                case 1
-                    saveToFile=1;
-                    display=0;
-                case 2
-                    display = 0;
+        function entry(self,~,eventData)
+            % General function to display and log events to a text file for easy debugging and
+            % bookkeeping. Up to messages up to level 2 will also be displayed. 
 
-            end
-
-            entry = [datestr(now,13),': ',entry];
-
-            if saveToFile
-                fprintf(self.fid,'%s\r\n', entry);
-            end
-
-            if display
+            %only process logMessages that are below the current logging
+            %level
+            if eventData.logLevel <= self.level
+            entry = [datestr(now,13),': ',eventData.message];
+            fprintf(self.fid,'%s\r\n', entry);
+            if eventData.logLevel <= 2
                 disp(entry)
+            end
             end
         
         end
