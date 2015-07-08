@@ -27,6 +27,7 @@ classdef sample < handle
         numberOfFrames=0;
         measurements=table();
         classificationResults=table();
+        dataTypeOriginalImage='uint16';
     end
     
     events

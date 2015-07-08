@@ -52,9 +52,9 @@ classdef threshold < workflow_object
             sample = frame.sample;
             nrFrames = sample.numberOfFrames;
             nrChannels = sample.numChannels;
-            if strcmp(frame.dataTypeOriginalImage,'uint8')
+            if strcmp(sample.dataTypeOriginalImage,'uint8')
                 bins = 255;
-            elseif strcmp(frame.dataTypeOriginalImage,'uint16')
+            elseif strcmp(sample.dataTypeOriginalImage,'uint16')
                 bins = 4095;
             end
             hist = zeros(1,bins,nrChannels);
@@ -85,9 +85,9 @@ classdef threshold < workflow_object
         
         function hist = create_local_hist(self, currentFrame)
             nrChannels = size(currentFrame.rawImage,3);
-            if strcmp(currentFrame.dataTypeOriginalImage,'uint8')
+            if strcmp(currentFrame.sample.dataTypeOriginalImage,'uint8')
                 bins = 255;
-            elseif strcmp(currentFrame.dataTypeOriginalImage,'uint16')
+            elseif strcmp(currentFrame.sample.dataTypeOriginalImage,'uint16')
                 bins = 4095;
             end
             hist = zeros(1,bins,nrChannels);

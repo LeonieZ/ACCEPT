@@ -1,105 +1,61 @@
-function [Msr, Thumbs] = measurements(seg_image, scaled_image, image_number, dataP, algP);
+classdef measurements < workflow_object
+    %UNTITLED2 Summary of this class goes here
+    %   Detailed explanation goes here
     
-Thumbs = [];
-Msr = table();
-channelsToThreshold=unique(dataP.maskForChannel);
-
-
-%%%%%%%%%%%%% test %%%%%%%%%%%%%
-% Look for connecting components in 3d. Make sure that mask layers touch eachother 
-if (sum(ismember(dataP.channelNames(channelsToThreshold),'DAPI') + ismember(dataP.channelNames(channelsToThreshold),'PE')+ismember(dataP.channelNames(channelsToThreshold),'APC')) == 3)
-    seg_image_permut = zeros(size(seg_image));
-    seg_image_permut(:,:,1) = seg_image(:,:,find(ismember(dataP.channelNames,'PE')));
-    seg_image_permut(:,:,2) = seg_image(:,:,find(ismember(dataP.channelNames,'DAPI')));
-    seg_image_permut(:,:,3) = seg_image(:,:,find(ismember(dataP.channelNames,'APC')));
-    others = find(ones(1,dataP.numChannels) - ismember(dataP.channelNames,'PE') - ismember(dataP.channelNames,'DAPI') - ismember(dataP.channelNames,'APC'));
-    for i = 1:numel(others)
-        seg_image_permut(:,:,3+i) = seg_image(:,:,others(i));
-    end
-    CC = bwconncomp(seg_image_permut,6);
-    Mask_permut = labelmatrix(CC);
-    Mask(:,:,find(ismember(dataP.channelNames,'PE'))) = Mask_permut(:,:,1);
-    Mask(:,:,find(ismember(dataP.channelNames,'DAPI'))) = Mask_permut(:,:,2);
-    Mask(:,:,find(ismember(dataP.channelNames,'APC'))) = Mask_permut(:,:,3);
-    for i = 1:numel(others)
-        Mask(:,:,others(i)) = Mask_permut(:,:,3+i);
+    properties
+        nrObjects = [];
+        msrTable = [];
     end
     
-else
-    CC = bwconncomp(seg_image,6);
-    Mask = labelmatrix(CC);
-end
-    
-
-%P2A missing!
-if CC.NumObjects > 0
-    for ch=1:dataP.numChannels
-        MsrTemp = regionprops(Mask(:,:,ch),scaled_image(:,:,ch)-min(min(scaled_image(:,:,ch))),...
-                'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
-        %i've tried arrayfun as an alternative for this loop but did
-        %not get it to work properly. Usually a loop is faster so it
-        %should not be a problem 
-        %StandardDeviation = arrayfun(@(x) std2(x.PixelValues),MsrTemp);
-        for i=1:numel(MsrTemp)
-            MsrTemp(i).StandardDeviation=std2(MsrTemp(i).PixelValues);
-            MsrTemp(i).Mass=sum(MsrTemp(i).PixelValues(:));
-            %MsrTemp(i).PixelValues=NaN;
-            if MsrTemp(i).Area > 1
-                MsrTemp(i).P2A=MsrTemp(i).Perimeter^2/(4*pi*MsrTemp(i).Area);
-            else
-                MsrTemp(i).P2A=NaN;
+    methods
+        function self = measurements(dataFrame)
+            self.nrObjects = max(dataFrame.labelImage(:));
+            self.msrTable = make_table(self,dataFrame);
+        end
+        
+        function tbl = make_table(self,dataFrame)
+            tbl = table();
+            
+            if self.nrObjects > 0
+                for ch = 1:size(dataFrame.rawImage,3)
+                    imTemp = dataFrame.rawImage(:,:,ch);
+                    MsrTemp = regionprops(dataFrame.labelImage(:,:,ch), imTemp - median(imTemp(dataFrame.labelImage(:,:,ch) == 0)),...
+                            'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
+                    
+                    %fill structure so tables can be concatenated.
+                    MsrTemp=fillStruct(self, MsrTemp);
+                    
+                    StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
+                    Mass = arrayfun(@(x) sum(x.PixelValues), MsrTemp);
+                    P2A = arrayfun(@(x) x.Perimeter^2/(4*pi*x.Area), MsrTemp);
+                           
+                    MsrTemp=rmfield(MsrTemp,'PixelValues');
+                    
+                    names = strcat(dataFrame.sample.channelNames(ch),'_',fieldnames(MsrTemp));
+                    tmpTable = struct2table(MsrTemp);
+                    tmpTable.Properties.VariableNames = names;
+                    tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat(dataFrame.sample.channelNames{ch},'_StandardDeviation')});
+                    tmpMass = array2table(Mass,'VariableNames',{strcat(dataFrame.sample.channelNames{ch},'_Mass')});
+                    tmpP2A = array2table(P2A,'VariableNames',{strcat(dataFrame.sample.channelNames{ch},'_P2A')});
+                    tbl=[tbl tmpTable tmpStandardDeviation tmpMass tmpP2A];
+                end
             end
         end
-        MsrTemp=rmfield(MsrTemp,'PixelValues');
-        %fill structure so tables can be concatonated.
-        MsrTemp=fillStructure(MsrTemp,CC.NumObjects);
-        names=strcat(dataP.channelTargets(ch),'_',fieldnames(MsrTemp));
-        tempTable=struct2table(MsrTemp);
-        tempTable.Properties.VariableNames=names;
-        Msr=[Msr tempTable];
+
+        function MsrTemp=fillStruct(self, MsrTemp)
+        numObjects = self.nrObjects;
+        numMsr=numel(MsrTemp);
+        
+        if numMsr ~= numObjects
+            if numMsr == 0;
+                MsrTemp(1:numObjects)=struct('Area',0,'Eccentricity', 0 ,'Perimeter',0,...
+                    'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',[] );
+            else
+                MsrTemp(numMsr+1:numObjects)=struct('Area',0 ,'Eccentricity', 0,...
+                    'Perimeter',0, 'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',[] );
+            end
+        end
+        end
+        
     end
-    Msr_BoundingBox = regionprops(CC,'BoundingBox');
-    thumbs = makeThumbnail(CC,scaled_image,dataP);
-    ID=[str2double(image_number)*10000+1:1:str2double(image_number)*10000+CC.NumObjects];
-    Msr=[Msr array2table(ID','VariableNames',{'ID'}), array2table(str2double(image_number)*ones(CC.NumObjects,1),'VariableNames',{'ImgNum'}), struct2table(Msr_BoundingBox), cell2table(thumbs','VariableNames',{'ThumbNail'})];
-end
-
-end
-
-
-function thumbs = makeThumbnail(CC,scaled_image,dataP)
-Msr=regionprops(CC,'BoundingBox');
-x=dataP.temp.imageSize(1);
-y=dataP.temp.imageSize(2);
-for k=1:CC.NumObjects
-xdim = Msr(k).BoundingBox(4)+9;
-ydim = Msr(k).BoundingBox(5)+9;
-lower_x = floor(max(min(max(round(Msr(k).BoundingBox(1)-5),1), y-xdim-1),1));
-lower_y = floor(max(min(max(round(Msr(k).BoundingBox(2)-5),1), x-ydim-1),1));
-higher_x = ceil(min(max(1+xdim,min(lower_x+xdim,y)),y));
-higher_y = ceil(min(max(1+ydim,min(lower_y+ydim,x)),x));
-thumbs{k} = scaled_image(lower_y:higher_y,lower_x:higher_x,:);
-end
-end
-
-function MsrTemp=fillStructure(MsrTemp,NumObjects)
-numMsr=numel(MsrTemp);
-if numMsr~=NumObjects
-    if numMsr==0;
-        MsrTemp=struct('Area',NaN ,'Eccentricity', NaN, 'Perimeter',NaN,...
-            'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
-            'StandardDeviation' ,NaN , 'Mass',NaN,'P2A',NaN );
-        MsrTemp(1:NumObjects)=struct('Area',NaN,'Eccentricity', NaN ,'Perimeter',NaN,...
-            'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
-            'StandardDeviation' ,NaN , 'Mass',NaN,'P2A',NaN );
-    else
-        MsrTemp(numMsr+1:NumObjects)=struct('Area',NaN ,'Eccentricity', NaN,...
-            'Perimeter',NaN, 'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
-            'StandardDeviation' ,NaN , 'Mass',NaN,'P2A',NaN);
-    end
-end
-    idx=arrayfun(@(x) isempty(x.MaxIntensity),MsrTemp);
-    MsrTemp(idx)=struct('Area',NaN ,'Eccentricity', NaN,'Perimeter',NaN,...
-        'MeanIntensity',NaN ,'MaxIntensity',NaN ,...
-        'StandardDeviation' ,NaN , 'Mass',NaN,'P2A',NaN);
 end
