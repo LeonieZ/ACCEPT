@@ -27,7 +27,7 @@ classdef dataframe < handle
         frameHasEdge=false;
         rawImage=[];
         priorLocations=[];
-        dataTypeOriginalImage=uint16();
+        
     end
     
     properties(Access = public)

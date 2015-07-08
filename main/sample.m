@@ -16,7 +16,7 @@ classdef sample < handle
     properties (SetAccess=private)
         name='Empty' %the sample name or identifier.
         type='Default'; % this can be replaced with a specific data type such as CellSearch. 
-        removeEdges = false; % do we need to removeEdges using this datatype (for example CellSearch )
+        hasEdges = false; % do we need to removeEdges using this datatype (for example CellSearch )
 
         % We will have to discuss our naming convention. I think we should keep
         % track of both the flouphore and its target, but it gets confusing \G.
@@ -24,9 +24,10 @@ classdef sample < handle
         numChannels = 4;
         pixelSize=1;
         channelEdgeRemoval=4;
-        numberOfFrames=0;
+        nrOfFrames=0;
         measurements=table();
         classificationResults=table();
+        dataTypeOriginalImage='uint16';
     end
     
     events
@@ -36,15 +37,16 @@ classdef sample < handle
     
 
     methods
-        function self=sample(name,type,pixelSize,removeEdges,channelNames,channelEdgeRemoval)
-            if nargin==6
+        function self=sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames)
+            if nargin==7
                 self.name=name;
                 self.type=type;
                 self.pixelSize=pixelSize;
-                self.removeEdges=removeEdges;
+                self.hasEdges=hasEdges;
                 self.channelNames=channelNames;
                 self.numChannels=numel(channelNames);
                 self.channelEdgeRemoval=channelEdgeRemoval;
+                self.nrOfFrames=nrOfFrames;
             end
             notify(self,'logMessage',logmessage(4,['New sample: ',self.name, ' is constructed.']));
                      
