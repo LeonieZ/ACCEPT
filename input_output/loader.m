@@ -6,6 +6,7 @@ classdef (Abstract) loader < handle
     
     properties
         loaderType
+        sampleId
         imagePath
         priorPath
         nrOfFrames
