@@ -9,26 +9,23 @@ classdef celltracks < loader
         imageFileNames
         tiffHeaders
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
-        channelRemapping=[2,4,3,1,5,6];
+        channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
         channelEdgeRemoval=2;
         xmlData
     end
-   
-
-    
     
     methods
         function self = celltracks(samplePath)
             self.loaderType='celltracks';
-            splitPath=regexp(samplePath, filesep, 'split');
-            if isempty(splitPath{end})
-                self.sampleId=splitPath{end-1};
-            else
-                self.sampleId=splitPath{end};
-            end
             if nargin == 1
                 self.imagePath = self.find_dir(samplePath,'tif',100);
                 self.priorPath = self.find_dir(samplePath,'xml',1);
+                splitPath=regexp(samplePath, filesep, 'split');
+                if isempty(splitPath{end})
+                    self.sampleId=splitPath{end-1};
+                else
+                    self.sampleId=splitPath{end};
+                end
             end
         end
         
@@ -39,7 +36,7 @@ classdef celltracks < loader
                 'celltracks',...
                 self.pixelSize,...
                 self.hasEdges,...
-                self.channelNames(self.channelRemapping([1:self.nrOfChannels])),...
+                self.channelNames(self.channelRemapping(2,1:self.nrOfChannels)),...
                 self.channelEdgeRemoval,...
                 self.nrOfFrames);
         end
@@ -54,7 +51,6 @@ classdef celltracks < loader
             self.prior_locations_in_frame(frameNr));
             addlistener(dataFrame,'loadNeigbouringFrames',@self.load_neigbouring_frames);
         end
-        
          
     end
     methods(Access=private)
@@ -145,64 +141,48 @@ classdef celltracks < loader
 
 
                     % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
-                    rawImage(:,:,self.channelRemapping(i)) = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
+                    rawImage(:,:,self.channelRemapping(1,i)) = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
                 else
-                    rawImage(:,:,self.channelRemapping(i))=imagetemp;
+                    rawImage(:,:,self.channelRemapping(1,i))=imagetemp;
                 end
             end
         end
 
         function hasEdge=does_frame_have_edge(self,frameNr)
-            hasEdge=false;
+            row = ceil(frameNr/self.xmlData.columns) - 1;
+            switch row
+                case {0,self.xmlData.rows} 
+                    hasEdge=true;
+                otherwise
+                    col=frameNr-row*self.xmlData.columns;
+                    if col==self.xmlData.columns
+                        hasEdge=true;
+                    elseif col==1
+                        hasEdge=true;
+                    else
+                        hasEdge=false;
+                    end 
+            end
         end
         
         function locations=prior_locations_in_frame(self,frameNr)
-            locations=[];
-%             if NoXML==0 && size(res.Msr,1) > 0
-%             %     Msr = [res.Msr array2table(zeros(size(res.Msr,1),1),'VariableNames',{'CellSearchID'})];
-%                 CellSearchID{size(res.Msr,1),1} = '--';
-%                 Msr = [res.Msr cell2table(CellSearchID, 'VariableNames',{'CellSearchID'})];
-% 
-% 
-%                 for jj = 1:size(res.Msr,1)
-% 
-%                     xdim = res.Msr.BoundingBox(jj,4);
-%                     ydim = res.Msr.BoundingBox(jj,5);
-%                     lower_x = res.Msr.BoundingBox(jj,1);
-%                     lower_y = res.Msr.BoundingBox(jj,2);
-%                     higher_x = lower_x+xdim;
-%                     higher_y = lower_y+ydim;
-% 
-%                     minloc=pixelsToCoordinates([lower_x, lower_y], res.Msr.ImgNum(jj), xml.columns, xml.camXSize, xml.camYSize);
-%                     maxloc=pixelsToCoordinates([higher_x, higher_y], res.Msr.ImgNum(jj), xml.columns, xml.camXSize, xml.camYSize);
-% 
-%                     overlaps = 0;
-%                     overlap=[];
-%                     for i=1:size(locations,1)
-%                         if ~(locations(i,1)>maxloc(1)||locations(i,2)>maxloc(2)||locations(i,3)<minloc(1)||locations(i,4)<minloc(2))
-%                             overlaps = 1;
-%                             overlap(i)=(min(locations(i,3),maxloc(1))-max(locations(i,1),minloc(1)))*(min(locations(i,4),maxloc(2))-max(locations(i,2),minloc(2)))/((maxloc(1)-minloc(1))*(maxloc(2)-minloc(2)));
-%                         end
-%                     end
-%                     if overlaps
-%                         [a,kk]=max(overlap);
-%                         Msr.CellSearchID(jj)=num2cell(xml.CellSearchIds(kk));
-%                         Msr.CellSearchIDOverlap(jj)=a;
-%                     else
-%                         Msr.CellSearchID(jj)=cellstr('--');
-%                         Msr.CellSearchIDOverlap(jj)=0;
-% 
-%                     end
-%                 end
-%             end
-        end
-                  
+            index=find(self.xmlData.score==1&self.xmlData.frameNr==frameNr);
+            if isempty(index)
+                locations=[];
+            else
+                locations=zeros(numel(index),4);
+                for i=1:numel(index)
+                    [locations(i,:),~]=self.coordinates_to_pixels(index(i));
+                end
+            end
+        end           
         
         function load_neighbouring_frames(self,sourceFrame,~)
             % to be implemented
             neigbouring_frames=self.calculate_neighbouring_frames(sourceFrame.frameNr);
         
         end
+        
         function neigbouring_frames=calculate_neigbouring_frames(self,frameNr)
             % to be implemented
             neigbouring_frames=[1,2,3];
@@ -224,46 +204,114 @@ classdef celltracks < loader
             % Load & process XML file
             if NoXML == 0
                 self.xmlData=xml2struct([self.priorPath filesep XMLFile.name]);
+                self.xmlData.num_events = [];
+                self.xmlData.CellSearchIds = [];
+                self.xmlData.locations = [];
+                self.xmlData.score=[];
+                self.xmlData.frameNr=[];
+                self.xmlData.camYSize=1384
+                self.xmlData.camXSize=1036;
                 if isfield(self.xmlData,'archive')
                     self.xmlData.num_events = size(self.xmlData.archive{2}.events.record,2);
                     self.xmlData.CellSearchIds = zeros(self.xmlData.num_events,1);
-                    locations = zeros(self.xmlData.num_events,4);
+                    self.xmlData.locations = zeros(self.xmlData.num_events,4);
+                    self.xmlData.score=zeros(self.xmlData.num_events,1);
+                    self.xmlData.frameNr=zeros(self.xmlData.num_events,1);
                     for i=1:self.xmlData.num_events
                         self.xmlData.CellSearchIds(i)=str2num(self.xmlData.archive{2}.events.record{i}.eventnum.Text); %#ok<*ST2NM>
+                        self.xmlData.score(i)=str2num(self.xmlData.archive{2}.events.record{i}.numselected.Text);                    
+                        self.xmlData.frameNr(i)=str2num(self.xmlData.archive{2}.events.record{i}.framenum.Text);
                         tempstr=self.xmlData.archive{2}.events.record{i}.location.Text;
                         start=strfind(tempstr,'(');
                         finish=strfind(tempstr,')');
                         to=str2num(tempstr(start(1)+1:finish(1)-1));
                         from=str2num(tempstr(start(2)+1:finish(2)-1));
-                        locations(i,:)=[from,to];
+                        self.xmlData.locations(i,:)=[from,to];
                     end
                     self.xmlData.columns=str2num(self.xmlData.archive{2}.runs.record.numcols.Text);
                     self.xmlData.rows=str2num(self.xmlData.archive{2}.runs.record.numrows.Text);
                     self.xmlData.camYSize=str2num(self.xmlData.archive{2}.runs.record.camysize.Text);
                     self.xmlData.camXSize=str2num(self.xmlData.archive{2}.runs.record.camxsize.Text);
+           
+                    
                 elseif isfield(self.xmlData, 'export')
                     self.xmlData.num_events = size(self.xmlData.export{2}.events.record,2);
                     self.xmlData.CellSearchIds = zeros(self.xmlData.num_events,1);
-                    locations = zeros(self.xmlData.num_events,4);
+                    self.xmlData.locations = zeros(self.xmlData.num_events,4);
+                    self.xmlData.score=zeros(self.xmlData.num_events,1);
+                    self.xmlData.frameNr=zeros(self.xmlData.num_events,1);
                     for i=1:self.xmlData.num_events
                         self.xmlData.CellSearchIds(i)=str2num(self.xmlData.export{2}.events.record{i}.eventnum.Text);
+                        self.xmlData.score(i)=str2num(self.xmlData.export{2}.events.record{i}.numselected.Text);                    
+                        self.xmlData.frameNr(i)=str2num(self.xmlData.export{2}.events.record{i}.framenum.Text);
                         tempstr=self.xmlData.export{2}.events.record{i}.location.Text;
                         start=strfind(tempstr,'(');
                         finish=strfind(tempstr,')');
                         to=str2num(tempstr(start(1)+1:finish(1)-1));
                         from=str2num(tempstr(start(2)+1:finish(2)-1));
-                        locations(i,:)=[from,to];
+                        self.xmlData.locations(i,:)=[from,to];
                     end
                     self.xmlData.columns=str2num(self.xmlData.export{2}.runs.record.numcols.Text);
-                    %     rows=str2num(self.xmlData.export{2}.runs.record.numrows.Text);
+                    self.xmlData.rows=str2num(self.xmlData.export{2}.runs.record.numrows.Text);
                     self.xmlData.camYSize=str2num(self.xmlData.export{2}.runs.record.camysize.Text);
                     self.xmlData.camXSize=str2num(self.xmlData.export{2}.runs.record.camxsize.Text);
                 else
                     notify(self,'logMessage',logmessage(2,['unable to read xml']));
+                    %setting row and colums based on nrOfImages
+                    switch self.nrOfFrames
+                        case 210 % 6*35 images
+                            self.xmlData.columns=35;
+                            self.xmlData.rows=6;
+                        case 180 % 5*36 images
+                            self.xmlData.columns=36;
+                            self.xmlData.rows=5;
+                        case 175 % 5*35 images
+                            self.xmlData.columns=35;
+                            self.xmlData.rows=5;
+                        case 170 % 5*34 images
+                            self.xmlData.columns=34;
+                            self.xmlData.rows=5;
+                        case 144 % 4*36 images
+                            self.xmlData.columns=36;
+                            self.xmlData.rows=4;
+                        case 140 % 4*35 images
+                            self.xmlData.columns=35;
+                            self.xmlData.rows=4;
+                    end
                     return
                 end
             end
         end
+        
+        function [coordinates]=pixels_to_coordinates(self,pixelCoordinates, imgNr)
+            row = ceil(imgNr/self.xmlData.columns) - 1;
+            switch row
+                case {1,3,5} 
+                    col=(cols-(imgNr-rowself.xmlData.columns));
+                    coordinates(1)=pixelCoordinates(1)+self.xmlData.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+self.xmlData.camYSize*row;  
+                otherwise
+                    col=imgNr-1-row*cols;
+                    coordinates(1)=pixelCoordinates(1)+self.xmlData.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+self.xmlData.camYSize*row; 
+            end
+        end
+
+        function [pixels,frameNr]=coordinates_to_pixels(self,eventNr)
+            frameNr=self.xmlData.frameNr(eventNr);
+            row = ceil(frameNr/self.xmlData.columns) - 1;
+            switch row
+                case {1,3,5} 
+                    col=(cols-(frameNr-row*self.xmlData.columns));
+                    pixels([1,3])=self.xmlData.locations(eventNr,[1,3])-self.xmlData.camXSize*col;
+                    pixels([2,4])=self.xmlData.locations(eventNr,[2,4])-self.xmlData.camYSize*row;  
+                otherwise
+                    col=frameNr-1-row*self.xmlData.columns;
+                    pixels([1,3])=self.xmlData.locations(eventNr,[1,3])-self.xmlData.camXSize*col;
+                    pixels([2,4])=self.xmlData.locations(eventNr,[2,4])-self.xmlData.camYSize*row; 
+            end
+        end
+        
     end
         
     methods(Static)
