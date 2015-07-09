@@ -1,2 +1,0 @@
-function global_threshold_segmentation
-end

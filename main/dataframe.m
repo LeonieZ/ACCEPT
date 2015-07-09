@@ -27,17 +27,20 @@ classdef dataframe < handle
         frameHasEdge=false;
         rawImage=[];
         priorLocations=[];
-        
     end
     
     properties(Access = public)
         adjacentFrames=[];
         preProcessedImage=[];
-        labelImage=[];
+        segmentedImage = [];
         measurements=table();
         classificationResults=table();        
         % mask if we want to remove edge (logicals)
         mask = [];
+    end
+    
+    properties(Dependent)
+        labelImage=[];
     end
     
     events
@@ -53,6 +56,12 @@ classdef dataframe < handle
                 self.frameHasEdge=frameHasEdge;
                 self.rawImage=rawImage;
                 self.priorLocations=priorLocations;
-         end
+        end
+        
+        function value = get.labelImage(self)
+            sumImage = sum(self.segmentedImage,3); 
+            labels = repmat(bwlabel(sumImage,4),1,1,3);
+            value = labels.*self.segmentedImage; 
+        end
     end
 end

@@ -1,2 +1,0 @@
-function otsu_segmentation
-end
