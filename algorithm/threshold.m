@@ -18,7 +18,7 @@ classdef threshold < workflow_object
             self.meth = meth;
             self.range = range;
             
-            if nargin > 3
+            if nargin > 3 && ~isempty(varargin{1})
                 self.maskForChannels = varargin{1};
             else
                 self.maskForChannels = 1:1:size(currentFrame.rawImage,3);
@@ -55,7 +55,7 @@ classdef threshold < workflow_object
             if strcmp(sample.dataTypeOriginalImage,'uint8')
                 bins = 255;
             elseif strcmp(sample.dataTypeOriginalImage,'uint16')
-                bins = 4095;
+                bins = 65535;
             end
             hist = zeros(1,bins,nrChannels);
 
@@ -88,7 +88,7 @@ classdef threshold < workflow_object
             if strcmp(currentFrame.sample.dataTypeOriginalImage,'uint8')
                 bins = 255;
             elseif strcmp(currentFrame.sample.dataTypeOriginalImage,'uint16')
-                bins = 4095;
+                bins =  65535;
             end
             hist = zeros(1,bins,nrChannels);
             for j = 1:nrChannels

@@ -60,7 +60,7 @@ classdef dataframe < handle
         
         function value = get.labelImage(self)
             sumImage = sum(self.segmentedImage,3); 
-            labels = repmat(bwlabel(sumImage,4),1,1,3);
+            labels = repmat(bwlabel(sumImage,4),1,1,size(self.segmentedImage,3));
             value = labels.*self.segmentedImage; 
         end
     end
