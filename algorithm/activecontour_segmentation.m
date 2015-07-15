@@ -20,18 +20,24 @@ classdef activecontour_segmentation < workflow_object
     
     methods
         function self = activecontour_segmentation(dataFrame, lambda, inner_it, breg_it, varargin)
-            self.currentFrame = dataFrame.rawImage;
-         
-            if size(lambda,2) == dataFrame.sample.numChannels    
-                self.lambda = lambda;
-            elseif size(lambda,2) == 1
-                self.lambda = repmat(lambda,1, dataFrame.sample.numChannels);
+            
+            if nargin > 5
+                self.currentFrame = dataFrame.rawImage(:,:,varargin{2});
+            else
+                self.currentFrame = dataFrame.rawImage;
             end
             
-            if size(breg_it,2) == dataFrame.sample.numChannels    
+         
+            if size(lambda,2) == size(self.currentFrame,3)    
+                self.lambda = lambda;
+            elseif size(lambda,2) == 1
+                self.lambda = repmat(lambda,1, size(self.currentFrame,3));
+            end
+            
+            if size(breg_it,2) == size(self.currentFrame,3)    
                 self.breg_it = breg_it;
             elseif size(breg_it,2) == 1
-                self.breg_it = repmat(breg_it,1, dataFrame.sample.numChannels);
+                self.breg_it = repmat(breg_it,1, size(self.currentFrame,3));
             end
             
             self.inner_it = inner_it;
@@ -44,13 +50,19 @@ classdef activecontour_segmentation < workflow_object
                 init = [];
             end
             
-            for i = 1:dataFrame.sample.numChannels
-                self.segmentedFrame(:,:,i) = bregman_cv(self, i, init);
+            for i = 1:size(self.currentFrame,3)
+                tmp = bregman_cv(self, dataFrame, i, init);
+                tmp = bwareaopen(tmp, 6);
+                self.segmentedFrame(:,:,i) = tmp;
                 clear grad div
-            end  
+            end
+            
+%             if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask)
+%                 self.segmentedFrame(repmat(self.mask,1,1,dataFrame.sample.numChannels)) = false;
+%             end
         end
         
-        function bin = bregman_cv(self, k, init)
+        function bin = bregman_cv(self, dataFrame, k, init)
         %BREGMAN_CV Summary of this function goes here
         %   Detailed explanation goes here
         f = self.currentFrame(:,:,k);
@@ -67,12 +79,16 @@ classdef activecontour_segmentation < workflow_object
         b = zeros(nx,ny); % dims: nx x ny , bregman variable
         
         if isempty(init)
-            f_scale = f/max(f(:));
+            f_scale = f - min(f(:));
+            f_scale = f_scale/max(f_scale(:));
             init(:,:,k) = f_scale;
         end
 
         mu0 = max(mean(mean(f(init(:,:,k)<0.5))),0); % mean value outside object
         mu1 = max(mean(mean(f(init(:,:,k)>=0.5))),0); % mean value inside object
+        if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
+            f(dataFrame.mask.mask) = mu0;
+        end
 
 
         i = 1; j = 1;
@@ -102,6 +118,9 @@ classdef activecontour_segmentation < workflow_object
                 if (mod(j,self.mu_update) == 0) && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
                     mu0 = max(mean(mean(f(u<0.5))),0); % mean value outside object
                     mu1 = max(mean(mean(f(u>=0.5))),0); % mean value inside object
+                    if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
+                        f(dataFrame.mask.mask) = mu0;
+                    end
                 end
 
                 % update inner index

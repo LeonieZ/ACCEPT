@@ -66,7 +66,7 @@ classdef threshold < workflow_object
                         imTemp = currentFrame.rawImage(:,:,j);
                             
                         if currentFrame.frameHasEdge
-                            imTemp = imTemp(currentFrame.mask);
+                            imTemp = imTemp(~currentFrame.mask.mask);
                         end
 
                         if max(imTemp) > 32767
@@ -96,7 +96,7 @@ classdef threshold < workflow_object
                     imTemp = currentFrame.rawImage(:,:,j);
                     
                     if currentFrame.frameHasEdge
-                        imTemp = imTemp(currentFrame.mask);
+                        imTemp = imTemp(~currentFrame.mask.mask);
                     end
             
                     if max(imTemp) > 32767

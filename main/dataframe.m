@@ -23,24 +23,24 @@ classdef dataframe < handle
     
     properties(SetAccess = private)
         sample; %might remove this for better structur
-        frameNr=NaN;
-        frameHasEdge=false;
-        rawImage=[];
-        priorLocations=[];
+        frameNr = NaN;
+        frameHasEdge = false;
+        rawImage = [];
+        priorLocations = [];
     end
     
     properties(Access = public)
-        adjacentFrames=[];
-        preProcessedImage=[];
+        adjacentFrames = [];
+        preProcessedImage = [];
         segmentedImage = [];
-        measurements=table();
-        classificationResults=table();        
+        measurements = table();
+        classificationResults = table();
         % mask if we want to remove edge (logicals)
         mask = [];
     end
     
     properties(Dependent)
-        labelImage=[];
+        labelImage = [];
     end
     
     events
@@ -50,18 +50,18 @@ classdef dataframe < handle
     end
           
     methods
-        function self = dataframe(Sample,frameNr,frameHasEdge,rawImage,priorLocations)
-                self.sample=Sample;
-                self.frameNr=frameNr;
-                self.frameHasEdge=frameHasEdge;
-                self.rawImage=rawImage;
-                self.priorLocations=priorLocations;
+        function self = dataframe(Sample,frameNr,rawImage,priorLocations)
+                self.sample = Sample;
+                self.frameNr = frameNr;
+                self.frameHasEdge = Sample.hasEdges;
+                self.rawImage = rawImage;
+                self.priorLocations = priorLocations;
         end
         
         function value = get.labelImage(self)
             %remove doubles at boarder
             sumImage = sum(self.segmentedImage,3); 
-            labels = repmat(bwlabel(sumImage,4),1,1,size(self.segmentedImage,3));
+            labels = repmat(bwlabel(sumImage,4),1,1,self.sample.numChannels);
             value = labels.*self.segmentedImage; 
         end
     end
