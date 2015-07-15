@@ -8,6 +8,10 @@ classdef workflow_object < handle
 
       
     end
+    
+    events
+        logMessage
+    end
    
     methods
         function returnFrame = run(dataFrame)

@@ -46,7 +46,7 @@ classdef dataframe < handle
     events
         loadNeigbouringFrames
         logMessage
-        saveSegentation
+        saveSegmentation
     end
           
     methods
@@ -59,6 +59,7 @@ classdef dataframe < handle
         end
         
         function value = get.labelImage(self)
+            %remove doubles at boarder
             sumImage = sum(self.segmentedImage,3); 
             labels = repmat(bwlabel(sumImage,4),1,1,size(self.segmentedImage,3));
             value = labels.*self.segmentedImage; 

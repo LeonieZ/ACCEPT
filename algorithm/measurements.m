@@ -49,13 +49,18 @@ classdef measurements < workflow_object
         if numMsr ~= numObjects
             if numMsr == 0;
                 MsrTemp(1:numObjects)=struct('Area',0,'Eccentricity', 0 ,'Perimeter',0,...
-                    'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',[] );
+                    'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
             else
                 MsrTemp(numMsr+1:numObjects)=struct('Area',0 ,'Eccentricity', 0,...
-                    'Perimeter',0, 'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',[] );
+                    'Perimeter',0, 'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
             end
         end
+        idx=arrayfun(@(x) isempty(x.MaxIntensity),MsrTemp);
+        MsrTemp(idx)=struct('Area',0 ,'Eccentricity',0,'Perimeter',0,...
+        'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
+
         end
+       
         
     end
 end
