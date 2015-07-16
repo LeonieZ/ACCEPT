@@ -19,7 +19,7 @@ classdef thresholding_segmentation < workflow_object
                 if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask)
                     tmp(dataFrame.mask.mask) = false;
                 end
-                tmp = bwareaopen(tmp, 6);
+                tmp = bwareaopen(tmp, 10);
                 self.segmentedFrame(:,:,i) = tmp;    
             end
         end

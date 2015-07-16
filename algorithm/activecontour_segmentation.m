@@ -52,7 +52,7 @@ classdef activecontour_segmentation < workflow_object
             
             for i = 1:size(self.currentFrame,3)
                 tmp = bregman_cv(self, dataFrame, i, init);
-                tmp = bwareaopen(tmp, 6);
+                tmp = bwareaopen(tmp, 10);
                 self.segmentedFrame(:,:,i) = tmp;
                 clear grad div
             end

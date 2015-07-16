@@ -13,7 +13,7 @@ classdef determine_mask < workflow_object
             se = strel('disk',50);
             self.mask = imopen(tmp,se);
             % too large or small?
-            self.mask = bwmorph(self.mask,'thicken',20);
+            self.mask = bwmorph(self.mask,'thicken',25);
         end
     end
     

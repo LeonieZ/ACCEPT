@@ -50,12 +50,12 @@ classdef dataframe < handle
     end
           
     methods
-        function self = dataframe(Sample,frameNr,rawImage,priorLocations)
-                self.sample = Sample;
-                self.frameNr = frameNr;
-                self.frameHasEdge = Sample.hasEdges;
-                self.rawImage = rawImage;
-                self.priorLocations = priorLocations;
+        function self = dataframe(Sample,frameNr,frameHasEdge,rawImage,priorLocations)
+                self.sample=Sample;
+                self.frameNr=frameNr;
+                self.frameHasEdge=frameHasEdge;
+                self.rawImage=rawImage;
+                self.priorLocations=priorLocations;
         end
         
         function value = get.labelImage(self)
