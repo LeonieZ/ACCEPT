@@ -52,10 +52,10 @@ classdef sample < handle
                      
         end
         function add_measurements(self,frameNr,measurements)
-            self.measurements=cat(self.measurements,measurements);
+            self.measurements=[self.measurements; measurements];
         end
         function add_classification_results(self,frameNr,classificationResults)
-            self.classificationResults=cat(self.classificationResults,classificationResults);
+            self.classificationResults=[self.classificationResults; classificationResults];
         end
         function save_results(self)
         notify(self,'saveResults');

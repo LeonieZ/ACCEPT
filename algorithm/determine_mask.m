@@ -9,7 +9,7 @@ classdef determine_mask < workflow_object
     methods
         function self = determine_mask(dataFrame)
             %necessary or is thresholding enough?
-            tmp = activecontour_segmentation(dataFrame, 10000, 50, 1, [], dataFrame.sample.channelEdgeRemoval).segmentedFrame;
+            tmp = activecontour_segmentation(dataFrame, 10000, 50, 1, [], [], dataFrame.sample.channelEdgeRemoval).segmentedFrame;
             se = strel('disk',50);
             self.mask = imopen(tmp,se);
             % too large or small?

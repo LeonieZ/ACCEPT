@@ -3,7 +3,7 @@ classdef manual_classification_byLigthart < workflow_object
     %   Detailed explanation goes here
     
     properties
-        classification_res = table();
+        classTable = table();
         nrObjects
         type = [];
     end
@@ -29,7 +29,7 @@ classdef manual_classification_byLigthart < workflow_object
                 self.nrObjects = dataFrame.measurements.nrObjects;    
             end
             
-            self.classification_res = gate_sample(self,dataFrame,index);
+            self.classTable = gate_sample(self,dataFrame,index);
         end
         
         function tbl = gate_sample(self,dataFrame,index)

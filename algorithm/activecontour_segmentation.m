@@ -5,6 +5,7 @@ classdef activecontour_segmentation < workflow_object
     properties (SetAccess = private)
         currentFrame = [];
         segmentedFrame = [];
+        maskForChannels
         lambda = [];
         inner_it = []
         breg_it = [];
@@ -20,11 +21,18 @@ classdef activecontour_segmentation < workflow_object
     
     methods
         function self = activecontour_segmentation(dataFrame, lambda, inner_it, breg_it, varargin)
+            %varargin(1) = init, varargin(2) = masksforchannels, varargin(3) = single_channel
             
-            if nargin > 5
-                self.currentFrame = dataFrame.rawImage(:,:,varargin{2});
+            if nargin > 6
+                self.currentFrame = dataFrame.rawImage(:,:,varargin{3});
             else
                 self.currentFrame = dataFrame.rawImage;
+            end
+            
+            if nargin > 5 && ~isempty(varargin{2})
+                self.maskForChannels = varargin{2};
+            else
+                self.maskForChannels = 1:1:size(dataFrame.rawImage,3);
             end
             
          
@@ -51,10 +59,16 @@ classdef activecontour_segmentation < workflow_object
             end
             
             for i = 1:size(self.currentFrame,3)
-                tmp = bregman_cv(self, dataFrame, i, init);
-                tmp = bwareaopen(tmp, 10);
-                self.segmentedFrame(:,:,i) = tmp;
-                clear grad div
+                if any(self.maskForChannels == i)
+                    tmp = bregman_cv(self, dataFrame, i, init);
+                    tmp = bwareaopen(tmp, 10);
+                    self.segmentedFrame(:,:,i) = tmp;
+                    clear grad div
+                end
+            end
+            
+            if nargin < 7
+                self.segmentedFrame = self.segmentedFrame(:,:,self.maskForChannels);
             end
             
 %             if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask)
