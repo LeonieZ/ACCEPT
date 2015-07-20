@@ -21,21 +21,23 @@ classdef activecontour_segmentation < workflow_object
     
     methods
         function self = activecontour_segmentation(dataFrame, lambda, inner_it, breg_it, varargin)
-            %varargin(1) = init, varargin(2) = masksforchannels, varargin(3) = single_channel
-            
-            if nargin > 6
+            %varargin(1) = init, varargin(2) = masksforchannels,
+            %varargin(3) = single_channel, , varargin(4) = image
+
+            if nargin == 7
                 self.currentFrame = dataFrame.rawImage(:,:,varargin{3});
+            elseif nargin > 7 && isa(varargin{4}, 'double')
+                self.currentFrame = varargin{4};
             else
                 self.currentFrame = dataFrame.rawImage;
             end
-            
+                        
             if nargin > 5 && ~isempty(varargin{2})
                 self.maskForChannels = varargin{2};
             else
                 self.maskForChannels = 1:1:size(dataFrame.rawImage,3);
             end
-            
-         
+                     
             if size(lambda,2) == size(self.currentFrame,3)    
                 self.lambda = lambda;
             elseif size(lambda,2) == 1
@@ -70,10 +72,6 @@ classdef activecontour_segmentation < workflow_object
             if nargin < 7
                 self.segmentedFrame = self.segmentedFrame(:,:,self.maskForChannels);
             end
-            
-%             if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask)
-%                 self.segmentedFrame(repmat(self.mask,1,1,dataFrame.sample.numChannels)) = false;
-%             end
         end
         
         function bin = bregman_cv(self, dataFrame, k, init)
@@ -85,9 +83,6 @@ classdef activecontour_segmentation < workflow_object
         [nx, ny] = size(f);
         dim = ndims(f);
 
-        % initialize primal variables
-        u = zeros(nx,ny);
-        u_bar = u; % dims: nx x ny
         % initialize dual variable
         p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
         b = zeros(nx,ny); % dims: nx x ny , bregman variable
@@ -96,10 +91,26 @@ classdef activecontour_segmentation < workflow_object
             f_scale = f - min(f(:));
             f_scale = f_scale/max(f_scale(:));
             init(:,:,k) = f_scale;
+            % initialize primal variables
+            u = zeros(nx,ny);
+            u_bar = u; % dims: nx x ny
+        else
+            % initialize primal variables
+            u = init(:,:,k);
+            u_bar = u; % dims: nx x ny
         end
-
-        mu0 = max(mean(mean(f(init(:,:,k)<0.5))),0); % mean value outside object
-        mu1 = max(mean(mean(f(init(:,:,k)>=0.5))),0); % mean value inside object
+        
+        if max(max((init(:,:,k)<0.5))) == 1 && max(max((init(:,:,k)>=0.5))) == 1
+            mu0 = max(mean(mean(f(init(:,:,k)<0.5))),0); % mean value outside object
+            mu1 = max(mean(mean(f(init(:,:,k)>=0.5))),0); % mean value inside object
+        elseif max(max((init(:,:,k)<0.5))) == 0
+            mu0 = min(f(:));
+            mu1 = mean(mean(f(init(:,:,k)>=0.5)));
+        elseif max(max((init(:,:,k)>=0.5))) == 0
+            mu0 = mean(mean(f(init(:,:,k)<0.5)));
+            mu1 = max(f(:));
+        end
+        
         if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
             f(dataFrame.mask.mask) = mu0;
         end
@@ -129,9 +140,17 @@ classdef activecontour_segmentation < workflow_object
 
 
                 % update mean values (mu 0 and mu1)
-                if (mod(j,self.mu_update) == 0) && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
-                    mu0 = max(mean(mean(f(u<0.5))),0); % mean value outside object
-                    mu1 = max(mean(mean(f(u>=0.5))),0); % mean value inside object
+                if (mod(j,self.mu_update) == 0) % && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
+                    if max(max((init(:,:,k)<0.5))) == 1 && max(max((init(:,:,k)>=0.5))) == 1
+                        mu0 = max(mean(mean(f(init(:,:,k)<0.5))),0); % mean value outside object
+                        mu1 = max(mean(mean(f(init(:,:,k)>=0.5))),0); % mean value inside object
+                    elseif max(max((init(:,:,k)<0.5))) == 0
+                        mu0 = min(f(:));
+                        mu1 = mean(mean(f(init(:,:,k)>=0.5)));
+                    elseif max(max((init(:,:,k)>=0.5))) == 0
+                        mu0 = mean(mean(f(init(:,:,k)<0.5)));
+                        mu1 = max(f(:));
+                    end
                     if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
                         f(dataFrame.mask.mask) = mu0;
                     end

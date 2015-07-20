@@ -175,8 +175,12 @@ classdef threshold < workflow_object
 
                     distToRamp = sqrt((xCrossing-(index:1:maxBin)).^2+(yCrossing-hist_temp(index:maxBin)).^2);
                     [~, thresh_temp] = max(distToRamp);
-
-                    thresh(1,i) = thresh_temp+index-1;
+                    
+                    if  ~isempty(thresh_temp)
+                        thresh(1,i) = thresh_temp+index-1;
+                    else
+                        thresh(1,i) = 0;
+                    end
                 end
             end  
             thresh = thresh(self.maskForChannels);

@@ -127,7 +127,7 @@ classdef celltracks < loader
             rawImage = zeros(self.imageSize);
             for i=1:self.nrOfChannels;
                 try
-                    imagetemp = imread(self.imageFileNames{imageNr},i, 'info',self.tiffHeaders{imageNr});
+                    imagetemp = double(imread(self.imageFileNames{imageNr},i, 'info',self.tiffHeaders{imageNr}));
                 catch
                     notify(self,'logMessage',logmessage(2,['Tiff from channel ' num2str(ch) ' is not readable!'])) ;
                     return
