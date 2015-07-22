@@ -285,6 +285,7 @@ classdef celltracks < loader
         
         function [coordinates]=pixels_to_coordinates(self,pixelCoordinates, imgNr)
             row = ceil(imgNr/self.xmlData.columns) - 1;
+            cols = self.xmlData.columns;
             switch row
                 case {1,3,5} 
                     col=(cols-(imgNr-rowself.xmlData.columns));
@@ -300,6 +301,7 @@ classdef celltracks < loader
         function [pixels,frameNr]=coordinates_to_pixels(self,eventNr)
             frameNr=self.xmlData.frameNr(eventNr);
             row = ceil(frameNr/self.xmlData.columns) - 1;
+            cols = self.xmlData.columns;
             switch row
                 case {1,3,5} 
                     col=(cols-(frameNr-row*self.xmlData.columns));
