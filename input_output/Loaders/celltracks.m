@@ -38,7 +38,8 @@ classdef celltracks < loader
                 self.hasEdges,...
                 self.channelNames(self.channelRemapping(2,1:self.nrOfChannels)),...
                 self.channelEdgeRemoval,...
-                self.nrOfFrames);
+                self.nrOfFrames,...
+                self.prior_locations_in_sample);
         end
         
         function dataFrame=load_data_frame(self,frameNr)
@@ -47,8 +48,7 @@ classdef celltracks < loader
             end
             dataFrame=dataframe(self.sample,frameNr,...
             self.does_frame_have_edge(frameNr),...
-            self.read_im_and_scale(frameNr),...
-            self.prior_locations_in_frame(frameNr));
+            self.read_im_and_scale(frameNr));
             addlistener(dataFrame,'loadNeigbouringFrames',@self.load_neigbouring_frames);
         end
          
@@ -165,14 +165,14 @@ classdef celltracks < loader
             end
         end
         
-        function locations=prior_locations_in_frame(self,frameNr)
-            index=find(self.xmlData.score==1&self.xmlData.frameNr==frameNr);
+        function locations=prior_locations_in_sample(self)
+            index=find(self.xmlData.score==1);
             if isempty(index)
                 locations=[];
             else
                 locations=zeros(numel(index),4);
                 for i=1:numel(index)
-                    [locations(i,:),~]=self.coordinates_to_pixels(index(i));
+                    [locations(i,:)]=self.event_to_pixels_and_frame(index(i));
                 end
             end
         end           
@@ -298,20 +298,21 @@ classdef celltracks < loader
             end
         end
 
-        function [pixels,frameNr]=coordinates_to_pixels(self,eventNr)
+        function [locations]=event_to_pixels_and_frame(self,eventNr)
             frameNr=self.xmlData.frameNr(eventNr);
             row = ceil(frameNr/self.xmlData.columns) - 1;
             cols = self.xmlData.columns;
             switch row
                 case {1,3,5} 
                     col=(cols-(frameNr-row*self.xmlData.columns));
-                    pixels([1,3])=self.xmlData.locations(eventNr,[1,3])-self.xmlData.camXSize*col;
-                    pixels([2,4])=self.xmlData.locations(eventNr,[2,4])-self.xmlData.camYSize*row;  
+                    [xTopLeft,xBottomRight]=self.xmlData.locations(eventNr,[1,3])-self.xmlData.camXSize*col;
+                    [yTopLeft,yBottomRight]=self.xmlData.locations(eventNr,[2,4])-self.xmlData.camYSize*row;  
                 otherwise
                     col=frameNr-1-row*self.xmlData.columns;
-                    pixels([1,3])=self.xmlData.locations(eventNr,[1,3])-self.xmlData.camXSize*col;
-                    pixels([2,4])=self.xmlData.locations(eventNr,[2,4])-self.xmlData.camYSize*row; 
+                    [xTopLeft,xBottomRight]=self.xmlData.locations(eventNr,[1,3])-self.xmlData.camXSize*col;
+                    [yTopLeft,yBottomRight]=self.xmlData.locations(eventNr,[2,4])-self.xmlData.camYSize*row; 
             end
+            locations=table(frameNr,xTopLeft,yTopLeft,xBottomRight,yBottomRight);
         end
         
     end

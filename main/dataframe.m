@@ -26,7 +26,6 @@ classdef dataframe < handle
         frameNr = NaN;
         frameHasEdge = false;
         rawImage = [];
-        priorLocations = [];
     end
     
     properties(Access = public)
@@ -50,12 +49,11 @@ classdef dataframe < handle
     end
           
     methods
-        function self = dataframe(Sample,frameNr,frameHasEdge,rawImage,priorLocations)
+        function self = dataframe(Sample,frameNr,frameHasEdge,rawImage)
                 self.sample=Sample;
                 self.frameNr=frameNr;
                 self.frameHasEdge=frameHasEdge;
                 self.rawImage=rawImage;
-                self.priorLocations=priorLocations;
         end
         
         function value = get.labelImage(self)

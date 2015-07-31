@@ -25,9 +25,10 @@ classdef sample < handle
         pixelSize=1;
         channelEdgeRemoval=4;
         nrOfFrames=0;
-        measurements=table();
-        classificationResults=table();
         dataTypeOriginalImage='uint16';
+        priorLocations=[];
+        results=result();
+        
     end
     
     events
@@ -37,8 +38,8 @@ classdef sample < handle
     
 
     methods
-        function self=sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames)
-            if nargin==7
+        function self=sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames,priorLocations)
+            if nargin==8
                 self.name=name;
                 self.type=type;
                 self.pixelSize=pixelSize;
@@ -47,6 +48,7 @@ classdef sample < handle
                 self.numChannels=numel(channelNames);
                 self.channelEdgeRemoval=channelEdgeRemoval;
                 self.nrOfFrames=nrOfFrames;
+                self.priorLocations=priorLocations;
             end
             notify(self,'logMessage',logmessage(4,['New sample: ',self.name, ' is constructed.']));
                      
