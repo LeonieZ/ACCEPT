@@ -29,7 +29,7 @@ classdef celltracks < loader
             end
         end
         
-        function load_sample(self)
+        function Sample=load_sample(self)
             self.preload_tiff_headers();
             self.processXML();
             self.sample=sample(self.sampleId,...
@@ -40,6 +40,7 @@ classdef celltracks < loader
                 self.channelEdgeRemoval,...
                 self.nrOfFrames,...
                 self.prior_locations_in_sample);
+            Sample=self.sample;
         end
         
         function dataFrame=load_data_frame(self,frameNr)
@@ -170,9 +171,8 @@ classdef celltracks < loader
             if isempty(index)
                 locations=[];
             else
-                locations=zeros(numel(index),4);
                 for i=1:numel(index)
-                    [locations(i,:)]=self.event_to_pixels_and_frame(index(i));
+                    locations(i,:)=self.event_to_pixels_and_frame(index(i));
                 end
             end
         end           
@@ -305,13 +305,13 @@ classdef celltracks < loader
             switch row
                 case {1,3,5} 
                     col=(cols-(frameNr-row*self.xmlData.columns));
-                    [xTopLeft,xBottomRight]=self.xmlData.locations(eventNr,[1,3])-self.xmlData.camXSize*col;
-                    [yTopLeft,yBottomRight]=self.xmlData.locations(eventNr,[2,4])-self.xmlData.camYSize*row;  
                 otherwise
                     col=frameNr-1-row*self.xmlData.columns;
-                    [xTopLeft,xBottomRight]=self.xmlData.locations(eventNr,[1,3])-self.xmlData.camXSize*col;
-                    [yTopLeft,yBottomRight]=self.xmlData.locations(eventNr,[2,4])-self.xmlData.camYSize*row; 
             end
+            xTopLeft=self.xmlData.locations(eventNr,1)-self.xmlData.camXSize*col;
+            yTopLeft=self.xmlData.locations(eventNr,2)-self.xmlData.camYSize*row;
+            xBottomRight=self.xmlData.locations(eventNr,3)-self.xmlData.camXSize*col;
+            yBottomRight=self.xmlData.locations(eventNr,4)-self.xmlData.camYSize*row;
             locations=table(frameNr,xTopLeft,yTopLeft,xBottomRight,yBottomRight);
         end
         
