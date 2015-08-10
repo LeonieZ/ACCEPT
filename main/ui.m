@@ -3,7 +3,7 @@ classdef ui < handle
     %or parralel processing
     
     properties
-        programVersion= '0.1';
+        programVersion= 'v0.1';
         profiler=false;
         parallelProcessing=false;
         ioHandle;
@@ -28,6 +28,11 @@ classdef ui < handle
             addlistener(self.currentSample,'logMessage',@self.log.entry);
             addlistener(self.workFlow,'logMessage',@self.log.entry);
             
+            %show splash logo
+            h=self.show_logo();
+            pause(1);
+            close(h);
+            
             if self.profiler
                 profile -memory on;
             end
@@ -36,7 +41,27 @@ classdef ui < handle
             end
             
         end
-        
+
+        function h=show_logo(self)
+            screen = get(0,'screensize');
+            screenWidth  = screen(3);
+            screenHeight = screen(4);
+
+            im = imread('logo2.tif');
+            imageWidth  = size(im,2);
+            imageHeight = size(im,1);
+
+            pos = [ceil((screenWidth-imageWidth)/2) ceil((screenHeight-imageHeight)/2) imageWidth imageHeight];
+
+            h = figure('visible','on','menubar','none','paperpositionmode','auto','numbertitle','off','resize','off','position',pos,'name','About the ACCEPT algorithm');
+
+            image(im);
+            set(gca,'visible','off','Position',[0 0 1 1]);
+
+            text(40,135, ['ACCEPT algorithm ',self.programVersion],'units','pixel','horizontalalignment','left','fontsize',18,'color',[.1 .1 .1]);
+            text(40,105, 'Code by Leonie Zeune, Guus van Dalum & Christoph Brune','units','pixel','horizontalalignment','left','fontsize',12,'color',[.1 .1 .1]);
+        end
+
         function delete(self)
             %destructor takes care of the profiler and parpool. 
             self.log.entry('',logmessage(1,'>>>> Session stopped <<<< '));

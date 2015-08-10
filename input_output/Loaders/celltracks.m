@@ -18,14 +18,18 @@ classdef celltracks < loader
         function self = celltracks(samplePath)
             self.loaderType='celltracks';
             if nargin == 1
-                self.imagePath = self.find_dir(samplePath,'tif',100);
-                self.priorPath = self.find_dir(samplePath,'xml',1);
-                splitPath=regexp(samplePath, filesep, 'split');
-                if isempty(splitPath{end})
-                    self.sampleId=splitPath{end-1};
-                else
-                    self.sampleId=splitPath{end};
-                end
+                self=self.new_sample_path(samplePath);
+            end
+        end
+        
+        function self=new_sample_path(self,samplePath)
+            self.imagePath = self.find_dir(samplePath,'tif',100);
+            self.priorPath = self.find_dir(samplePath,'xml',1);
+            splitPath=regexp(samplePath, filesep, 'split');
+            if isempty(splitPath{end})
+                self.sampleId=splitPath{end-1};
+            else
+                self.sampleId=splitPath{end};
             end
         end
         
@@ -318,7 +322,7 @@ classdef celltracks < loader
     end
         
     methods(Static)
-        function bool = can_load_this_folder(self,path)
+        function bool = can_load_this_folder(path)
             %function that must be present in all loader types to test
             %if the current sample can be loaded by this class. 
             bool=true;

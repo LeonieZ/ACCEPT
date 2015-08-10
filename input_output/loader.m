@@ -28,9 +28,13 @@ classdef (Abstract) loader < handle
         function dataFrame = load_data_frame(self,frameNr)
 
         end
+        function self=new_sample_path(self,samplePath)
+        
+        end
+            
    end
     methods(Static)
-        function bool = can_load_this_folder(self,path)
+        function bool = can_load_this_folder(path)
             %function that must be present in all loader types to test
             %if the current sample can be loaded by this class. 
             bool=false;

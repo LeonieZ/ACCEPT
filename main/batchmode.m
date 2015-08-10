@@ -17,13 +17,13 @@ classdef batchmode < ui
             self.ioHandle.samplesPath=self.input.Results.inputFolder;
             self.ioHandle.savePath=self.input.Results.outputFolder;
             self.ioHandle.overwriteResults=self.input.Results.overwriteResults;
-            keyboard
+            self.ioHandle.create_sample_list;
         end
 
         function build_valid_input_arguments(self)
             %Required: the use case
             self.input=inputParser;
-            expectedUseCases={'FullAuto','SemiSupervised','QuantifyMarkerExpression'};
+            expectedUseCases={'FullAuto','SemiSupervised','QuantifyMarkerExpression','CLI'};
             self.input.FunctionName='batchmode input parser';
             self.input.addRequired('useCase',@(a) any(validatestring(a,expectedUseCases)));
             %Optional: io atributes, defaults set to io defaults.

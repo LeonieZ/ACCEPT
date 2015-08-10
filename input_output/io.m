@@ -10,6 +10,7 @@ classdef io < handle
         nrOfSamples
         currentSampleNr
         overwriteResults=false;
+        loaderHandle
     end
     
     events
@@ -20,14 +21,15 @@ classdef io < handle
         function self = io(samplesPath,savePath)
             self.samplesPath=samplesPath;
             self.savePath=savePath;
+            self.create_sample_list;
         end
         
         function sampleOut=load_next_sample(self)
             %Will load the next sample in the sampleList
             self.currentSampleNr=self.currentSampleNr+1;
-            samplePath=fullfile(self.samplesPath,self.sampleList{self.currentSample});
-            loaderHandle=self.check_sample_type(samplePath);
-            sampleOut=loaderHandle.load_sample();
+            samplePath=fullfile(self.samplesPath,self.sampleList{self.currentSampleNr});
+            self.loaderHandle=self.check_sample_type(samplePath);
+            sampleOut=self.loaderHandle.load_sample();
         end
         
         
@@ -85,7 +87,8 @@ classdef io < handle
             for i=1:numel(self.loaderTypesAvailable)
                 canLoad(i) = self.loaderTypesAvailable{i}.can_load_this_folder(samplePath);
             end
-            loaderHandle=self.loaderTypesAvailable{find(canLoad,1)}(samplePath);
+            loaderHandle=self.loaderTypesAvailable{find(canLoad,1)};
+            loaderHandle.new_sample_path(samplePath);
         end
     end
 end
