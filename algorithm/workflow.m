@@ -4,7 +4,7 @@ classdef workflow < handle
     
     properties
         name='Empty'
-        loopResults={};
+        version='0.1'
         algorithm=cell(0);
     end
     

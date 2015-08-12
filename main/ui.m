@@ -6,7 +6,7 @@ classdef ui < handle
         programVersion= 'v0.1';
         profiler=false;
         parallelProcessing=false;
-        ioHandle;
+        io;
         currentSample;
         workFlow;
         log;
@@ -20,11 +20,14 @@ classdef ui < handle
             installDir = fileparts(which('ACTC.m'));
             self.log=logger(installDir);
             self.log.entry('',logmessage(1,['>>>> Session started <<<< actc version: ', self.programVersion]));
-            self.ioHandle=io([installDir,filesep,'examples',filesep,'test_images'],[installDir,filesep,'examples',filesep,'results']);
             self.currentSample=sample();
             self.workFlow=workflow();
+            self.io=io([installDir,filesep,'examples',filesep,'test_images'],...
+                [installDir,filesep,'examples',filesep,'results',filesep,...
+                self.workFlow.name,'_',self.workFlow.version]);
+
             %adding log listeners
-            addlistener(self.ioHandle,'logMessage',@self.log.entry);
+            addlistener(self.io,'logMessage',@self.log.entry);
             addlistener(self.currentSample,'logMessage',@self.log.entry);
             addlistener(self.workFlow,'logMessage',@self.log.entry);
             

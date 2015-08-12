@@ -6,6 +6,7 @@ classdef ACTC
     end
     
     methods
+        function self=ACTC()
     end
     
 end

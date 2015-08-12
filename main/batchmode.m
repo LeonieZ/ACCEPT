@@ -14,23 +14,34 @@ classdef batchmode < ui
             %Parse input en set values. 
             parse(self.input,varargin{:});
             self.useCase=self.input.Results.useCase;
-            self.ioHandle.samplesPath=self.input.Results.inputFolder;
-            self.ioHandle.savePath=self.input.Results.outputFolder;
-            self.ioHandle.overwriteResults=self.input.Results.overwriteResults;
-            self.ioHandle.create_sample_list;
+            self.io.samplesPath=self.input.Results.inputFolder;
+            self.io.savePath=[self.input.Results.outputFolder];
+            self.io.overwriteResults=self.input.Results.overwriteResults;
+            self.run_use_case;
         end
 
         function build_valid_input_arguments(self)
             %Required: the use case
             self.input=inputParser;
-            expectedUseCases={'FullAuto','SemiSupervised','QuantifyMarkerExpression','CLI'};
+            expectedUseCases={'createThumbnails','CLI'};
             self.input.FunctionName='batchmode input parser';
             self.input.addRequired('useCase',@(a) any(validatestring(a,expectedUseCases)));
             %Optional: io atributes, defaults set to io defaults.
-            self.input.addOptional('inputFolder',self.ioHandle.samplesPath,@(x) isdir(x));
-            self.input.addOptional('outputFolder',self.ioHandle.savePath,@(x) isdir(x));
-            self.input.addOptional('overwriteResults',self.ioHandle.overwriteResults,@(x)islogical(x))
+            self.input.addOptional('inputFolder',self.io.samplesPath,@(x) isdir(x));
+            self.input.addOptional('outputFolder',self.io.savePath,@(x) isdir(x));
+            self.input.addOptional('overwriteResults',self.io.overwriteResults,@(x)islogical(x))
             %additional inputs can be added:
+        end
+        
+        function run_use_case(self)
+            switch self.useCase
+                case 'createThumbnails'
+                    
+                case 'CLI'
+
+                otherwise
+                
+            end
 
         end
     end

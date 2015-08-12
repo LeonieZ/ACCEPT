@@ -3,3 +3,4 @@ set_data_parameter.m
 actc_log.txt
 log/log.txt
 test.mat
+examples/results/*
