@@ -14,7 +14,7 @@ classdef workflow_object < handle
     end
    
     methods
-        function returnFrame = run(dataFrame)
+        function returnFrame = run(self,dataFrame)
             returnFrame=dataFrame;
         end
     end

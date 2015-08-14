@@ -20,14 +20,19 @@ classdef workflow < handle
             notify(self,'logMessage',logmessage(4,[self.name,' workflow is constructed.']));
         end
         
-        function returnFrame=run_workflow(self,data)
+        function run_workflow(self,IO,currentSample)
             if isempty(self.algorithm)
-                %some kind of logging
+                notify(self,'logMessage',logmessage(1,[self.name,'no results applied an empty workflow on sample.']));
             else
-            for i=1:numel(self.algorithm)
-                data=self.algorithm{i}.run(data);
-            end
-            returnFrame=data;
+                for j=1:currentSample.nrOfFrames
+                    data=IO.loader.load_data_frame(j);
+                    for i=1:numel(self.algorithm)
+                        data=self.algorithm{i}.run(data);
+                    end
+                    currentSample.results.features=vertcat(currentSample.results.features,data.features);
+                    currentSample.results.classefication=vertcat(currentSample.results.classefication,data.classificationResults);
+                    currentSample.results.thumbnails=vertcat(currentSample.results.thumbnails,data.thumbnails);
+                end
             end
         end
         

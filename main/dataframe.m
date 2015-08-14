@@ -32,8 +32,9 @@ classdef dataframe < handle
         adjacentFrames = [];
         preProcessedImage = [];
         segmentedImage = [];
-        measurements = table();
+        features = table();
         classificationResults = table();
+        thumbnails=[];
         % mask if we want to remove edge (logicals)
         mask = [];
     end
