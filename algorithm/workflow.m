@@ -31,13 +31,13 @@ classdef workflow < handle
             end
         end
         
-        function  add_workflow_object(self,object)
-            if ~isa(object,'workflow_object')
+        function  set.algorithm(self,value)
+            if any(cellfun(@(x) ~isa(x,'workflow_object'),value))
                 error('cannot add non workflow_objects to algorithm')                
             end
-            self.algorithm{end+1}=object;
+            self.algorithm=value;
         end
-        
+     
     end
     
 end

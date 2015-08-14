@@ -7,6 +7,8 @@ classdef ACTC
     
     methods
         function self=ACTC()
+        
+        end
     end
     
 end
