@@ -11,19 +11,22 @@ classdef threshold < workflow_object
     end
     
     methods
-        function self = threshold(meth, range, currentFrame, varargin)
+        function self = threshold(meth, range, currentSample)
             %varargin(1) = masksforchannels, varargin(2) = offsets varargin(3) =
             %thresholds of manual ones
             
+            validatestring(meth,{'otsu','triangle','manual'});
             self.meth = meth;
+            
+            validatestring(range,{'global','local'});
             self.range = range;
             
-            if nargin > 3 && ~isempty(varargin{1})
-                self.maskForChannels = varargin{1};
-            else
-                self.maskForChannels = 1:1:size(currentFrame.rawImage,3);
-            end
+            self.maskForChannels=1:1:currentSample.numChannels;
             
+        end
+        
+        function returnFrame=run(dataFrame)
+           
             if strcmp(range,'global')
                 self.histogram = create_global_hist(self,currentFrame);
             elseif strcmp(range,'local')

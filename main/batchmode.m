@@ -15,7 +15,7 @@ classdef batchmode < ui
             parse(self.input,varargin{:});
             self.useCase=self.input.Results.useCase;
             self.io.samplesPath=self.input.Results.inputFolder;
-            self.io.savePath=[self.input.Results.outputFolder];
+            self.io.savePath=self.input.Results.outputFolder;
             self.io.overwriteResults=self.input.Results.overwriteResults;
             self.run_use_case;
         end

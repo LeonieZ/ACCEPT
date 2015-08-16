@@ -4,3 +4,4 @@ actc_log.txt
 log/log.txt
 test.mat
 examples/results/*
+examples/test_images/*

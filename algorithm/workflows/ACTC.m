@@ -1,6 +1,7 @@
 classdef ACTC
-    %ACTC Summary of this class goes here
-    %   Detailed explanation goes here
+    %ACTC This workflow replicates the ACTC algorithm originally developed by Sjoerd Ligthart
+    %   Use run_workflow to apply it on a cartridge.
+    %   This is still a work in progress \G
     
     properties
     end

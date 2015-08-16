@@ -17,7 +17,7 @@ classdef ui < handle
         function self=ui()
             %constructor will be called without arguments by children. It
             %starts the logging, profiler and parallel pool when turned on.
-            installDir = fileparts(which('ACTC.m'));
+            installDir = fileparts(which('ACCEPT.m'));
             self.log=logger(installDir);
             self.log.entry('',logmessage(1,['>>>> Session started <<<< actc version: ', self.programVersion]));
             self.currentSample=sample();
