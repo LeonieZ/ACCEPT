@@ -1,11 +1,11 @@
 function uiHandle=ACCEPT(varargin)
-    %% Automated CTC Classification Enumaration and PhenoTyping algorithm
+    %% Automated CTC Classification Enumeration and PhenoTyping algorithm
     % main function to run the image analysis algorithm for the detection of
-    %circulating tumor cells. If given input arguments it will run in batch
-    %mode. The function accepts the following input arguments:
-    %.....
-    %Developed for the european CANCER-ID project by Leonie Zeune, Guus
-    %van Dalum, Christoph Brune and Leon Terstappen. 
+    % circulating tumor cells. If given input arguments it will run in batch
+    % mode. The function accepts the following input arguments:
+    % .....
+    % Developed for the European CANCER-ID project by Leonie Zeune, Guus
+    % van Dalum, Christoph Brune and Leon Terstappen. 
 
 
     %% Clear command window, close all figures and clear global struct used to

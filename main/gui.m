@@ -1,4 +1,4 @@
-classdef gui < ui
+classdef gui < base
     %GUI Summary of this class goes here
     %   Detailed explanation goes here
     

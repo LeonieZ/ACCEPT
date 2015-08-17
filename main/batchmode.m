@@ -1,4 +1,4 @@
-classdef batchmode < ui
+classdef batchmode < base
     %BATCHMODE Summary of this class goes here
     %   Detailed explanation goes here
     
