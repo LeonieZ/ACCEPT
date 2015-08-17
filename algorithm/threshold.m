@@ -8,6 +8,8 @@ classdef threshold < workflow_object
         histogram = [];
         meth = [];
         range = [];
+        dataType = '';
+        offset=0;
     end
     
     methods
@@ -22,94 +24,67 @@ classdef threshold < workflow_object
             self.range = range;
             
             self.maskForChannels=1:1:currentSample.numChannels;
+            self.dataType = currentSample.dataTypeOriginalImage;
             
-        end
-        
-        function returnFrame=run(dataFrame)
-           
-            if strcmp(range,'global')
-                self.histogram = create_global_hist(self,currentFrame);
-            elseif strcmp(range,'local')
-                self.histogram = create_local_hist(self,currentFrame);
-            else
-                error('Thresholding range unknown.')
-            end
-            
-            if strcmp(meth,'otsu')
-                self.thresholds = otsu_method(self);
-            elseif strcmp(meth,'triangle')
-                self.thresholds = triangle_method(self);
-            elseif strcmp(meth,'manual')
-                self.thresholds = varargin{3};
-            else
-                error('Segmentation method unknown.')
-            end
-            
-            if nargin > 4 && ~isempty(varargin{2})                
-                self.thresholds = self.thresholds + varargin{2};
-            end
-        end
-        
-        function hist = create_global_hist(self, frame)
-            
-            sample = frame.sample;
-            nrFrames = sample.numberOfFrames;
-            nrChannels = sample.numChannels;
-            if strcmp(sample.dataTypeOriginalImage,'uint8')
+            if strcmp(currentSample.dataTypeOriginalImage,'uint8')
                 bins = 255;
-            elseif strcmp(sample.dataTypeOriginalImage,'uint16')
+            elseif strcmp(currentSample.dataTypeOriginalImage,'uint16')
                 bins = 65535;
             end
-            hist = zeros(1,bins,nrChannels);
+            self.hist = zeros(1,bins,currentSample.nrChannels);
+            
+        end
+        
+        function returnFrame=run(self,inputFrame)
 
-            for j = 1:nrChannels
-                if any(self.maskForChannels == j)
-                    for i = 1:nrFrames                    
-%                         currentFrame = read...
-                        imTemp = currentFrame.rawImage(:,:,j);
-                            
-                        if currentFrame.frameHasEdge
-                            imTemp = imTemp(~currentFrame.mask.mask);
-                        end
-
-                        if max(imTemp) > 32767
-                                imTemp = imTemp - 32768;
-                        end
-                        
-                        hist_temp = histc(imTemp(:),1:1:bins)';
-                        if ~isempty(hist_temp)
-                            hist(:,:,j) = hist(:,:,j) + hist_temp;
-                        end
-
+            %create histogram if thresholding is local otherwise we assume
+            %this was already done.
+            if strcmp(self.range,'local') && ~strcmp(self.meth,'manual')
+                self.histogram = self.create_local_hist(inputFrame);
+            end
+            if isempty(self.thresholds)
+                self.calculate_thresholds()
+            end
+            
+            %Here we will have to do the segmentation. 
+            
+        
+        end
+        
+        function calculate_threshold(self)
+            switch self.meth
+                case 'otsu'
+                    self.thresholds = self.otsu_method() + self.offset;
+                case 'triangle'
+                    self.thresholds = self.triangle_method() + self.offset;
+                case 'manual'
+                    if isempty(self.thresholds)
+                        error('please specify the threshold')
                     end
-                end
             end
         end
         
-        function hist = create_local_hist(self, currentFrame)
-            nrChannels = size(currentFrame.rawImage,3);
-            if strcmp(currentFrame.sample.dataTypeOriginalImage,'uint8')
-                bins = 255;
-            elseif strcmp(currentFrame.sample.dataTypeOriginalImage,'uint16')
-                bins =  65535;
-            end
-            hist = zeros(1,bins,nrChannels);
+        function create_hist(self, inputFrame)
             for j = 1:nrChannels
-                if any(self.maskForChannels == j)
-                    imTemp = currentFrame.rawImage(:,:,j);
-                    
-                    if currentFrame.frameHasEdge
-                        imTemp = imTemp(~currentFrame.mask.mask);
-                    end
-            
-                    if max(imTemp) > 32767
-                            imTemp = imTemp - 32768;
-                    end
-                    
-                    hist(:,:,j) = histc(imTemp(:),1:1:bins)';
+                if any(self.maskForChannels == j)                
+                        imTemp = inputFrame.rawImage(:,:,j);
+                          
+                        if inputFrame.frameHasEdge
+                            imTemp = imTemp(~inputFrame.mask);
+                        end
+                        hist_temp = histc(imTemp(:),1:1:numel(self.hist))';
+                        switch self.range
+                            case 'local'                                '
+                                self.hist(:,:,j)= hist_temp;
+                            case 'global'
+                                if ~isempty(hist_temp)
+                                    self.hist(:,:,j) = self.hist(:,:,j) + hist_temp;
+                                end
+                        end
                 end
             end
         end
+            
         
         function thresh = otsu_method(self)
             % Function carried over from Matlab function graythresh.

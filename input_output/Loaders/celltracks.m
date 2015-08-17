@@ -148,8 +148,13 @@ classdef celltracks < loader
                     % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
                     rawImage(:,:,self.channelRemapping(1,i)) = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
                 else
+                    if max(imagetemp) > 32767
+                        imagetemp = imagetemp - 32768;
+                    end
                     rawImage(:,:,self.channelRemapping(1,i))=imagetemp;
                 end
+
+                            
             end
         end
 

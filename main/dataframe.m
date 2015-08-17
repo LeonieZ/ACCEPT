@@ -22,7 +22,7 @@ classdef dataframe < handle
     %additional channels = extra markers
     
     properties(SetAccess = private)
-        sample; %might remove this for better structur
+        sample; %might remove this for better structure
         frameNr = NaN;
         frameHasEdge = false;
         rawImage = [];
