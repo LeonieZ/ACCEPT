@@ -6,18 +6,18 @@ classdef base < handle
         programVersion= 'v0.1';
         profiler=false;
         parallelProcessing=false;
-        io;
+        %io;
         %currentSample;
-        workFlow;
+        workflow=workflow();
         log;
         pool;
     end
     
     methods
         function self=base()
+            installDir = fileparts(which('ACCEPT.m'));
             %constructor will be called without arguments by children. It
             %starts the logging, profiler and parallel pool when turned on.
-            installDir = fileparts(which('ACCEPT.m'));
             self.log=logger(installDir);
             self.log.entry('',logmessage(1,['>>>> Session started <<<< actc version: ', self.programVersion]));
             
@@ -25,16 +25,10 @@ classdef base < handle
             %self.currentSample=sample();
             
             % a workflow object always deals with only one sample
-            self.workFlow=workflow();
-            
-            % therefore we need an io handler, e.g. for parallelization,
-            % housekeeping etc.
-            self.io=io([installDir,filesep,'examples',filesep,'test_images'],...
-                [installDir,filesep,'examples',filesep,'results',filesep,...
-                self.workFlow.name,'_',self.workFlow.version]);
-
+            self.workflow=workflow();
+           
             %adding log listeners
-            addlistener(self.io,'logMessage',@self.log.entry);
+            %addlistener(self.io,'logMessage',@self.log.entry);
             %addlistener(self.currentSample,'logMessage',@self.log.entry);
             addlistener(self.workFlow,'logMessage',@self.log.entry);
             

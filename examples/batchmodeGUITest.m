@@ -6,7 +6,7 @@
 batchmodeInstance=ACCEPT('cli'); % default is test_images
 
 %load sample and save it to currentSample
-batchmodeInstance.currentSample = batchmodeInstance.io.load_next_sample();
+currentSample = batchmodeInstance.io.load_next_sample();
 
 %go to the next one and save again
 batchmodeInstance.currentSample = batchmodeInstance.io.load_next_sample();
