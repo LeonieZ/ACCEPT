@@ -1,4 +1,4 @@
-classdef activecontour_segmentation < workflow_object
+classdef ActiveContourSegmentation < workflow_object
     %ACTIVECONTOUR_SEGMENTATION Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -20,39 +20,39 @@ classdef activecontour_segmentation < workflow_object
     
     
     methods
-        function self = activecontour_segmentation(dataFrame, lambda, inner_it, breg_it, varargin)
+        function this = activecontour_segmentation(dataFrame, lambda, inner_it, breg_it, varargin)
             %varargin(1) = init, varargin(2) = masksforchannels,
             %varargin(3) = single_channel, , varargin(4) = image
 
             if nargin == 7
-                self.currentFrame = dataFrame.rawImage(:,:,varargin{3});
+                this.currentFrame = dataFrame.rawImage(:,:,varargin{3});
             elseif nargin > 7 && isa(varargin{4}, 'double')
-                self.currentFrame = varargin{4};
+                this.currentFrame = varargin{4};
             else
-                self.currentFrame = dataFrame.rawImage;
+                this.currentFrame = dataFrame.rawImage;
             end
                         
             if nargin > 5 && ~isempty(varargin{2})
-                self.maskForChannels = varargin{2};
+                this.maskForChannels = varargin{2};
             else
-                self.maskForChannels = 1:1:size(dataFrame.rawImage,3);
+                this.maskForChannels = 1:1:size(dataFrame.rawImage,3);
             end
                      
-            if size(lambda,2) == size(self.currentFrame,3)    
-                self.lambda = lambda;
+            if size(lambda,2) == size(this.currentFrame,3)    
+                this.lambda = lambda;
             elseif size(lambda,2) == 1
-                self.lambda = repmat(lambda,1, size(self.currentFrame,3));
+                this.lambda = repmat(lambda,1, size(this.currentFrame,3));
             end
             
-            if size(breg_it,2) == size(self.currentFrame,3)    
-                self.breg_it = breg_it;
+            if size(breg_it,2) == size(this.currentFrame,3)    
+                this.breg_it = breg_it;
             elseif size(breg_it,2) == 1
-                self.breg_it = repmat(breg_it,1, size(self.currentFrame,3));
+                this.breg_it = repmat(breg_it,1, size(this.currentFrame,3));
             end
             
-            self.inner_it = inner_it;
-            self.mu_update = round(0.5*inner_it);
-            self.segmentedFrame = false(size(self.currentFrame));
+            this.inner_it = inner_it;
+            this.mu_update = round(0.5*inner_it);
+            this.segmentedFrame = false(size(this.currentFrame));
             
             if nargin > 4
                 init = varargin{1};
@@ -60,24 +60,24 @@ classdef activecontour_segmentation < workflow_object
                 init = [];
             end
             
-            for i = 1:size(self.currentFrame,3)
-                if any(self.maskForChannels == i)
-                    tmp = bregman_cv(self, dataFrame, i, init);
+            for i = 1:size(this.currentFrame,3)
+                if any(this.maskForChannels == i)
+                    tmp = bregman_cv(this, dataFrame, i, init);
                     tmp = bwareaopen(tmp, 10);
-                    self.segmentedFrame(:,:,i) = tmp;
+                    this.segmentedFrame(:,:,i) = tmp;
                     clear grad div
                 end
             end
             
             if nargin < 7
-                self.segmentedFrame = self.segmentedFrame(:,:,self.maskForChannels);
+                this.segmentedFrame = this.segmentedFrame(:,:,this.maskForChannels);
             end
         end
         
-        function bin = bregman_cv(self, dataFrame, k, init)
+        function bin = bregman_cv(this, dataFrame, k, init)
         %BREGMAN_CV Summary of this function goes here
         %   Detailed explanation goes here
-        f = self.currentFrame(:,:,k);
+        f = this.currentFrame(:,:,k);
 
         % dimensions
         [nx, ny] = size(f);
@@ -117,30 +117,30 @@ classdef activecontour_segmentation < workflow_object
 
 
         i = 1; j = 1;
-        while i <= self.breg_it(k)
-            while j <= self.inner_it
+        while i <= this.breg_it(k)
+            while j <= this.inner_it
 
                 %%% step 1 : update p according to 
                 %%% p_(n+1) = (I+delta F*)^(-1)(p_n + sigma K u_bar_n)
                 % update dual p
-                arg1 = p + self.sigma * grad(u_bar,'lr');
+                arg1 = p + this.sigma * grad(u_bar,'lr');
                 p = arg1 ./ max(1,repmat(sqrt(sum(arg1.^2,3)),[1 1 dim])); %different for aniso TV
 
 
                 %%% step 2: update u according to
                 %%% u_(n+1) = (I+tau G)^(-1)(u_n - tau K* p_(n+1))
                 u_old = u;
-                arg2 =  (u + self.tau * div(p,'lr')) - self.tau/self.lambda(k) * ((f - mu1).^2 - (f - mu0).^2 - self.lambda(k) * b);
+                arg2 =  (u + this.tau * div(p,'lr')) - this.tau/this.lambda(k) * ((f - mu1).^2 - (f - mu0).^2 - this.lambda(k) * b);
                 u = max(0, min(1,arg2));
 
 
                 %%% step 3: update u_bar according to
                 %%% u_bar_(n+1) = u_(n+1)+ theta * (u_(n+1) - u_n)
-                u_bar = u + self.theta * (u - u_old);
+                u_bar = u + this.theta * (u - u_old);
 
 
                 % update mean values (mu 0 and mu1)
-                if (mod(j,self.mu_update) == 0) % && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
+                if (mod(j,this.mu_update) == 0) % && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
                     if max(max((init(:,:,k)<0.5))) == 1 && max(max((init(:,:,k)>=0.5))) == 1
                         mu0 = max(mean(mean(f(init(:,:,k)<0.5))),0); % mean value outside object
                         mu1 = max(mean(mean(f(init(:,:,k)>=0.5))),0); % mean value inside object
@@ -163,7 +163,7 @@ classdef activecontour_segmentation < workflow_object
             end
 
             % update b (outer bregman update)
-            b = b + 1/self.lambda(k) * ((f - mu0).^2 - (f - mu1).^2);
+            b = b + 1/this.lambda(k) * ((f - mu0).^2 - (f - mu1).^2);
 
 
             % update outer index

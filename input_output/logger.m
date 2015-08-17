@@ -1,4 +1,4 @@
-classdef logger < handle
+classdef Logger < handle
 % class that deals with the logging. Is quite simple now can be expanded
 % later /G.
     properties
@@ -14,36 +14,36 @@ classdef logger < handle
     end
     
     methods
-        function self=logger(programLocation,level)
-            self.logPath=[programLocation,filesep,'log',filesep];
+        function this=logger(programLocation,level)
+            this.logPath=[programLocation,filesep,'log',filesep];
             
             if ~exist([programLocation filesep 'log'], 'dir') 
                 mkdir(programLocation, 'log');
             end
             
-            self.fid = fopen(fullfile(self.logPath,self.logFile),'a');
+            this.fid = fopen(fullfile(this.logPath,this.logFile),'a');
             if nargin==2
-            self.level=level;
+            this.level=level;
             end
         end
         
-        function entry(self,~,eventData)
+        function entry(this,~,eventData)
             % General function to display and log events to a text file for easy debugging and
             % bookkeeping. Up to messages up to level 2 will also be displayed. 
 
             %only process logMessages that are below the current logging
             %level
-            if eventData.logLevel <= self.level
+            if eventData.logLevel <= this.level
             entry = [datestr(now,13),': ',eventData.message];
-            fprintf(self.fid,'%s\r\n', entry);
+            fprintf(this.fid,'%s\r\n', entry);
             if eventData.logLevel <= 2
                 disp(entry)
             end
             end
         
         end
-        function delete(self)
-            fclose(self.fid);
+        function delete(this)
+            fclose(this.fid);
         end
     end
 end

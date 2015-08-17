@@ -1,4 +1,4 @@
-classdef determine_mask < workflow_object
+classdef DetermineMask < workflow_object
     %DETERMINE_MASK Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -7,8 +7,8 @@ classdef determine_mask < workflow_object
     end
     
     methods
-        function self = determine_mask(dataFrame)
-            self.mask = false(size(dataFrame.rawImage,1),size(dataFrame.rawImage,2));
+        function this = determine_mask(dataFrame)
+            this.mask = false(size(dataFrame.rawImage,1),size(dataFrame.rawImage,2));
             se = strel('disk',50);
             frame = imopen(dataFrame.rawImage(:,:,dataFrame.sample.channelEdgeRemoval),se);
             
@@ -17,8 +17,8 @@ classdef determine_mask < workflow_object
             [r,c] = find(tmp == 1);
             
             % adapt for corner images;
-            self.mask(min(r):max(r),min(c):max(c)) = true;
-            self.mask = bwmorph(self.mask,'thicken',100);
+            this.mask(min(r):max(r),min(c):max(c)) = true;
+            this.mask = bwmorph(this.mask,'thicken',100);
         end
     end
     

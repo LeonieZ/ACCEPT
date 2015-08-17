@@ -1,4 +1,4 @@
-classdef dataframe < handle
+classdef Dataframe < handle
     %dataframe holds frame specific data together with pointers to
     %additional information. This class has all the information that is
     %needed to be passed to the different steps of the analysis algoritm.
@@ -50,18 +50,18 @@ classdef dataframe < handle
     end
           
     methods
-        function self = dataframe(Sample,frameNr,frameHasEdge,rawImage)
-                self.sample=Sample;
-                self.frameNr=frameNr;
-                self.frameHasEdge=frameHasEdge;
-                self.rawImage=rawImage;
+        function this = dataframe(Sample,frameNr,frameHasEdge,rawImage)
+                this.sample=Sample;
+                this.frameNr=frameNr;
+                this.frameHasEdge=frameHasEdge;
+                this.rawImage=rawImage;
         end
         
-        function value = get.labelImage(self)
+        function value = get.labelImage(this)
             %remove doubles at boarder
-            sumImage = sum(self.segmentedImage,3); 
-            labels = repmat(bwlabel(sumImage,4),1,1,self.sample.numChannels);
-            value = labels.*self.segmentedImage; 
+            sumImage = sum(this.segmentedImage,3); 
+            labels = repmat(bwlabel(sumImage,4),1,1,this.sample.numChannels);
+            value = labels.*this.segmentedImage; 
         end
     end
 end

@@ -1,4 +1,4 @@
-classdef workflow < handle
+classdef Workflow < handle
     %WORKFLOW Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -14,28 +14,28 @@ classdef workflow < handle
     end
     
     methods
-        function self=workflow(inputWorkflow)
+        function this=workflow(inputWorkflow)
             if nargin==1
                 validateattributes(inputWorkflow,{'workflow'},{'nonempty'},'','inputWorkflow');
             end
-            notify(self,'logMessage',logmessage(4,[self.name,' workflow is constructed.']));
+            notify(this,'logMessage',logmessage(4,[this.name,' workflow is constructed.']));
             
             % therefore we need an io handler, e.g. for parallelization,
             % housekeeping etc.
             installDir = fileparts(which('ACCEPT.m'));
-            self.io=io([installDir,filesep,'examples',filesep,'test_images'],...
+            this.io=io([installDir,filesep,'examples',filesep,'test_images'],...
                 [installDir,filesep,'examples',filesep,'results',filesep,...
-                self.workFlow.name,'_',self.workFlow.version]);
+                this.workFlow.name,'_',this.workFlow.version]);
         end
         
-        function run_workflow(self,IO,currentSample)
-            if isempty(self.algorithm)
-                notify(self,'logMessage',logmessage(1,[self.name,'no results applied an empty workflow on sample.']));
+        function run_workflow(this,currentSample)
+            if isempty(this.algorithm)
+                notify(this,'logMessage',logmessage(1,[this.name,'no results applied an empty workflow on sample.']));
             else
                 for j=1:currentSample.nrOfFrames
-                    data=IO.loader.load_data_frame(j);
-                    for i=1:numel(self.algorithm)
-                        data=self.algorithm{i}.run(data);
+                    data=this.io.loader.load_data_frame(j);
+                    for i=1:numel(this.algorithm)
+                        data=this.algorithm{i}.run(data);
                     end
                     currentSample.results.features=vertcat(currentSample.results.features,data.features);
                     currentSample.results.classefication=vertcat(currentSample.results.classefication,data.classificationResults);
@@ -44,11 +44,11 @@ classdef workflow < handle
             end
         end
         
-        function  set.algorithm(self,value)
+        function  set.algorithm(this,value)
             if any(cellfun(@(x) ~isa(x,'workflow_object'),value))
                 error('cannot add non workflow_objects to algorithm')                
             end
-            self.algorithm=value;
+            this.algorithm=value;
         end
      
     end

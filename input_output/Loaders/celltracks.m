@@ -1,4 +1,4 @@
-classdef celltracks < loader
+classdef CellTracks < loader
     %CELLSEARCH Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -15,51 +15,51 @@ classdef celltracks < loader
     end
     
     methods
-        function self = celltracks(samplePath)
-            self.loaderType='celltracks';
+        function this = celltracks(samplePath)
+            this.loaderType='celltracks';
             if nargin == 1
-                self=self.new_sample_path(samplePath);
+                this=this.new_sample_path(samplePath);
             end
         end
         
-        function self=new_sample_path(self,samplePath)
-            self.imagePath = self.find_dir(samplePath,'tif',100);
-            self.priorPath = self.find_dir(samplePath,'xml',1);
+        function this=new_sample_path(this,samplePath)
+            this.imagePath = this.find_dir(samplePath,'tif',100);
+            this.priorPath = this.find_dir(samplePath,'xml',1);
             splitPath=regexp(samplePath, filesep, 'split');
             if isempty(splitPath{end})
-                self.sampleId=splitPath{end-1};
+                this.sampleId=splitPath{end-1};
             else
-                self.sampleId=splitPath{end};
+                this.sampleId=splitPath{end};
             end
         end
         
-        function Sample=load_sample(self)
-            self.preload_tiff_headers();
-            self.processXML();
-            self.sample=sample(self.sampleId,...
+        function Sample=load_sample(this)
+            this.preload_tiff_headers();
+            this.processXML();
+            this.sample=sample(this.sampleId,...
                 'celltracks',...
-                self.pixelSize,...
-                self.hasEdges,...
-                self.channelNames(self.channelRemapping(2,1:self.nrOfChannels)),...
-                self.channelEdgeRemoval,...
-                self.nrOfFrames,...
-                self.prior_locations_in_sample);
-            Sample=self.sample;
+                this.pixelSize,...
+                this.hasEdges,...
+                this.channelNames(this.channelRemapping(2,1:this.nrOfChannels)),...
+                this.channelEdgeRemoval,...
+                this.nrOfFrames,...
+                this.prior_locations_in_sample);
+            Sample=this.sample;
         end
         
-        function dataFrame=load_data_frame(self,frameNr)
-            if isempty(self.sample)
-                self.load_sample();
+        function dataFrame=load_data_frame(this,frameNr)
+            if isempty(this.sample)
+                this.load_sample();
             end
-            dataFrame=dataframe(self.sample,frameNr,...
-            self.does_frame_have_edge(frameNr),...
-            self.read_im_and_scale(frameNr));
-            addlistener(dataFrame,'loadNeigbouringFrames',@self.load_neigbouring_frames);
+            dataFrame=dataframe(this.sample,frameNr,...
+            this.does_frame_have_edge(frameNr),...
+            this.read_im_and_scale(frameNr));
+            addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
          
     end
     methods(Access=private)
-        function Dir_out = find_dir(self,Dir_in,fileExtension,numberOfFiles)
+        function Dir_out = find_dir(this,Dir_in,fileExtension,numberOfFiles)
             % function to verify in which directory the tiff files are located. There
             % are a few combinations present in the immc databases:
             % immc38: dirs with e.g. .1.2 have a dir "processed" in cartridge dir, dirs
@@ -105,67 +105,67 @@ classdef celltracks < loader
             end
         end
         
-        function preload_tiff_headers(self)
-            tempImageFileNames = dir([self.imagePath filesep '*.tif']);
+        function preload_tiff_headers(this)
+            tempImageFileNames = dir([this.imagePath filesep '*.tif']);
             for i=1:numel(tempImageFileNames)
-             self.imageFileNames{i} = [self.imagePath filesep tempImageFileNames(i).name];  
+             this.imageFileNames{i} = [this.imagePath filesep tempImageFileNames(i).name];  
             end
             %function to fill the dataP.temp.imageinfos variable
 
-            for i=1:numel(self.imageFileNames)
-                self.tiffHeaders{i}=imfinfo(self.imageFileNames{i});
+            for i=1:numel(this.imageFileNames)
+                this.tiffHeaders{i}=imfinfo(this.imageFileNames{i});
             end
 
             %Have to add a check for the 2^15 offset.
             %dataP.temp.imagesHaveOffset=false;
-            self.imageSize=[self.tiffHeaders{1}(1).Height self.tiffHeaders{1}(1).Width numel(self.tiffHeaders{1})];
-            self.nrOfFrames=numel(self.imageFileNames);
-            self.nrOfChannels=numel(self.tiffHeaders{1});
+            this.imageSize=[this.tiffHeaders{1}(1).Height this.tiffHeaders{1}(1).Width numel(this.tiffHeaders{1})];
+            this.nrOfFrames=numel(this.imageFileNames);
+            this.nrOfChannels=numel(this.tiffHeaders{1});
         end
         
-        function rawImage=read_im_and_scale(self,imageNr)
+        function rawImage=read_im_and_scale(this,imageNr)
             % use the previously gathered imageinfo and read all images in a multipage
             % tiff. read only one channel if a channel is specified. Rescale and
             % stretch values and rescale to approx old values if the image is a
             % celltracks tiff: scales IMMC images back to 0..4095 scale. Otherwise a
             % normal tiff is returned.
-            rawImage = zeros(self.imageSize);
-            for i=1:self.nrOfChannels;
+            rawImage = zeros(this.imageSize);
+            for i=1:this.nrOfChannels;
                 try
-                    imagetemp = double(imread(self.imageFileNames{imageNr},i, 'info',self.tiffHeaders{imageNr}));
+                    imagetemp = double(imread(this.imageFileNames{imageNr},i, 'info',this.tiffHeaders{imageNr}));
                 catch
-                    notify(self,'logMessage',logmessage(2,['Tiff from channel ' num2str(ch) ' is not readable!'])) ;
+                    notify(this,'logMessage',logmessage(2,['Tiff from channel ' num2str(ch) ' is not readable!'])) ;
                     return
                 end
-                if  self.rescaleTiffs 
+                if  this.rescaleTiffs 
                     
-                    UnknownTags = self.tiffHeaders{imageNr}(i).UnknownTags;
+                    UnknownTags = this.tiffHeaders{imageNr}(i).UnknownTags;
 
                     LowValue  =  UnknownTags(2).Value;
                     HighValue =  UnknownTags(3).Value;
 
 
                     % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
-                    rawImage(:,:,self.channelRemapping(1,i)) = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
+                    rawImage(:,:,this.channelRemapping(1,i)) = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
                 else
                     if max(imagetemp) > 32767
                         imagetemp = imagetemp - 32768;
                     end
-                    rawImage(:,:,self.channelRemapping(1,i))=imagetemp;
+                    rawImage(:,:,this.channelRemapping(1,i))=imagetemp;
                 end
 
                             
             end
         end
 
-        function hasEdge=does_frame_have_edge(self,frameNr)
-            row = ceil(frameNr/self.xmlData.columns) - 1;
+        function hasEdge=does_frame_have_edge(this,frameNr)
+            row = ceil(frameNr/this.xmlData.columns) - 1;
             switch row
-                case {0,self.xmlData.rows} 
+                case {0,this.xmlData.rows} 
                     hasEdge=true;
                 otherwise
-                    col=frameNr-row*self.xmlData.columns;
-                    if col==self.xmlData.columns
+                    col=frameNr-row*this.xmlData.columns;
+                    if col==this.xmlData.columns
                         hasEdge=true;
                     elseif col==1
                         hasEdge=true;
@@ -175,152 +175,152 @@ classdef celltracks < loader
             end
         end
         
-        function locations=prior_locations_in_sample(self)
-            index=find(self.xmlData.score==1);
+        function locations=prior_locations_in_sample(this)
+            index=find(this.xmlData.score==1);
             if isempty(index)
                 locations=[];
             else
                 for i=1:numel(index)
-                    locations(i,:)=self.event_to_pixels_and_frame(index(i));
+                    locations(i,:)=this.event_to_pixels_and_frame(index(i));
                 end
             end
         end           
         
-        function load_neighbouring_frames(self,sourceFrame,~)
+        function load_neighbouring_frames(this,sourceFrame,~)
             % to be implemented
-            neigbouring_frames=self.calculate_neighbouring_frames(sourceFrame.frameNr);
+            neigbouring_frames=this.calculate_neighbouring_frames(sourceFrame.frameNr);
         
         end
         
-        function neigbouring_frames=calculate_neigbouring_frames(self,frameNr)
+        function neigbouring_frames=calculate_neigbouring_frames(this,frameNr)
             % to be implemented
             neigbouring_frames=[1,2,3];
         end
         
-        function processXML(self)
+        function processXML(this)
             % Process XML file if available
             % determine in which directory the xml file is located.
             NoXML=0;
-            self.xmlData = [];
+            this.xmlData = [];
             
             % find directory where xml file is located in
-            if isempty(self.priorPath)
+            if isempty(this.priorPath)
                 NoXML=1;
             else
-                XMLFile = dir([self.priorPath filesep '*.xml']);
+                XMLFile = dir([this.priorPath filesep '*.xml']);
             end
                 
             % Load & process XML file
             if NoXML == 0
-                self.xmlData=xml2struct([self.priorPath filesep XMLFile.name]);
-                self.xmlData.num_events = [];
-                self.xmlData.CellSearchIds = [];
-                self.xmlData.locations = [];
-                self.xmlData.score=[];
-                self.xmlData.frameNr=[];
-                self.xmlData.camYSize=1384
-                self.xmlData.camXSize=1036;
-                if isfield(self.xmlData,'archive')
-                    self.xmlData.num_events = size(self.xmlData.archive{2}.events.record,2);
-                    self.xmlData.CellSearchIds = zeros(self.xmlData.num_events,1);
-                    self.xmlData.locations = zeros(self.xmlData.num_events,4);
-                    self.xmlData.score=zeros(self.xmlData.num_events,1);
-                    self.xmlData.frameNr=zeros(self.xmlData.num_events,1);
-                    for i=1:self.xmlData.num_events
-                        self.xmlData.CellSearchIds(i)=str2num(self.xmlData.archive{2}.events.record{i}.eventnum.Text); %#ok<*ST2NM>
-                        self.xmlData.score(i)=str2num(self.xmlData.archive{2}.events.record{i}.numselected.Text);                    
-                        self.xmlData.frameNr(i)=str2num(self.xmlData.archive{2}.events.record{i}.framenum.Text);
-                        tempstr=self.xmlData.archive{2}.events.record{i}.location.Text;
+                this.xmlData=xml2struct([this.priorPath filesep XMLFile.name]);
+                this.xmlData.num_events = [];
+                this.xmlData.CellSearchIds = [];
+                this.xmlData.locations = [];
+                this.xmlData.score=[];
+                this.xmlData.frameNr=[];
+                this.xmlData.camYSize=1384
+                this.xmlData.camXSize=1036;
+                if isfield(this.xmlData,'archive')
+                    this.xmlData.num_events = size(this.xmlData.archive{2}.events.record,2);
+                    this.xmlData.CellSearchIds = zeros(this.xmlData.num_events,1);
+                    this.xmlData.locations = zeros(this.xmlData.num_events,4);
+                    this.xmlData.score=zeros(this.xmlData.num_events,1);
+                    this.xmlData.frameNr=zeros(this.xmlData.num_events,1);
+                    for i=1:this.xmlData.num_events
+                        this.xmlData.CellSearchIds(i)=str2num(this.xmlData.archive{2}.events.record{i}.eventnum.Text); %#ok<*ST2NM>
+                        this.xmlData.score(i)=str2num(this.xmlData.archive{2}.events.record{i}.numselected.Text);                    
+                        this.xmlData.frameNr(i)=str2num(this.xmlData.archive{2}.events.record{i}.framenum.Text);
+                        tempstr=this.xmlData.archive{2}.events.record{i}.location.Text;
                         start=strfind(tempstr,'(');
                         finish=strfind(tempstr,')');
                         to=str2num(tempstr(start(1)+1:finish(1)-1));
                         from=str2num(tempstr(start(2)+1:finish(2)-1));
-                        self.xmlData.locations(i,:)=[from,to];
+                        this.xmlData.locations(i,:)=[from,to];
                     end
-                    self.xmlData.columns=str2num(self.xmlData.archive{2}.runs.record.numcols.Text);
-                    self.xmlData.rows=str2num(self.xmlData.archive{2}.runs.record.numrows.Text);
-                    self.xmlData.camYSize=str2num(self.xmlData.archive{2}.runs.record.camysize.Text);
-                    self.xmlData.camXSize=str2num(self.xmlData.archive{2}.runs.record.camxsize.Text);
+                    this.xmlData.columns=str2num(this.xmlData.archive{2}.runs.record.numcols.Text);
+                    this.xmlData.rows=str2num(this.xmlData.archive{2}.runs.record.numrows.Text);
+                    this.xmlData.camYSize=str2num(this.xmlData.archive{2}.runs.record.camysize.Text);
+                    this.xmlData.camXSize=str2num(this.xmlData.archive{2}.runs.record.camxsize.Text);
            
                     
-                elseif isfield(self.xmlData, 'export')
-                    self.xmlData.num_events = size(self.xmlData.export{2}.events.record,2);
-                    self.xmlData.CellSearchIds = zeros(self.xmlData.num_events,1);
-                    self.xmlData.locations = zeros(self.xmlData.num_events,4);
-                    self.xmlData.score=zeros(self.xmlData.num_events,1);
-                    self.xmlData.frameNr=zeros(self.xmlData.num_events,1);
-                    for i=1:self.xmlData.num_events
-                        self.xmlData.CellSearchIds(i)=str2num(self.xmlData.export{2}.events.record{i}.eventnum.Text);
-                        self.xmlData.score(i)=str2num(self.xmlData.export{2}.events.record{i}.numselected.Text);                    
-                        self.xmlData.frameNr(i)=str2num(self.xmlData.export{2}.events.record{i}.framenum.Text);
-                        tempstr=self.xmlData.export{2}.events.record{i}.location.Text;
+                elseif isfield(this.xmlData, 'export')
+                    this.xmlData.num_events = size(this.xmlData.export{2}.events.record,2);
+                    this.xmlData.CellSearchIds = zeros(this.xmlData.num_events,1);
+                    this.xmlData.locations = zeros(this.xmlData.num_events,4);
+                    this.xmlData.score=zeros(this.xmlData.num_events,1);
+                    this.xmlData.frameNr=zeros(this.xmlData.num_events,1);
+                    for i=1:this.xmlData.num_events
+                        this.xmlData.CellSearchIds(i)=str2num(this.xmlData.export{2}.events.record{i}.eventnum.Text);
+                        this.xmlData.score(i)=str2num(this.xmlData.export{2}.events.record{i}.numselected.Text);                    
+                        this.xmlData.frameNr(i)=str2num(this.xmlData.export{2}.events.record{i}.framenum.Text);
+                        tempstr=this.xmlData.export{2}.events.record{i}.location.Text;
                         start=strfind(tempstr,'(');
                         finish=strfind(tempstr,')');
                         to=str2num(tempstr(start(1)+1:finish(1)-1));
                         from=str2num(tempstr(start(2)+1:finish(2)-1));
-                        self.xmlData.locations(i,:)=[from,to];
+                        this.xmlData.locations(i,:)=[from,to];
                     end
-                    self.xmlData.columns=str2num(self.xmlData.export{2}.runs.record.numcols.Text);
-                    self.xmlData.rows=str2num(self.xmlData.export{2}.runs.record.numrows.Text);
-                    self.xmlData.camYSize=str2num(self.xmlData.export{2}.runs.record.camysize.Text);
-                    self.xmlData.camXSize=str2num(self.xmlData.export{2}.runs.record.camxsize.Text);
+                    this.xmlData.columns=str2num(this.xmlData.export{2}.runs.record.numcols.Text);
+                    this.xmlData.rows=str2num(this.xmlData.export{2}.runs.record.numrows.Text);
+                    this.xmlData.camYSize=str2num(this.xmlData.export{2}.runs.record.camysize.Text);
+                    this.xmlData.camXSize=str2num(this.xmlData.export{2}.runs.record.camxsize.Text);
                 else
-                    notify(self,'logMessage',logmessage(2,['unable to read xml']));
+                    notify(this,'logMessage',logmessage(2,['unable to read xml']));
                     %setting row and colums based on nrOfImages
-                    switch self.nrOfFrames
+                    switch this.nrOfFrames
                         case 210 % 6*35 images
-                            self.xmlData.columns=35;
-                            self.xmlData.rows=6;
+                            this.xmlData.columns=35;
+                            this.xmlData.rows=6;
                         case 180 % 5*36 images
-                            self.xmlData.columns=36;
-                            self.xmlData.rows=5;
+                            this.xmlData.columns=36;
+                            this.xmlData.rows=5;
                         case 175 % 5*35 images
-                            self.xmlData.columns=35;
-                            self.xmlData.rows=5;
+                            this.xmlData.columns=35;
+                            this.xmlData.rows=5;
                         case 170 % 5*34 images
-                            self.xmlData.columns=34;
-                            self.xmlData.rows=5;
+                            this.xmlData.columns=34;
+                            this.xmlData.rows=5;
                         case 144 % 4*36 images
-                            self.xmlData.columns=36;
-                            self.xmlData.rows=4;
+                            this.xmlData.columns=36;
+                            this.xmlData.rows=4;
                         case 140 % 4*35 images
-                            self.xmlData.columns=35;
-                            self.xmlData.rows=4;
+                            this.xmlData.columns=35;
+                            this.xmlData.rows=4;
                     end
                     return
                 end
             end
         end
         
-        function [coordinates]=pixels_to_coordinates(self,pixelCoordinates, imgNr)
-            row = ceil(imgNr/self.xmlData.columns) - 1;
-            cols = self.xmlData.columns;
+        function [coordinates]=pixels_to_coordinates(this,pixelCoordinates, imgNr)
+            row = ceil(imgNr/this.xmlData.columns) - 1;
+            cols = this.xmlData.columns;
             switch row
                 case {1,3,5} 
-                    col=(cols-(imgNr-rowself.xmlData.columns));
-                    coordinates(1)=pixelCoordinates(1)+self.xmlData.camXSize*col;
-                    coordinates(2)=pixelCoordinates(2)+self.xmlData.camYSize*row;  
+                    col=(cols-(imgNr-rowthis.xmlData.columns));
+                    coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row;  
                 otherwise
                     col=imgNr-1-row*cols;
-                    coordinates(1)=pixelCoordinates(1)+self.xmlData.camXSize*col;
-                    coordinates(2)=pixelCoordinates(2)+self.xmlData.camYSize*row; 
+                    coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row; 
             end
         end
 
-        function [locations]=event_to_pixels_and_frame(self,eventNr)
-            frameNr=self.xmlData.frameNr(eventNr);
-            row = ceil(frameNr/self.xmlData.columns) - 1;
-            cols = self.xmlData.columns;
+        function [locations]=event_to_pixels_and_frame(this,eventNr)
+            frameNr=this.xmlData.frameNr(eventNr);
+            row = ceil(frameNr/this.xmlData.columns) - 1;
+            cols = this.xmlData.columns;
             switch row
                 case {1,3,5} 
-                    col=(cols-(frameNr-row*self.xmlData.columns));
+                    col=(cols-(frameNr-row*this.xmlData.columns));
                 otherwise
-                    col=frameNr-1-row*self.xmlData.columns;
+                    col=frameNr-1-row*this.xmlData.columns;
             end
-            xTopLeft=self.xmlData.locations(eventNr,1)-self.xmlData.camXSize*col;
-            yTopLeft=self.xmlData.locations(eventNr,2)-self.xmlData.camYSize*row;
-            xBottomRight=self.xmlData.locations(eventNr,3)-self.xmlData.camXSize*col;
-            yBottomRight=self.xmlData.locations(eventNr,4)-self.xmlData.camYSize*row;
+            xTopLeft=this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col;
+            yTopLeft=this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row;
+            xBottomRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
+            yBottomRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;
             locations=table(frameNr,xTopLeft,yTopLeft,xBottomRight,yBottomRight);
         end
         

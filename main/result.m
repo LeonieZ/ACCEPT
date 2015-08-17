@@ -1,4 +1,4 @@
-classdef result < handle
+classdef Result < handle
     % This class contains the output of a workflow. This can be the
     % measured cell features and classification. 
     properties

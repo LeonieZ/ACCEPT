@@ -1,4 +1,4 @@
-classdef io < handle
+classdef IO < handle
     %the toplevel class that handles the various input and output operations. It
     %allows for easy loading of different sample types
     
@@ -23,70 +23,70 @@ classdef io < handle
     end
     
     methods
-        function self = io(samplesPath,savePath)
-            self.samplesPath=samplesPath;
-            self.savePath=savePath;
+        function this = io(samplesPath,savePath)
+            this.samplesPath=samplesPath;
+            this.savePath=savePath;
         end
         
-        function set.savePath(self,path)
+        function set.savePath(this,path)
             if exist(path,'dir')
-                self.savePath=path;
+                this.savePath=path;
             else
                 mkdir(path);
                 mkdir([path,filesep,'output']);
                 mkdir([path,filesep,'frames'])
-                self.savePath=path;
+                this.savePath=path;
             end
-            self.create_sample_list;
+            this.create_sample_list;
         end
         
-        function set.samplesPath(self,path)
-            self.samplesPath=path;
-            self.create_sample_list;
+        function set.samplesPath(this,path)
+            this.samplesPath=path;
+            this.create_sample_list;
         end
         
-        function set.overwriteResults(self,bool)
-            self.overwriteResults=bool;
-            self.create_sample_list;
+        function set.overwriteResults(this,bool)
+            this.overwriteResults=bool;
+            this.create_sample_list;
         end
         
-        function sampleOut=load_next_sample(self)
+        function sampleOut=load_next_sample(this)
             %Will load the next sample in the sampleList
-            if self.currentSampleNr==self.nrOfSamples
-                sampleOut=self.loader.sample;
+            if this.currentSampleNr==this.nrOfSamples
+                sampleOut=this.loader.sample;
             else
-                self.currentSampleNr=self.currentSampleNr+1;
-                samplePath=fullfile(self.samplesPath,self.sampleList{self.currentSampleNr});
-                self.loader=self.check_sample_type(samplePath);
-                sampleOut=self.loader.load_sample();
+                this.currentSampleNr=this.currentSampleNr+1;
+                samplePath=fullfile(this.samplesPath,this.sampleList{this.currentSampleNr});
+                this.loader=this.check_sample_type(samplePath);
+                sampleOut=this.loader.load_sample();
             end
         end
         
-        function save_work_flow(self,workFlow)
-            save([self.savePath,filesep,'workflow.mat'],'workFlow');
+        function save_work_flow(this,workFlow)
+            save([this.savePath,filesep,'workflow.mat'],'workFlow');
         end
         
-        function save_sample(self,currentSample)
-            save([self.savePath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample');
+        function save_sample(this,currentSample)
+            save([this.savePath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample');
         end
         
-        function save_results(self,currentSample)
-            save([self.savePath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample.results','-append');        
+        function save_results(this,currentSample)
+            save([this.savePath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample.results','-append');        
         end
         
-        function save_data_frame(self,currentSample,currentDataFrame)
-            if ~exist([self.savePath,filesep,'frames',filesep,currentSample.name],'dir')
-                mkdir([self.savePath,filesep,'frames',filesep,currentSample.name]);
+        function save_data_frame(this,currentSample,currentDataFrame)
+            if ~exist([this.savePath,filesep,'frames',filesep,currentSample.name],'dir')
+                mkdir([this.savePath,filesep,'frames',filesep,currentSample.name]);
             end
-            save([self.savePath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame');            
+            save([this.savePath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame');            
     
         end
         
-        function save_data_frame_segmentation(self,currentSample,currentDataFrame)
-            if ~exist([self.savePath,filesep,'frames',filesep,currentSample.name],'dir')
-                mkdir([self.savePath,filesep,'frames',filesep,currentSample.name]);
+        function save_data_frame_segmentation(this,currentSample,currentDataFrame)
+            if ~exist([this.savePath,filesep,'frames',filesep,currentSample.name],'dir')
+                mkdir([this.savePath,filesep,'frames',filesep,currentSample.name]);
             end
-            t=Tiff([self.savePath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
+            t=Tiff([this.savePath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
             t.setTag('Photometric',t.Photometric.MinIsBlack);
             t.setTag('Compression',t.Compression.LZW);
             t.setTag('ImageLength',size(currentDataFrame.segmentedImage,1));
@@ -98,7 +98,7 @@ classdef io < handle
             t.close;
         end
         
-        function save_thumbnail(self,currentSample,eventNr)
+        function save_thumbnail(this,currentSample,eventNr)
             
         end
         
@@ -108,7 +108,7 @@ classdef io < handle
     
     
     methods (Access = private)
-        function populate_available_input_types(self)
+        function populate_available_input_types(this)
             % populate available inputs 
             % Function not used atm /g
             temp = what('Loaders');
@@ -117,28 +117,28 @@ classdef io < handle
             for i=1:numel(flist)
                [~,filename,fileext]=fileparts(flist{i}); % get just the filename
                if exist(filename, 'class') && ismember('loader', superclasses(filename))
-                 self.loaderTypesAvailable{end+1} = filename();
+                 this.loaderTypesAvailable{end+1} = filename();
                end
              end
         end
         
-        function loaderHandle=check_sample_type(self,samplePath)
+        function loaderHandle=check_sample_type(this,samplePath)
             %Checks which loader types can load the sample path and chooses
             %the first one on the list. 
-            for i=1:numel(self.loaderTypesAvailable)
-                canLoad(i) = self.loaderTypesAvailable{i}.can_load_this_folder(samplePath);
+            for i=1:numel(this.loaderTypesAvailable)
+                canLoad(i) = this.loaderTypesAvailable{i}.can_load_this_folder(samplePath);
             end
-            loaderHandle=self.loaderTypesAvailable{find(canLoad,1)};
+            loaderHandle=this.loaderTypesAvailable{find(canLoad,1)};
             loaderHandle.new_sample_path(samplePath);
         end
         
-        function create_sample_list(self)
+        function create_sample_list(this)
             %creates list of samples from input dir. It also checks if
             %these samples are already processed in the output dir when the
             %overwriteResults attribute is set to false. 
-            files = dir(self.samplesPath);
+            files = dir(this.samplesPath);
             if isempty(files)
-                self.log.entry('inputDir is empty; cannot continue',1,1);
+                this.log.entry('inputDir is empty; cannot continue',1,1);
                 error('inputDir is empty; cannot continue');
             end
 
@@ -147,18 +147,18 @@ classdef io < handle
             inputList = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
 
             %Check in results dir if any samples are already processed.
-            if self.overwriteResults==false
-                try load([self.savePath filesep processed.mat],samplesProccesed)
+            if this.overwriteResults==false
+                try load([this.savePath filesep processed.mat],samplesProccesed)
                 catch 
                     %appears to be no lest (?) so lets create an empty sampleProccesed variable
                     sampleProccessed=['empty'];
                 end
-                self.sampleList=setdiff({inputList.name},sampleProccessed);
+                this.sampleList=setdiff({inputList.name},sampleProccessed);
             else
-                self.sampleList=inputList;
+                this.sampleList=inputList;
             end
-            self.nrOfSamples=numel(inputList);
-            self.currentSampleNr=0;
+            this.nrOfSamples=numel(inputList);
+            this.currentSampleNr=0;
         end
 
     end

@@ -1,4 +1,4 @@
-classdef measurements < workflow_object
+classdef Measurements < workflow_object
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -8,22 +8,22 @@ classdef measurements < workflow_object
     end
     
     methods
-        function self = measurements(dataFrame)
-            self.nrObjects = max(dataFrame.labelImage(:));
-            self.msrTable = make_table(self,dataFrame);
+        function this = measurements(dataFrame)
+            this.nrObjects = max(dataFrame.labelImage(:));
+            this.msrTable = make_table(this,dataFrame);
         end
         
-        function tbl = make_table(self,dataFrame)
+        function tbl = make_table(this,dataFrame)
             tbl = table();
             
-            if self.nrObjects > 0
+            if this.nrObjects > 0
                 for ch = 1:size(dataFrame.rawImage,3)
                     imTemp = dataFrame.rawImage(:,:,ch);
                     MsrTemp = regionprops(dataFrame.labelImage(:,:,ch), imTemp - median(imTemp(dataFrame.labelImage(:,:,ch) == 0)),...
                             'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
                     
                     %fill structure so tables can be concatenated.
-                    MsrTemp=fillStruct(self, MsrTemp);
+                    MsrTemp=fillStruct(this, MsrTemp);
                     
                     StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
                     Mass = arrayfun(@(x) sum(x.PixelValues), MsrTemp);
@@ -42,8 +42,8 @@ classdef measurements < workflow_object
             end
         end
 
-        function MsrTemp=fillStruct(self, MsrTemp)
-        numObjects = self.nrObjects;
+        function MsrTemp=fillStruct(this, MsrTemp)
+        numObjects = this.nrObjects;
         numMsr=numel(MsrTemp);
         
         if numMsr ~= numObjects

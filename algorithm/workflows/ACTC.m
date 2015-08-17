@@ -7,27 +7,27 @@ classdef ACTC
     end
     
     methods
-        function self=ACTC()
+        function this=ACTC()
         
         end
         
-        function run_workflow(self,IO,currentSample)
+        function run_workflow(this,currentSample)
         %modified run function due to the implementation of a global
         %threshold. 
         
-            if isempty(self.algorithm)
-                notify(self,'logMessage',logmessage(1,[self.name,'no results applied an empty workflow on sample.']));
+            if isempty(this.algorithm)
+                notify(this,'logMessage',logmessage(1,[this.name,'no results applied an empty workflow on sample.']));
             else
                 hist=[];
                 for j=1:currentSample.nrOfFrames
-                    data=IO.loader.load_data_frame(j);
-                    tempHist=self.algorithm{1}.create_global_hist(data);
+                    data=this.io.loader.load_data_frame(j);
+                    tempHist=this.algorithm{1}.create_global_hist(data);
                     hist=hist+tempHist;
                 end
                 for j=1:currentSample.nrOfFrames
                     data=IO.loader.load_data_frame(j);
-                    for i=2:numel(self.algorithm)
-                        data=self.algorithm{i}.run(data);
+                    for i=2:numel(this.algorithm)
+                        data=this.algorithm{i}.run(data);
                     end
                     currentSample.results.features=vertcat(currentSample.results.features,data.features);
                     currentSample.results.classefication=vertcat(currentSample.results.classefication,data.classificationResults);

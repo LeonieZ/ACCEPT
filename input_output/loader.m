@@ -1,4 +1,4 @@
-classdef (Abstract) loader < handle
+classdef (Abstract) Loader < handle
     %LOADER abstract loading class  
     %   The io class needs input for each data type. The loader class
     %   defines the functions which must be implemented in its subclasses
@@ -21,14 +21,14 @@ classdef (Abstract) loader < handle
     
     
     methods
-        function sample=load_sample(self,samplePath)
+        function sample=load_sample(this,samplePath)
         
         end
        
-        function dataFrame = load_data_frame(self,frameNr)
+        function dataFrame = load_data_frame(this,frameNr)
 
         end
-        function self=new_sample_path(self,samplePath)
+        function this=new_sample_path(this,samplePath)
         
         end
             

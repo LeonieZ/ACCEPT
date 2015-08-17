@@ -1,4 +1,4 @@
-classdef manual_classification_byLigthart < workflow_object
+classdef ManualClassificationByLigthart < workflow_object
     %MANUAL_CLASSIFICATION_BYLIGTHART Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -9,49 +9,49 @@ classdef manual_classification_byLigthart < workflow_object
     end
     
     methods
-        function self = manual_classification_byLigthart(dataFrame, varargin)
+        function this = manual_classification_byLigthart(dataFrame, varargin)
             if isempty(dataFrame.measurements)
-                notify(self,'logMessage',logmessage(1,'No measurements available for classification.'));
+                notify(this,'logMessage',logmessage(1,'No measurements available for classification.'));
                 return
             end
             
             if nargin > 1
-                self.type = varargin{1};
+                this.type = varargin{1};
             else 
-                self.type = 'Breast';
+                this.type = 'Breast';
             end
             
             if nargin > 2
                 index = varargin{2};
-                self.nrObjects = 1;
+                this.nrObjects = 1;
             else 
                 index = [];
-                self.nrObjects = dataFrame.measurements.nrObjects;    
+                this.nrObjects = dataFrame.measurements.nrObjects;    
             end
             
-            self.classTable = gate_sample(self,dataFrame,index);
+            this.classTable = gate_sample(this,dataFrame,index);
         end
         
-        function tbl = gate_sample(self,dataFrame,index)
+        function tbl = gate_sample(this,dataFrame,index)
             tbl = table();
             
-            if self.nrObjects > 0
+            if this.nrObjects > 0
                 % load gates
                 [Breast, Prostate, Cellline, WBC] = gates();
                 
-                if strcmp(self.type,'Breast')
+                if strcmp(this.type,'Breast')
                     CTCGates = Breast;
-                elseif strcmp(self.type,'Prostate')
+                elseif strcmp(this.type,'Prostate')
                     CTCGates = Prostate;
                 end
                 
-                tbl.isACTC = isGatedBy(self,dataFrame,index,CTCGates);
-                tbl.isWBC = isGatedBy(self,dataFrame,index,WBC);
-                tbl.isCellline = isGatedBy(self,dataFrame,index,Cellline);   
+                tbl.isACTC = isGatedBy(this,dataFrame,index,CTCGates);
+                tbl.isWBC = isGatedBy(this,dataFrame,index,WBC);
+                tbl.isCellline = isGatedBy(this,dataFrame,index,Cellline);   
             end
         end
         
-        function bool = isGatedBy(self,dataFrame,index,gateStr)
+        function bool = isGatedBy(this,dataFrame,index,gateStr)
         % This function returns if measured events falls in Gate
 
         % set gates for easy iteration
@@ -74,8 +74,8 @@ classdef manual_classification_byLigthart < workflow_object
                 bool = bool & include_event;
             end
         else
-            bool = true(self.nrObjects,1);
-            for index = 1:self.nrObjects
+            bool = true(this.nrObjects,1);
+            for index = 1:this.nrObjects
                 for ii = 1:size(gateStr,1)
                     include_event = dataFrame.measurements.msrTable.(gateStr{ii,1})(index) > gate_valuesl(ii) & dataFrame.measurements.msrTable.(gateStr{ii,1})(index) < gate_valuesu(ii);
                     bool(index) = bool(index) & include_event;

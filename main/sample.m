@@ -1,4 +1,4 @@
-classdef sample < handle
+classdef Sample < handle
     %sample class contains sample specific information
     %It also contains results for the entire sample. Sample wide results
     %are not directly writable but require the use of class methods. 
@@ -38,29 +38,29 @@ classdef sample < handle
     
 
     methods
-        function self=sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames,priorLocations)
+        function this=sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames,priorLocations)
             if nargin==8
-                self.name=name;
-                self.type=type;
-                self.pixelSize=pixelSize;
-                self.hasEdges=hasEdges;
-                self.channelNames=channelNames;
-                self.numChannels=numel(channelNames);
-                self.channelEdgeRemoval=channelEdgeRemoval;
-                self.nrOfFrames=nrOfFrames;
-                self.priorLocations=priorLocations;
+                this.name=name;
+                this.type=type;
+                this.pixelSize=pixelSize;
+                this.hasEdges=hasEdges;
+                this.channelNames=channelNames;
+                this.numChannels=numel(channelNames);
+                this.channelEdgeRemoval=channelEdgeRemoval;
+                this.nrOfFrames=nrOfFrames;
+                this.priorLocations=priorLocations;
             end
-            notify(self,'logMessage',logmessage(4,['New sample: ',self.name, ' is constructed.']));
+            notify(this,'logMessage',logmessage(4,['New sample: ',this.name, ' is constructed.']));
                      
         end
-        function add_measurements(self,frameNr,measurements)
-            self.measurements=[self.measurements; measurements];
+        function add_measurements(this,frameNr,measurements)
+            this.measurements=[this.measurements; measurements];
         end
-        function add_classification_results(self,frameNr,classificationResults)
-            self.classificationResults=[self.classificationResults; classificationResults];
+        function add_classification_results(this,frameNr,classificationResults)
+            this.classificationResults=[this.classificationResults; classificationResults];
         end
-        function save_results(self)
-        notify(self,'saveResults');
+        function save_results(this)
+        notify(this,'saveResults');
         end
     end
 end

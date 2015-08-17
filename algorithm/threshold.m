@@ -1,4 +1,4 @@
-classdef threshold < workflow_object
+classdef Threshold < workflow_object
     %THRESHOLD Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -13,37 +13,37 @@ classdef threshold < workflow_object
     end
     
     methods
-        function self = threshold(meth, range, currentSample)
+        function this = threshold(meth, range, currentSample)
             %varargin(1) = masksforchannels, varargin(2) = offsets varargin(3) =
             %thresholds of manual ones
             
             validatestring(meth,{'otsu','triangle','manual'});
-            self.meth = meth;
+            this.meth = meth;
             
             validatestring(range,{'global','local'});
-            self.range = range;
+            this.range = range;
             
-            self.maskForChannels=1:1:currentSample.numChannels;
-            self.dataType = currentSample.dataTypeOriginalImage;
+            this.maskForChannels=1:1:currentSample.numChannels;
+            this.dataType = currentSample.dataTypeOriginalImage;
             
             if strcmp(currentSample.dataTypeOriginalImage,'uint8')
                 bins = 255;
             elseif strcmp(currentSample.dataTypeOriginalImage,'uint16')
                 bins = 65535;
             end
-            self.hist = zeros(1,bins,currentSample.nrChannels);
+            this.hist = zeros(1,bins,currentSample.nrChannels);
             
         end
         
-        function returnFrame=run(self,inputFrame)
+        function returnFrame=run(this,inputFrame)
 
             %create histogram if thresholding is local otherwise we assume
             %this was already done.
-            if strcmp(self.range,'local') && ~strcmp(self.meth,'manual')
-                self.histogram = self.create_local_hist(inputFrame);
+            if strcmp(this.range,'local') && ~strcmp(this.meth,'manual')
+                this.histogram = this.create_local_hist(inputFrame);
             end
-            if isempty(self.thresholds)
-                self.calculate_thresholds()
+            if isempty(this.thresholds)
+                this.calculate_thresholds()
             end
             
             %Here we will have to do the segmentation. 
@@ -51,34 +51,34 @@ classdef threshold < workflow_object
         
         end
         
-        function calculate_threshold(self)
-            switch self.meth
+        function calculate_threshold(this)
+            switch this.meth
                 case 'otsu'
-                    self.thresholds = self.otsu_method() + self.offset;
+                    this.thresholds = this.otsu_method() + this.offset;
                 case 'triangle'
-                    self.thresholds = self.triangle_method() + self.offset;
+                    this.thresholds = this.triangle_method() + this.offset;
                 case 'manual'
-                    if isempty(self.thresholds)
+                    if isempty(this.thresholds)
                         error('please specify the threshold')
                     end
             end
         end
         
-        function create_hist(self, inputFrame)
+        function create_hist(this, inputFrame)
             for j = 1:nrChannels
-                if any(self.maskForChannels == j)                
+                if any(this.maskForChannels == j)                
                         imTemp = inputFrame.rawImage(:,:,j);
                           
                         if inputFrame.frameHasEdge
                             imTemp = imTemp(~inputFrame.mask);
                         end
-                        hist_temp = histc(imTemp(:),1:1:numel(self.hist))';
-                        switch self.range
+                        hist_temp = histc(imTemp(:),1:1:numel(this.hist))';
+                        switch this.range
                             case 'local'                                '
-                                self.hist(:,:,j)= hist_temp;
+                                this.hist(:,:,j)= hist_temp;
                             case 'global'
                                 if ~isempty(hist_temp)
-                                    self.hist(:,:,j) = self.hist(:,:,j) + hist_temp;
+                                    this.hist(:,:,j) = this.hist(:,:,j) + hist_temp;
                                 end
                         end
                 end
@@ -86,13 +86,13 @@ classdef threshold < workflow_object
         end
             
         
-        function thresh = otsu_method(self)
+        function thresh = otsu_method(this)
             % Function carried over from Matlab function graythresh.
-            hist = self.histogram;
+            hist = this.histogram;
             thresh = zeros(1,size(hist,3));
             
             for i = 1:size(hist,3)
-                if any(self.maskForChannels == i)
+                if any(this.maskForChannels == i)
                     % Variable names are chosen to be similar to the formulas in
                     % the Otsu paper.
 
@@ -117,18 +117,18 @@ classdef threshold < workflow_object
                     end
                 end
             end
-            thresh = thresh(self.maskForChannels);
+            thresh = thresh(this.maskForChannels);
         end
         
-        function thresh = triangle_method(self)
+        function thresh = triangle_method(this)
             % Function carried over from old ACTC script by Sjoerd.
             % adapted it a bit  - need to test if it works correctly!
-            hist = self.histogram;
+            hist = this.histogram;
             thresh = zeros(1,size(hist,3));
             num_bins = size(hist(:,:,1),2);
             
             for i = 1:size(hist,3)
-                if any(self.maskForChannels == i)
+                if any(this.maskForChannels == i)
                     % function to determine a threshold value using the "triangle threshold"
                     % method. This method determines the maximum distance of the image
                     % histogram to a line from the maximum count to the maximum bin. 
@@ -161,7 +161,7 @@ classdef threshold < workflow_object
                     end
                 end
             end  
-            thresh = thresh(self.maskForChannels);
+            thresh = thresh(this.maskForChannels);
         end
         
     end

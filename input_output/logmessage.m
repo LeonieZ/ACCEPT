@@ -1,4 +1,4 @@
-classdef (ConstructOnLoad) logmessage < event.EventData
+classdef (ConstructOnLoad) LogMessage < event.EventData
     %LOGMESSAGE is a custom event class that is used to pass messages to the logger class. 
 
     
@@ -8,11 +8,11 @@ classdef (ConstructOnLoad) logmessage < event.EventData
     end
     
     methods
-        function self=logmessage(level,message)
+        function this=logmessage(level,message)
         validateattributes(level,{'numeric'},{'integer','>=',1,'<=',4},'','level');
         validateattributes(message,{'char'},{'nonempty'},'','message');
-        self.message=message;
-        self.logLevel=level;
+        this.message=message;
+        this.logLevel=level;
         end
     end
     
