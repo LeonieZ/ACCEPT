@@ -1,25 +1,21 @@
-classdef Measurements < workflow_object
+classdef Measurements < WorkflowObject
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
         nrObjects = [];
-        msrTable = [];
+        msrTable = table();
     end
     
     methods
-        function this = measurements(dataFrame)
-            this.nrObjects = max(dataFrame.labelImage(:));
-            this.msrTable = make_table(this,dataFrame);
-        end
-        
-        function tbl = make_table(this,dataFrame)
-            tbl = table();
-            
+        function returnFrame = run(this,inputFrame)
+            returnFrame = inputFrame;
+            this.nrObjects = max(inputFrame.labelImage(:));
+
             if this.nrObjects > 0
-                for ch = 1:size(dataFrame.rawImage,3)
-                    imTemp = dataFrame.rawImage(:,:,ch);
-                    MsrTemp = regionprops(dataFrame.labelImage(:,:,ch), imTemp - median(imTemp(dataFrame.labelImage(:,:,ch) == 0)),...
+                for ch = 1:size(inputFrame.rawImage,3)
+                    imTemp = inputFrame.rawImage(:,:,ch);
+                    MsrTemp = regionprops(inputFrame.labelImage(:,:,ch), imTemp - median(imTemp(inputFrame.labelImage(:,:,ch) == 0)),...
                             'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
                     
                     %fill structure so tables can be concatenated.
@@ -31,34 +27,34 @@ classdef Measurements < workflow_object
                            
                     MsrTemp=rmfield(MsrTemp,'PixelValues');
                     
-                    names = strcat(dataFrame.sample.channelNames(ch),'_',fieldnames(MsrTemp));
+                    names = strcat(inputFrame.sample.channelNames(ch),'_',fieldnames(MsrTemp));
                     tmpTable = struct2table(MsrTemp);
                     tmpTable.Properties.VariableNames = names;
-                    tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat(dataFrame.sample.channelNames{ch},'_StandardDeviation')});
-                    tmpMass = array2table(Mass,'VariableNames',{strcat(dataFrame.sample.channelNames{ch},'_Mass')});
-                    tmpP2A = array2table(P2A,'VariableNames',{strcat(dataFrame.sample.channelNames{ch},'_P2A')});
-                    tbl=[tbl tmpTable tmpStandardDeviation tmpMass tmpP2A];
+                    tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat(inputFrame.sample.channelNames{ch},'_StandardDeviation')});
+                    tmpMass = array2table(Mass,'VariableNames',{strcat(inputFrame.sample.channelNames{ch},'_Mass')});
+                    tmpP2A = array2table(P2A,'VariableNames',{strcat(inputFrame.sample.channelNames{ch},'_P2A')});
+                    this.msrTable=[this.msrTable tmpTable tmpStandardDeviation tmpMass tmpP2A];
                 end
             end
+            returnFrame.features = this.msrTable;
         end
 
         function MsrTemp=fillStruct(this, MsrTemp)
-        numObjects = this.nrObjects;
-        numMsr=numel(MsrTemp);
-        
-        if numMsr ~= numObjects
-            if numMsr == 0;
-                MsrTemp(1:numObjects,1)=struct('Area',0,'Eccentricity', 0 ,'Perimeter',0,...
-                    'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
-            else
-                MsrTemp(numMsr+1:numObjects,1)=struct('Area',0 ,'Eccentricity', 0,...
-                    'Perimeter',0, 'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
-            end
-        end
-        idx=arrayfun(@(x) isempty(x.MaxIntensity),MsrTemp);
-        MsrTemp(idx)=struct('Area',0 ,'Eccentricity',0,'Perimeter',0,...
-        'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
+            numObjects = this.nrObjects;
+            numMsr=numel(MsrTemp);
 
+            if numMsr ~= numObjects
+                if numMsr == 0;
+                    MsrTemp(1:numObjects,1)=struct('Area',0,'Eccentricity', 0 ,'Perimeter',0,...
+                        'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
+                else
+                    MsrTemp(numMsr+1:numObjects,1)=struct('Area',0 ,'Eccentricity', 0,...
+                        'Perimeter',0, 'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
+                end
+            end
+            idx=arrayfun(@(x) isempty(x.MaxIntensity),MsrTemp);
+            MsrTemp(idx)=struct('Area',0 ,'Eccentricity',0,'Perimeter',0,...
+            'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
         end
        
         

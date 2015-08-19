@@ -1,15 +1,15 @@
-classdef ActiveContourSegmentation < workflow_object
+classdef ActiveContourSegmentation < WorkflowObject
     %ACTIVECONTOUR_SEGMENTATION Summary of this class goes here
     %   Detailed explanation goes here
     
     properties (SetAccess = private)
-        currentFrame = [];
-        segmentedFrame = [];
-        maskForChannels
+        maskForChannels = [];
         lambda = [];
         inner_it = []
         breg_it = [];
         mu_update = [];
+        single_channel = [];
+        init = [];
     end
     
     properties (Constant)
@@ -20,56 +20,59 @@ classdef ActiveContourSegmentation < workflow_object
     
     
     methods
-        function this = activecontour_segmentation(dataFrame, lambda, inner_it, breg_it, varargin)
+        function this = ActiveContourSegmentation(lambda, inner_it, breg_it, varargin)
             %varargin(1) = init, varargin(2) = masksforchannels,
-            %varargin(3) = single_channel, , varargin(4) = image
+            %varargin(3) = single_channel
 
-            if nargin == 7
-                this.currentFrame = dataFrame.rawImage(:,:,varargin{3});
-            elseif nargin > 7 && isa(varargin{4}, 'double')
-                this.currentFrame = varargin{4};
-            else
-                this.currentFrame = dataFrame.rawImage;
+            if nargin > 5
+                this.single_channel = varargin{3};
             end
                         
-            if nargin > 5 && ~isempty(varargin{2})
+            if nargin > 4 && ~isempty(varargin{2})
                 this.maskForChannels = varargin{2};
-            else
-                this.maskForChannels = 1:1:size(dataFrame.rawImage,3);
-            end
-                     
-            if size(lambda,2) == size(this.currentFrame,3)    
-                this.lambda = lambda;
-            elseif size(lambda,2) == 1
-                this.lambda = repmat(lambda,1, size(this.currentFrame,3));
             end
             
-            if size(breg_it,2) == size(this.currentFrame,3)    
-                this.breg_it = breg_it;
-            elseif size(breg_it,2) == 1
-                this.breg_it = repmat(breg_it,1, size(this.currentFrame,3));
-            end
-            
+            this.lambda = lambda; 
+            this.breg_it = breg_it;
+ 
             this.inner_it = inner_it;
             this.mu_update = round(0.5*inner_it);
-            this.segmentedFrame = false(size(this.currentFrame));
             
-            if nargin > 4
-                init = varargin{1};
-            else
-                init = [];
+            if nargin > 3
+                this.init = varargin{1};
+            end
+        end
+        
+        function returnFrame = run(this, inputFrame)
+            returnFrame = inputFrame;
+            returnFrame.segmentedImage = false(size(inputFrame.rawImage));
+                
+
+            if isempty(this.maskForChannels) && isempty(this.single_channel)
+                this.maskForChannels = 1:1:size(inputFrame.rawImage,3);
+            elseif ~isempty(this.single_channel)
+                this.maskForChannels = zeros(1,size(inputFrame.rawImage,3));
+                this.maskForChannels(this.single_channel) = this.single_channel;
+            end
+                                 
+            if size(this.lambda,2) == 1
+                this.lambda = repmat(this.lambda,1, size(inputFrame.rawImage,3));
             end
             
-            for i = 1:size(this.currentFrame,3)
+            if size(this.breg_it,2) == 1
+                this.breg_it = repmat(this.breg_it,1, size(this.currentFrame,3));
+            end
+            
+            for i = 1:size(inputFrame.rawImage,3)
                 if any(this.maskForChannels == i)
-                    tmp = bregman_cv(this, dataFrame, i, init);
+                    tmp = bregman_cv(this, inputFrame, i, this.init);
                     tmp = bwareaopen(tmp, 10);
-                    this.segmentedFrame(:,:,i) = tmp;
+                    returnFrame.segmentedImage(:,:,i) = tmp;
                     clear grad div
                 end
             end
             
-            if nargin < 7
+            if nargin < 6
                 this.segmentedFrame = this.segmentedFrame(:,:,this.maskForChannels);
             end
         end

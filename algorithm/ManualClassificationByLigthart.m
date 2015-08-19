@@ -1,38 +1,49 @@
-classdef ManualClassificationByLigthart < workflow_object
+classdef ManualClassificationByLigthart < WorkflowObject
     %MANUAL_CLASSIFICATION_BYLIGTHART Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
         classTable = table();
         nrObjects
+        index
         type = [];
     end
     
     methods
-        function this = manual_classification_byLigthart(dataFrame, varargin)
-            if isempty(dataFrame.measurements)
-                notify(this,'logMessage',logmessage(1,'No measurements available for classification.'));
-                return
-            end
-            
-            if nargin > 1
+        function this = ManualClassificationByLigthart(varargin)
+            if nargin > 0
                 this.type = varargin{1};
             else 
                 this.type = 'Breast';
             end
             
-            if nargin > 2
-                index = varargin{2};
+            if nargin > 1
+                this.index = varargin{2};
                 this.nrObjects = 1;
             else 
-                index = [];
-                this.nrObjects = dataFrame.measurements.nrObjects;    
-            end
-            
-            this.classTable = gate_sample(this,dataFrame,index);
+                this.index = [];
+                this.nrObjects = [];    
+            end    
         end
         
-        function tbl = gate_sample(this,dataFrame,index)
+        function returnFrame = run(this, inputFrame)
+            returnFrame = inputFrame;
+            
+            if isempty(inputFrame.measurements)
+                notify(this,'logMessage',logmessage(1,'No measurements available for classification.'));
+                return
+            end
+            
+            if isempty(this.nrObjects)
+                this.nrObjects = inputFrame.measurements.nrObjects;    
+            end
+            
+            this.classTable = gate_sample(this,dataFrame); 
+            
+            returnFrame.classificationResults = this.classTable;
+        end
+        
+        function tbl = gate_sample(this,dataFrame)
             tbl = table();
             
             if this.nrObjects > 0
@@ -45,9 +56,9 @@ classdef ManualClassificationByLigthart < workflow_object
                     CTCGates = Prostate;
                 end
                 
-                tbl.isACTC = isGatedBy(this,dataFrame,index,CTCGates);
-                tbl.isWBC = isGatedBy(this,dataFrame,index,WBC);
-                tbl.isCellline = isGatedBy(this,dataFrame,index,Cellline);   
+                tbl.isACTC = isGatedBy(this,dataFrame,this.index,CTCGates);
+                tbl.isWBC = isGatedBy(this,dataFrame,this.index,WBC);
+                tbl.isCellline = isGatedBy(this,dataFrame,this.index,Cellline);   
             end
         end
         
