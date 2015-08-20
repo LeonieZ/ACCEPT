@@ -3,14 +3,13 @@ classdef IO < handle
     %allows for easy loading of different sample types
     
     properties
-        samplesPath
-        savePath
+        inputPath
+        resultsPath
         overwriteResults=false;
-        loader
     end
     
     properties(SetAccess=private)
-        loaderTypesAvailable={celltracks(),mcbp(),default()}; % beware of the order, the first loader type that can load a dir will be used.
+        loaderTypesAvailable={CellTracks(),MCBP(),Default()}; % beware of the order, the first loader type that can load a dir will be used.
         sampleList
     end
     properties(Access=private)
@@ -23,19 +22,19 @@ classdef IO < handle
     end
     
     methods
-        function this = io(samplesPath,savePath)
+        function this = IO(samplesPath,resultsPath,sampleProcessor)
             this.samplesPath=samplesPath;
-            this.savePath=savePath;
+            this.resultsPath=resultsPath;
         end
         
-        function set.savePath(this,path)
+        function set.resultsPath(this,path)
             if exist(path,'dir')
-                this.savePath=path;
+                this.resultsPath=path;
             else
                 mkdir(path);
                 mkdir([path,filesep,'output']);
                 mkdir([path,filesep,'frames'])
-                this.savePath=path;
+                this.resultsPath=path;
             end
             this.create_sample_list;
         end
@@ -63,30 +62,30 @@ classdef IO < handle
         end
         
         function save_work_flow(this,workFlow)
-            save([this.savePath,filesep,'workflow.mat'],'workFlow');
+            save([this.resultsPath,filesep,'workflow.mat'],'workFlow');
         end
         
         function save_sample(this,currentSample)
-            save([this.savePath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample');
+            save([this.resultsPath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample');
         end
         
         function save_results(this,currentSample)
-            save([this.savePath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample.results','-append');        
+            save([this.resultsPath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample.results','-append');        
         end
         
         function save_data_frame(this,currentSample,currentDataFrame)
-            if ~exist([this.savePath,filesep,'frames',filesep,currentSample.name],'dir')
-                mkdir([this.savePath,filesep,'frames',filesep,currentSample.name]);
+            if ~exist([this.resultsPath,filesep,'frames',filesep,currentSample.name],'dir')
+                mkdir([this.resultsPath,filesep,'frames',filesep,currentSample.name]);
             end
-            save([this.savePath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame');            
+            save([this.resultsPath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame');            
     
         end
         
         function save_data_frame_segmentation(this,currentSample,currentDataFrame)
-            if ~exist([this.savePath,filesep,'frames',filesep,currentSample.name],'dir')
-                mkdir([this.savePath,filesep,'frames',filesep,currentSample.name]);
+            if ~exist([this.resultsPath,filesep,'frames',filesep,currentSample.name],'dir')
+                mkdir([this.resultsPath,filesep,'frames',filesep,currentSample.name]);
             end
-            t=Tiff([this.savePath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
+            t=Tiff([this.resultsPath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
             t.setTag('Photometric',t.Photometric.MinIsBlack);
             t.setTag('Compression',t.Compression.LZW);
             t.setTag('ImageLength',size(currentDataFrame.segmentedImage,1));
@@ -148,7 +147,7 @@ classdef IO < handle
 
             %Check in results dir if any samples are already processed.
             if this.overwriteResults==false
-                try load([this.savePath filesep processed.mat],samplesProccesed)
+                try load([this.resultsPath filesep processed.mat],samplesProccesed)
                 catch 
                     %appears to be no lest (?) so lets create an empty sampleProccesed variable
                     sampleProccessed=['empty'];

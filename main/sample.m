@@ -14,25 +14,33 @@ classdef Sample < handle
     
     
     properties (SetAccess=private)
-        name='Empty' %the sample name or identifier.
+        sampleId='Empty' %the sample name or identifier.
         type='Default'; % this can be replaced with a specific data type such as CellSearch. 
         hasEdges = false; % do we need to removeEdges using this datatype (for example CellSearch )
 
         % We will have to discuss our naming convention. I think we should keep
         % track of both the flouphore and its target, but it gets confusing \G.
-        channelNames={'CD45','DNA','CK','Empty'};
-        numChannels = 4;
-        pixelSize=1;
-        channelEdgeRemoval=4;
+        imageSize=[0,0]
         nrOfFrames=0;
+        nrOfChannels = 4;
+        channelNames={'CD45','DNA','CK','Empty'};
+        channelEdgeRemoval=4;
         dataTypeOriginalImage='uint16';
+        pixelSize=1;
         priorLocations=[];
-        results=result();
+        results=Result();
+    end
+    properties (Access={?Loader})
+        loaderType
+        imagePath
+        priorPath
+        tiffHeaders
+        rows
+        collumns
         
     end
     
     events
-        saveResults
         logMessage
     end
     
@@ -45,7 +53,7 @@ classdef Sample < handle
                 this.pixelSize=pixelSize;
                 this.hasEdges=hasEdges;
                 this.channelNames=channelNames;
-                this.numChannels=numel(channelNames);
+                this.nrOfChannels=numel(channelNames);
                 this.channelEdgeRemoval=channelEdgeRemoval;
                 this.nrOfFrames=nrOfFrames;
                 this.priorLocations=priorLocations;

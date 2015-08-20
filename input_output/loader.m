@@ -1,18 +1,11 @@
-classdef (Abstract) Loader < handle
+classdef (Abstract) Loader
     %LOADER abstract loading class  
     %   The io class needs input for each data type. The loader class
     %   defines the functions which must be implemented in its subclasses
     %   so that the io class is able to load the appropriate data. 
     
     properties
-        loaderType
-        sampleId
-        imagePath
-        priorPath
-        nrOfFrames
-        nrOfChannels
-        imageSize
-        sample
+
     end
     
     events

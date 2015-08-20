@@ -1,57 +1,59 @@
-classdef CellTracks < loader
+classdef CellTracks < Loader
     %CELLSEARCH Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
+        loaderType='CellTracks'
         hasEdges=true;
         rescaleTiffs=true;
         pixelSize=0.64;
-        imageFileNames
-        tiffHeaders
+        tiffHeaders;
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
         channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
         channelEdgeRemoval=2;
-        xmlData
+        xmlData;
+        sample=Sample();
     end
     
     methods
-        function this = celltracks(samplePath)
-            this.loaderType='celltracks';
+        function this = CellTracks(input) %pass either a sample or a path to the constructor
             if nargin == 1
-                this=this.new_sample_path(samplePath);
+                validateattributes(input,{'Sample','char'},{'nonempty'},'','input');
+                if isa(input,'Sample')
+                    if strcmp(input.type,'CellTracks')
+                        this.sample=input;
+                    end
+                    error('tried to use incorrect sampletype with CellTracks Loader');
+                else
+                    this=this.new_sample_path(samplePath);
+                end
             end
+            keyboard
         end
         
         function this=new_sample_path(this,samplePath)
-            this.imagePath = this.find_dir(samplePath,'tif',100);
-            this.priorPath = this.find_dir(samplePath,'xml',1);
+            this.sample.imagePath = this.find_dir(samplePath,'tif',100);
+            this.sample.priorPath = this.find_dir(samplePath,'xml',1);
             splitPath=regexp(samplePath, filesep, 'split');
             if isempty(splitPath{end})
-                this.sampleId=splitPath{end-1};
+                this.sample.sampleId=splitPath{end-1};
             else
-                this.sampleId=splitPath{end};
+                this.sample.sampleId=splitPath{end};
             end
-        end
-        
-        function Sample=load_sample(this)
-            this.preload_tiff_headers();
+            this.preload_tiff_headers(imagePath);
             this.processXML();
-            this.sample=sample(this.sampleId,...
-                'celltracks',...
-                this.pixelSize,...
-                this.hasEdges,...
-                this.channelNames(this.channelRemapping(2,1:this.nrOfChannels)),...
-                this.channelEdgeRemoval,...
-                this.nrOfFrames,...
-                this.prior_locations_in_sample);
-            Sample=this.sample;
+            this.sample.pixelSize=this.pixelSize;
+            this.sample.hasEdges=this.hasEdges;
+            this.sample.channelNames=this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
+            this.sample.channelEdgeRemoval=this.channelEdgeRemoval;
+            this.priorLocations=this.prior_locations_in_sample;
         end
-        
+   
         function dataFrame=load_data_frame(this,frameNr)
             if isempty(this.sample)
                 this.load_sample();
             end
-            dataFrame=dataframe(this.sample,frameNr,...
+            dataFrame=Dataframe(this.sample,frameNr,...
             this.does_frame_have_edge(frameNr),...
             this.read_im_and_scale(frameNr));
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
@@ -106,21 +108,21 @@ classdef CellTracks < loader
         end
         
         function preload_tiff_headers(this)
-            tempImageFileNames = dir([this.imagePath filesep '*.tif']);
+            tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
             for i=1:numel(tempImageFileNames)
-             this.imageFileNames{i} = [this.imagePath filesep tempImageFileNames(i).name];  
+             imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
             end
             %function to fill the dataP.temp.imageinfos variable
 
-            for i=1:numel(this.imageFileNames)
-                this.tiffHeaders{i}=imfinfo(this.imageFileNames{i});
+            for i=1:numel(imageFileNames)
+                this.sample.tiffHeaders{i}=imfinfo(imageFileNames{i});
             end
 
             %Have to add a check for the 2^15 offset.
             %dataP.temp.imagesHaveOffset=false;
-            this.imageSize=[this.tiffHeaders{1}(1).Height this.tiffHeaders{1}(1).Width numel(this.tiffHeaders{1})];
-            this.nrOfFrames=numel(this.imageFileNames);
-            this.nrOfChannels=numel(this.tiffHeaders{1});
+            this.sample.imageSize=[this.tiffHeaders{1}(1).Height this.tiffHeaders{1}(1).Width numel(this.tiffHeaders{1})];
+            this.sample.nrOfFrames=numel(this.imageFileNames);
+            this.sample.nrOfChannels=numel(this.tiffHeaders{1});
         end
         
         function rawImage=read_im_and_scale(this,imageNr)
@@ -159,13 +161,13 @@ classdef CellTracks < loader
         end
 
         function hasEdge=does_frame_have_edge(this,frameNr)
-            row = ceil(frameNr/this.xmlData.columns) - 1;
+            row = ceil(frameNr/this.sample.columns) - 1;
             switch row
                 case {0,this.xmlData.rows} 
                     hasEdge=true;
                 otherwise
-                    col=frameNr-row*this.xmlData.columns;
-                    if col==this.xmlData.columns
+                    col=frameNr-row*this.sample.columns;
+                    if col==this.sample.columns
                         hasEdge=true;
                     elseif col==1
                         hasEdge=true;
@@ -269,23 +271,23 @@ classdef CellTracks < loader
                     %setting row and colums based on nrOfImages
                     switch this.nrOfFrames
                         case 210 % 6*35 images
-                            this.xmlData.columns=35;
-                            this.xmlData.rows=6;
+                            this.sample.columns=35;
+                            this.sample.rows=6;
                         case 180 % 5*36 images
-                            this.xmlData.columns=36;
-                            this.xmlData.rows=5;
+                            this.sample.columns=36;
+                            this.sample.rows=5;
                         case 175 % 5*35 images
-                            this.xmlData.columns=35;
-                            this.xmlData.rows=5;
+                            this.sample.columns=35;
+                            this.sample.rows=5;
                         case 170 % 5*34 images
-                            this.xmlData.columns=34;
-                            this.xmlData.rows=5;
+                            this.sample.columns=34;
+                            this.sample.rows=5;
                         case 144 % 4*36 images
-                            this.xmlData.columns=36;
-                            this.xmlData.rows=4;
+                            this.sample.columns=36;
+                            this.sample.rows=4;
                         case 140 % 4*35 images
-                            this.xmlData.columns=35;
-                            this.xmlData.rows=4;
+                            this.sample.columns=35;
+                            this.sample.rows=4;
                     end
                     return
                 end
@@ -293,31 +295,31 @@ classdef CellTracks < loader
         end
         
         function [coordinates]=pixels_to_coordinates(this,pixelCoordinates, imgNr)
-            row = ceil(imgNr/this.xmlData.columns) - 1;
-            cols = this.xmlData.columns;
+            row = ceil(imgNr/this.sample.columns) - 1;
+            cols = this.sample.columns;
             switch row
                 case {1,3,5} 
-                    col=(cols-(imgNr-rowthis.xmlData.columns));
-                    coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
-                    coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row;  
+                    col=(cols-(imgNr-rowthis.sample.columns));
+                    coordinates(1)=pixelCoordinates(1)+this.sample.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+this.sample.camYSize*row;  
                 otherwise
                     col=imgNr-1-row*cols;
-                    coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
-                    coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row; 
+                    coordinates(1)=pixelCoordinates(1)+this.sample.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+this.sample.camYSize*row; 
             end
         end
 
         function [locations]=event_to_pixels_and_frame(this,eventNr)
-            frameNr=this.xmlData.frameNr(eventNr);
-            row = ceil(frameNr/this.xmlData.columns) - 1;
-            cols = this.xmlData.columns;
+            frameNr=this.sample.frameNr(eventNr);
+            row = ceil(frameNr/this.sample.columns) - 1;
+            cols = this.sample.columns;
             switch row
                 case {1,3,5} 
-                    col=(cols-(frameNr-row*this.xmlData.columns));
+                    col=(cols-(frameNr-row*this.sample.columns));
                 otherwise
-                    col=frameNr-1-row*this.xmlData.columns;
+                    col=frameNr-1-row*this.sample.columns;
             end
-            xTopLeft=this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col;
+            xTopLeft=this.xmlData.locations(eventNr,1)-this.sample.camXSize*col;
             yTopLeft=this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row;
             xBottomRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
             yBottomRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;
