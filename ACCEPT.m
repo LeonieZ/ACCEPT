@@ -20,9 +20,9 @@ function uiHandle=ACCEPT(varargin)
     %% Check the number of arguments in and launch the appropriate script.
     if nargin > 0
         %Batch Mode
-        uiHandle=batchmode(varargin{:});
+        uiHandle=Batchmode(varargin{:});
     else
-        uiHandle=gui();
+        uiHandle=Gui();
     end
 end
 
