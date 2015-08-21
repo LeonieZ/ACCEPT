@@ -19,12 +19,14 @@ function uiHandle=ACCEPT(varargin)
     addpath(genpath_exclude(installDir));
     
     %% Check the number of arguments in and launch the appropriate script.
+    base = Base();
     if nargin > 0
-        %Batch Mode
-        %uiHandle=Batchmode(varargin{:});
+        % batch mode script of our program
+        % TODO: batchmode script and base argument missing here
+        uiHandle = batchmode(varargin{:});
     else
-        base = Base();
-        uiHandle=ACCEPT_GUI(base);
+        % graphical user interface script guiding our program
+        uiHandle = gui(base);
     end
 end
 
