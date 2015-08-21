@@ -17,12 +17,14 @@ function uiHandle=ACCEPT(varargin)
     file = which('ACCEPT.m');
     installDir = fileparts(file);
     addpath(genpath_exclude(installDir));
+    
     %% Check the number of arguments in and launch the appropriate script.
     if nargin > 0
         %Batch Mode
-        uiHandle=Batchmode(varargin{:});
+        %uiHandle=Batchmode(varargin{:});
     else
-        uiHandle=Gui();
+        base = Base();
+        uiHandle=ACCEPT_GUI(base);
     end
 end
 
