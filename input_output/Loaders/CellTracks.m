@@ -11,7 +11,7 @@ classdef CellTracks < Loader
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
         channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
         channelEdgeRemoval=2;
-        xmlData;
+        xmlData=[];
         sample=Sample();
     end
     
@@ -20,18 +20,19 @@ classdef CellTracks < Loader
             if nargin == 1
                 validateattributes(input,{'Sample','char'},{'nonempty'},'','input');
                 if isa(input,'Sample')
-                    if strcmp(input.type,'CellTracks')
+                    if strcmp(input.type,this.loaderType)
                         this.sample=input;
-                    end
+                    else
                     error('tried to use incorrect sampletype with CellTracks Loader');
+                    end
                 else
-                    this=this.new_sample_path(samplePath);
+                    this=this.new_sample_path(input);
                 end
             end
-            keyboard
         end
         
         function this=new_sample_path(this,samplePath)
+            this.sample.type=this.loaderType;
             this.sample.imagePath = this.find_dir(samplePath,'tif',100);
             this.sample.priorPath = this.find_dir(samplePath,'xml',1);
             splitPath=regexp(samplePath, filesep, 'split');
@@ -40,13 +41,12 @@ classdef CellTracks < Loader
             else
                 this.sample.sampleId=splitPath{end};
             end
-            this.preload_tiff_headers(imagePath);
-            this.processXML();
+            this.preload_tiff_headers();
             this.sample.pixelSize=this.pixelSize;
             this.sample.hasEdges=this.hasEdges;
             this.sample.channelNames=this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
             this.sample.channelEdgeRemoval=this.channelEdgeRemoval;
-            this.priorLocations=this.prior_locations_in_sample;
+            this.sample.priorLocations=this.prior_locations_in_sample;
         end
    
         function dataFrame=load_data_frame(this,frameNr)
@@ -110,19 +110,19 @@ classdef CellTracks < Loader
         function preload_tiff_headers(this)
             tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
             for i=1:numel(tempImageFileNames)
-             imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+             this.sample.imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
             end
             %function to fill the dataP.temp.imageinfos variable
 
-            for i=1:numel(imageFileNames)
-                this.sample.tiffHeaders{i}=imfinfo(imageFileNames{i});
+            for i=1:numel(this.sample.imageFileNames)
+                this.sample.tiffHeaders{i}=imfinfo(this.sample.imageFileNames{i});
             end
 
             %Have to add a check for the 2^15 offset.
             %dataP.temp.imagesHaveOffset=false;
-            this.sample.imageSize=[this.tiffHeaders{1}(1).Height this.tiffHeaders{1}(1).Width numel(this.tiffHeaders{1})];
-            this.sample.nrOfFrames=numel(this.imageFileNames);
-            this.sample.nrOfChannels=numel(this.tiffHeaders{1});
+            this.sample.imageSize=[this.sample.tiffHeaders{1}(1).Height this.sample.tiffHeaders{1}(1).Width numel(this.sample.tiffHeaders{1})];
+            this.sample.nrOfFrames=numel(tempImageFileNames);
+            this.sample.nrOfChannels=numel(this.sample.tiffHeaders{1});
         end
         
         function rawImage=read_im_and_scale(this,imageNr)
@@ -131,17 +131,17 @@ classdef CellTracks < Loader
             % stretch values and rescale to approx old values if the image is a
             % celltracks tiff: scales IMMC images back to 0..4095 scale. Otherwise a
             % normal tiff is returned.
-            rawImage = zeros(this.imageSize);
-            for i=1:this.nrOfChannels;
+            rawImage = zeros(this.sample.imageSize);
+            for i=1:this.sample.nrOfChannels;
                 try
-                    imagetemp = double(imread(this.imageFileNames{imageNr},i, 'info',this.tiffHeaders{imageNr}));
+                    imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr}));
                 catch
-                    notify(this,'logMessage',logmessage(2,['Tiff from channel ' num2str(ch) ' is not readable!'])) ;
+                    notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr}, 'from channel ' num2str(i) ' is not readable!'])) ;
                     return
                 end
                 if  this.rescaleTiffs 
                     
-                    UnknownTags = this.tiffHeaders{imageNr}(i).UnknownTags;
+                    UnknownTags = this.sample.tiffHeaders{imageNr}(i).UnknownTags;
 
                     LowValue  =  UnknownTags(2).Value;
                     HighValue =  UnknownTags(3).Value;
@@ -163,7 +163,7 @@ classdef CellTracks < Loader
         function hasEdge=does_frame_have_edge(this,frameNr)
             row = ceil(frameNr/this.sample.columns) - 1;
             switch row
-                case {0,this.xmlData.rows} 
+                case {0,this.sample.rows} 
                     hasEdge=true;
                 otherwise
                     col=frameNr-row*this.sample.columns;
@@ -178,6 +178,9 @@ classdef CellTracks < Loader
         end
         
         function locations=prior_locations_in_sample(this)
+            if isempty(this.xmlData)
+                this.processXML();
+            end
             index=find(this.xmlData.score==1);
             if isempty(index)
                 locations=[];
@@ -206,15 +209,15 @@ classdef CellTracks < Loader
             this.xmlData = [];
             
             % find directory where xml file is located in
-            if isempty(this.priorPath)
+            if isempty(this.sample.priorPath)
                 NoXML=1;
             else
-                XMLFile = dir([this.priorPath filesep '*.xml']);
+                XMLFile = dir([this.sample.priorPath filesep '*.xml']);
             end
                 
             % Load & process XML file
             if NoXML == 0
-                this.xmlData=xml2struct([this.priorPath filesep XMLFile.name]);
+                this.xmlData=xml2struct([this.sample.priorPath filesep XMLFile.name]);
                 this.xmlData.num_events = [];
                 this.xmlData.CellSearchIds = [];
                 this.xmlData.locations = [];
@@ -239,8 +242,8 @@ classdef CellTracks < Loader
                         from=str2num(tempstr(start(2)+1:finish(2)-1));
                         this.xmlData.locations(i,:)=[from,to];
                     end
-                    this.xmlData.columns=str2num(this.xmlData.archive{2}.runs.record.numcols.Text);
-                    this.xmlData.rows=str2num(this.xmlData.archive{2}.runs.record.numrows.Text);
+                    this.sample.columns=str2num(this.xmlData.archive{2}.runs.record.numcols.Text);
+                    this.sample.rows=str2num(this.xmlData.archive{2}.runs.record.numrows.Text);
                     this.xmlData.camYSize=str2num(this.xmlData.archive{2}.runs.record.camysize.Text);
                     this.xmlData.camXSize=str2num(this.xmlData.archive{2}.runs.record.camxsize.Text);
            
@@ -262,8 +265,8 @@ classdef CellTracks < Loader
                         from=str2num(tempstr(start(2)+1:finish(2)-1));
                         this.xmlData.locations(i,:)=[from,to];
                     end
-                    this.xmlData.columns=str2num(this.xmlData.export{2}.runs.record.numcols.Text);
-                    this.xmlData.rows=str2num(this.xmlData.export{2}.runs.record.numrows.Text);
+                    this.sample.columns=str2num(this.xmlData.export{2}.runs.record.numcols.Text);
+                    this.sample.rows=str2num(this.xmlData.export{2}.runs.record.numrows.Text);
                     this.xmlData.camYSize=str2num(this.xmlData.export{2}.runs.record.camysize.Text);
                     this.xmlData.camXSize=str2num(this.xmlData.export{2}.runs.record.camxsize.Text);
                 else
@@ -300,17 +303,17 @@ classdef CellTracks < Loader
             switch row
                 case {1,3,5} 
                     col=(cols-(imgNr-rowthis.sample.columns));
-                    coordinates(1)=pixelCoordinates(1)+this.sample.camXSize*col;
-                    coordinates(2)=pixelCoordinates(2)+this.sample.camYSize*row;  
+                    coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row;  
                 otherwise
                     col=imgNr-1-row*cols;
-                    coordinates(1)=pixelCoordinates(1)+this.sample.camXSize*col;
-                    coordinates(2)=pixelCoordinates(2)+this.sample.camYSize*row; 
+                    coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row; 
             end
         end
 
         function [locations]=event_to_pixels_and_frame(this,eventNr)
-            frameNr=this.sample.frameNr(eventNr);
+            frameNr=this.xmlData.frameNr(eventNr);
             row = ceil(frameNr/this.sample.columns) - 1;
             cols = this.sample.columns;
             switch row
@@ -319,7 +322,7 @@ classdef CellTracks < Loader
                 otherwise
                     col=frameNr-1-row*this.sample.columns;
             end
-            xTopLeft=this.xmlData.locations(eventNr,1)-this.sample.camXSize*col;
+            xTopLeft=this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col;
             yTopLeft=this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row;
             xBottomRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
             yBottomRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;

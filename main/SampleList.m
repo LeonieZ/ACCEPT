@@ -3,13 +3,26 @@ classdef SampleList < handle
     %   Detailed explanation goes here
     
     properties
-        samplesNames = {}
+        sampleProcessorId='empty'
+        inputPath = '';
+        resultPath = '';
+        sampleNames = {}
         isProccessed = []
         isToBeProccessed = []
+    end
+        
+    properties(Access={?IO})
         loaderToBeUsed = {}
+    end
+        
+    events
+        updatedPocessorId
+        updatedInputPath
+        updatedResultPath
     end
     
     methods
+        
         
     end
     

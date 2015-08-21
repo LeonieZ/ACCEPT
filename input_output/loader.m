@@ -1,4 +1,4 @@
-classdef (Abstract) Loader
+classdef (Abstract) Loader < handle
     %LOADER abstract loading class  
     %   The io class needs input for each data type. The loader class
     %   defines the functions which must be implemented in its subclasses

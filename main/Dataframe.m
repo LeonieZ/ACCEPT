@@ -50,7 +50,7 @@ classdef Dataframe < handle
     end
           
     methods
-        function this = dataframe(Sample,frameNr,frameHasEdge,rawImage)
+        function this = Dataframe(Sample,frameNr,frameHasEdge,rawImage)
                 this.sample=Sample;
                 this.frameNr=frameNr;
                 this.frameHasEdge=frameHasEdge;

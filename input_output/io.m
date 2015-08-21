@@ -3,18 +3,11 @@ classdef IO < handle
     %allows for easy loading of different sample types
     
     properties
-        inputPath
-        resultsPath
         overwriteResults=false;
     end
     
     properties(SetAccess=private)
         loaderTypesAvailable={CellTracks(),MCBP(),Default()}; % beware of the order, the first loader type that can load a dir will be used.
-        sampleList
-    end
-    properties(Access=private)
-        nrOfSamples
-        currentSampleNr
     end
     
     events
@@ -22,12 +15,20 @@ classdef IO < handle
     end
     
     methods
-        function this = IO(samplesPath,resultsPath,sampleProcessor)
-            this.samplesPath=samplesPath;
-            this.resultsPath=resultsPath;
+        function this = IO()
+
         end
         
-        function set.resultsPath(this,path)
+        function outputList = create_sample_list(this,inputPath,resultsPath,sampleProcessor)
+        
+        end
+        
+        function updated_sample_Processor(this)
+            
+        end
+        
+        function updated_results_path(this)
+
             if exist(path,'dir')
                 this.resultsPath=path;
             else
@@ -39,26 +40,11 @@ classdef IO < handle
             this.create_sample_list;
         end
         
-        function set.samplesPath(this,path)
+        function updated_input_path(this)
+            %update loader list
+            %update sampleList
             this.samplesPath=path;
-            this.create_sample_list;
-        end
-        
-        function set.overwriteResults(this,bool)
-            this.overwriteResults=bool;
-            this.create_sample_list;
-        end
-        
-        function sampleOut=load_next_sample(this)
-            %Will load the next sample in the sampleList
-            if this.currentSampleNr==this.nrOfSamples
-                sampleOut=this.loader.sample;
-            else
-                this.currentSampleNr=this.currentSampleNr+1;
-                samplePath=fullfile(this.samplesPath,this.sampleList{this.currentSampleNr});
-                this.loader=this.check_sample_type(samplePath);
-                sampleOut=this.loader.load_sample();
-            end
+            this.update_sample_list;
         end
         
         function save_work_flow(this,workFlow)

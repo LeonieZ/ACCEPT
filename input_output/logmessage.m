@@ -8,7 +8,7 @@ classdef (ConstructOnLoad) LogMessage < event.EventData
     end
     
     methods
-        function this=logmessage(level,message)
+        function this=LogMessage(level,message)
         validateattributes(level,{'numeric'},{'integer','>=',1,'<=',4},'','level');
         validateattributes(message,{'char'},{'nonempty'},'','message');
         this.message=message;
