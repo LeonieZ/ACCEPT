@@ -1,28 +1,56 @@
 classdef SampleList < handle
-    %SAMPLELIST Summary of this class goes here
-    %   Detailed explanation goes here
+    %SAMPLELIST keeps track if availablee samples are processed or not. 
     
     properties
         sampleProcessorId='empty'
         inputPath = '';
         resultPath = '';
-        sampleNames = {}
-        isProccessed = []
-        isToBeProccessed = []
+        isToBeProcessed = []
     end
-        
+    
+    properties(SetAccess={?IO})
+        sampleNames = {}
+        isProcessed = []    
+    end
+    
     properties(Access={?IO})
         loaderToBeUsed = {}
     end
         
     events
-        updatedPocessorId
+        updatedProcessorId
         updatedInputPath
         updatedResultPath
     end
     
     methods
+        function this=SampleList(procId,inputP,resultP,smpleNames,isProc,isToBeProc,loaderUsed)
+            
+            if nargin==7
+                this.sampleProcessorId=procId;
+                this.inputPath=inputP;
+                this.resultPath=resultP;
+                this.sampleNames=smpleNames;
+                this.isProcessed=isProc;
+                this.isToBeProcessed=isToBeProc;
+                this.loaderToBeUsed=loaderUsed;
+            end
+        end
         
+        function set.sampleProcessorId(this,value)
+            this.sampleProcessorId=value;
+            notify(this,'updatedProcessorId');
+        end
+        
+        function set.inputPath(this,value)
+            this.inputPath=value;
+            notify(this,'updatedInputPath')
+        end
+        
+        function set.resultPath(this,value)
+            this.resultPath=value;
+            notify(this,'updatedResultPath')
+        end
         
     end
     

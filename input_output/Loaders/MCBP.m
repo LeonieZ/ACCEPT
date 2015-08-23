@@ -3,6 +3,7 @@ classdef MCBP < Loader
     %   Detailed explanation goes here
     
     properties
+        name='MCBP'
     end
     
     methods

@@ -3,7 +3,7 @@ classdef CellTracks < Loader
     %   Detailed explanation goes here
     
     properties
-        loaderType='CellTracks'
+        name='CellTracks'
         hasEdges=true;
         rescaleTiffs=true;
         pixelSize=0.64;
@@ -20,7 +20,7 @@ classdef CellTracks < Loader
             if nargin == 1
                 validateattributes(input,{'Sample','char'},{'nonempty'},'','input');
                 if isa(input,'Sample')
-                    if strcmp(input.type,this.loaderType)
+                    if strcmp(input.type,this.name)
                         this.sample=input;
                     else
                     error('tried to use incorrect sampletype with CellTracks Loader');
@@ -31,34 +31,39 @@ classdef CellTracks < Loader
             end
         end
         
-        function this=new_sample_path(this,samplePath)
-            this.sample.type=this.loaderType;
+        function new_sample_path(this,samplePath)
+            this.sample.type = this.name;
+            this.sample.loader = @CellTracks;
             this.sample.imagePath = this.find_dir(samplePath,'tif',100);
             this.sample.priorPath = this.find_dir(samplePath,'xml',1);
-            splitPath=regexp(samplePath, filesep, 'split');
+            splitPath = regexp(samplePath, filesep, 'split');
             if isempty(splitPath{end})
                 this.sample.sampleId=splitPath{end-1};
             else
                 this.sample.sampleId=splitPath{end};
             end
             this.preload_tiff_headers();
-            this.sample.pixelSize=this.pixelSize;
-            this.sample.hasEdges=this.hasEdges;
-            this.sample.channelNames=this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
-            this.sample.channelEdgeRemoval=this.channelEdgeRemoval;
-            this.sample.priorLocations=this.prior_locations_in_sample;
+            this.sample.pixelSize = this.pixelSize;
+            this.sample.hasEdges = this.hasEdges;
+            this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
+            this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
+            this.processXML();
+            this.sample.priorLocations = this.prior_locations_in_sample;
         end
    
-        function dataFrame=load_data_frame(this,frameNr)
-            if isempty(this.sample)
-                this.load_sample();
-            end
-            dataFrame=Dataframe(this.sample,frameNr,...
+        function dataFrame = load_data_frame(this,frameNr)
+            dataFrame = Dataframe(frameNr,...
             this.does_frame_have_edge(frameNr),...
             this.read_im_and_scale(frameNr));
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
-         
+        
+        function dataFrame=load_thumb_frame(this,thumbNr)
+            frameNr = this.sample.priorLocations.frameNr(thumbNr);
+            boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
+                [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+            dataFrame=Dataframe(thumbNr,false,this.read_im_and_scale(frameNr,boundingBox));
+        end
     end
     methods(Access=private)
         function Dir_out = find_dir(this,Dir_in,fileExtension,numberOfFiles)
@@ -125,16 +130,31 @@ classdef CellTracks < Loader
             this.sample.nrOfChannels=numel(this.sample.tiffHeaders{1});
         end
         
-        function rawImage=read_im_and_scale(this,imageNr)
+        function rawImage=read_im_and_scale(this,imageNr,boundingBox)
             % use the previously gathered imageinfo and read all images in a multipage
             % tiff. read only one channel if a channel is specified. Rescale and
             % stretch values and rescale to approx old values if the image is a
             % celltracks tiff: scales IMMC images back to 0..4095 scale. Otherwise a
             % normal tiff is returned.
-            rawImage = zeros(this.sample.imageSize);
+            if nargin==2
+                rawImage = zeros(this.sample.imageSize);
+                boundingBox={[1 this.sample.imageSize(1)],[1 this.sample.imageSize(2)]}
+            else
+                %limit boundingBox to frame
+                x = boundingBox{1};
+                y = boundingBox{1};
+                x = min(x,this.sample.imageSize(1));
+                x = max(x,1);
+                y = min(y,this.sample.imageSize(2));
+                y = max(y,1);
+                boundingBox = {x,y};
+                sizex = boundingBox{1}(2)-boundingBox{1}(1)+1;
+                sizey = boundingBox{2}(2)-boundingBox{2}(1)+1;
+                rawImage = zeros(sizex,sizey,this.sample.imageSize(3));
+            end
             for i=1:this.sample.nrOfChannels;
                 try
-                    imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr}));
+                    imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr},'PixelRegion',boundingBox));
                 catch
                     notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr}, 'from channel ' num2str(i) ' is not readable!'])) ;
                     return
@@ -322,11 +342,11 @@ classdef CellTracks < Loader
                 otherwise
                     col=frameNr-1-row*this.sample.columns;
             end
-            xTopLeft=this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col;
-            yTopLeft=this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row;
-            xBottomRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
-            yBottomRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;
-            locations=table(frameNr,xTopLeft,yTopLeft,xBottomRight,yBottomRight);
+            xBottomLeft=this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col;
+            yBottomLeft=this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row;
+            xTopRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
+            yTopRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;
+            locations=table(frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
         end
         
     end

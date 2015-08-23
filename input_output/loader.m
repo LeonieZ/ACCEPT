@@ -5,7 +5,7 @@ classdef (Abstract) Loader < handle
     %   so that the io class is able to load the appropriate data. 
     
     properties
-
+        
     end
     
     events

@@ -30,8 +30,11 @@ classdef Sample < handle
         priorLocations=[];
         results=Result();
     end
+    
+    properties (Access={?IO,?Loader})
+        loader
+    end
     properties (Access={?Loader})
-        loaderType
         imagePath
         priorPath
         imageFileNames

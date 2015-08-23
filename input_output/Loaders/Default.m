@@ -3,6 +3,7 @@ classdef Default < Loader
     %   Detailed explanation goes here
     
     properties
+        name='Default'
     end
     
     methods

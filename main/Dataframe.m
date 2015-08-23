@@ -22,7 +22,6 @@ classdef Dataframe < handle
     %additional channels = extra markers
     
     properties(SetAccess = private)
-        sample; %might remove this for better structure
         frameNr = NaN;
         frameHasEdge = false;
         rawImage = [];
@@ -50,8 +49,7 @@ classdef Dataframe < handle
     end
           
     methods
-        function this = Dataframe(Sample,frameNr,frameHasEdge,rawImage)
-                this.sample=Sample;
+        function this = Dataframe(frameNr,frameHasEdge,rawImage)
                 this.frameNr=frameNr;
                 this.frameHasEdge=frameHasEdge;
                 this.rawImage=rawImage;

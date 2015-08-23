@@ -15,37 +15,31 @@ classdef IO < handle
     end
     
     methods
-        function this = IO()
+        function outputList = create_sample_list(this,inputPath,resultPath,sampleProcessor)
+            [sampleNames,loaderUsed]=this.available_samples(inputPath);
+            [isProc,isToBeProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
+            outputList=SampleList(sampleProcessor.id(),inputPath,resultPath,sampleNames,isProc,isToBeProc,loaderUsed);
+            addlistener(outputList,'updatedProcessorId',@this.updated_sample_processor);
+            addlistener(outputList,'updatedInputPath',@this.updated_input_path);
+            addlistener(outputList,'updatedResultPath',@this.updated_result_path);
+        end
+        
+        function outputSample=load_sample(this,sampleList,sampleNr)
+            loader=sampleList.loaderToBeUsed{sampleNr};
+            loader.new_sample_path([sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
+            outputSample=loader.sample;
+        end
+        
+        function outputFrame=load_data_frame(this,sample,frameNr)
+            loader=sample.loader(sample);
+            outputFrame=loader.load_data_frame(frameNr);
+        end
+        
+        function outputFrame=load_thumbnail_frame(this,sample,thumbNr)
+            loader=sample.loader(sample);
+            outputFrame=loader.load_thumb_frame(thumbNr);
+        end
 
-        end
-        
-        function outputList = create_sample_list(this,inputPath,resultsPath,sampleProcessor)
-        
-        end
-        
-        function updated_sample_Processor(this)
-            
-        end
-        
-        function updated_results_path(this)
-
-            if exist(path,'dir')
-                this.resultsPath=path;
-            else
-                mkdir(path);
-                mkdir([path,filesep,'output']);
-                mkdir([path,filesep,'frames'])
-                this.resultsPath=path;
-            end
-            this.create_sample_list;
-        end
-        
-        function updated_input_path(this)
-            %update loader list
-            %update sampleList
-            this.samplesPath=path;
-            this.update_sample_list;
-        end
         
         function save_work_flow(this,workFlow)
             save([this.resultsPath,filesep,'workflow.mat'],'workFlow');
@@ -107,6 +101,33 @@ classdef IO < handle
              end
         end
         
+        function updated_sample_processor(this,sampleList,~)
+            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
+                                                sampleList.sampleProcessorId,...
+                                                sampleList.sampleNames);
+            sampleList.isProcessed=isProc;
+            sampleList.isToBeProcessed=isToBeProc;
+        end
+        
+        function updated_results_path(this,sampleList,~)
+            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
+                                                sampleList.sampleProcessorId,...
+                                                sampleLsit.sampleNames);
+            sampleList.isProcessed=isProc;
+            sampleList.isToBeProcessed=isToBeProc;
+        end
+        
+        function updated_input_path(this,sampleList,~)
+            [sampleNames,loaderUsed]=this.available_samples(inputPath);
+            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
+                                        sampleList.sampleProcessorId,...
+                                        sampleNames);
+            sampleList.sampleNames=smpleNames;
+            sampleList.loaderToBeUsed=loaderUsed;
+            sampleList.isProcessed=isProc;
+            sampleList.isToBeProcessed=isToBeProc;
+        end
+       
         function loaderHandle=check_sample_type(this,samplePath)
             %Checks which loader types can load the sample path and chooses
             %the first one on the list. 
@@ -114,38 +135,56 @@ classdef IO < handle
                 canLoad(i) = this.loaderTypesAvailable{i}.can_load_this_folder(samplePath);
             end
             loaderHandle=this.loaderTypesAvailable{find(canLoad,1)};
-            loaderHandle.new_sample_path(samplePath);
         end
         
-        function create_sample_list(this)
+        function [sampleNames,loaderUsed]=available_samples(this,inputPath)
             %creates list of samples from input dir. It also checks if
             %these samples are already processed in the output dir when the
             %overwriteResults attribute is set to false. 
-            files = dir(this.samplesPath);
+            files = dir(inputPath);
             if isempty(files)
-                this.log.entry('inputDir is empty; cannot continue',1,1);
+                this.log.entry('inputPath is empty; cannot continue',1,1);
                 error('inputDir is empty; cannot continue');
             end
 
             % select only directory entries from the input listing and remove
             % anything that starts with a .*.
-            inputList = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
-
-            %Check in results dir if any samples are already processed.
-            if this.overwriteResults==false
-                try load([this.resultsPath filesep processed.mat],samplesProccesed)
-                catch 
-                    %appears to be no lest (?) so lets create an empty sampleProccesed variable
-                    sampleProccessed=['empty'];
-                end
-                this.sampleList=setdiff({inputList.name},sampleProccessed);
-            else
-                this.sampleList=inputList;
+            samples = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
+            for i=1:numel(samples)
+                sampleNames{i}=samples(i).name
+                loaderUsed{i}=this.check_sample_type([inputPath,filesep,samples(i).name])
             end
-            this.nrOfSamples=numel(inputList);
-            this.currentSampleNr=0;
         end
-
+        
+        function [isProc,isToBeProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames);
+            savepath=[resultsPath,filesep,sampleProcessorId];
+            isProc=true(1,numel(sampleNames));
+            isToBeProc=false(1,numel(sampleNames));
+            if ~exist(savepath,'dir')
+                mkdir(savepath);
+                mkdir([savepath,filesep,'output']);
+                mkdir([savepath,filesep,'frames']);
+                samplesProcessed={};
+                save([savepath filesep 'processed.mat'],'samplesProcessed');
+                isProc=false(1,numel(sampleNames));
+                isToBeProc=true(1,numel(sampleNames));
+            else
+                %Check in results dir if any samples are already processed.
+                try load([savepath filesep 'processed.mat'],'samplesProcessed')
+                catch 
+                    %appears to be no list (?) so lets create an empty sampleProccesed variable
+                    samplesProcessed={};
+                end
+                [~,index]=setdiff(sampleNames,samplesProcessed);
+                if this.overwriteResults==false
+                    isToBeProc(index)=true;
+                    isProc(index)=false;
+                else
+                    isToBeProc=true(1,numel(sampleNames));
+                    isProc(index)=false;
+                end
+            end
+        end
     end
 end
         

@@ -15,7 +15,7 @@ classdef SampleProcessor < handle
     end
     
     methods
-        function this=workflow(inputIO,inputSampleProcessor)
+        function this=SampleProcessor(inputIO,inputSampleProcessor)
             if nargin==2
                 validateattributes(inputSampleProcessor,{'SampleProcessor'},{'nonempty'},'','inputSampleProcessor');
                 this=inputSampleProcessor;
@@ -26,28 +26,34 @@ classdef SampleProcessor < handle
             this.io=inputIO;
         end
         
-        function run_workflow(this,inputSample)
+        function outputStr=id(this)
+            outputStr=[this.name,'_',this.version];
+        end
+        
+        function run_sample_processor(this,inputSample)
             if isempty(this.imageProcessor)
                 notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
             else
-                for j=1:inputSample.nrOfFrames
-                    data=this.io.loader.load_data_frame(j);
-                    for i=1:numel(this.algorithm)
-                        data=this.algorithm{i}.run(data);
-                    end
-                    inputSample.results.features=vertcat(inputSample.results.features,data.features);
-                    inputSample.results.classefication=vertcat(inputSample.results.classefication,data.classificationResults);
-                    inputSample.results.thumbnails=vertcat(inputSample.results.thumbnails,data.thumbnails);
-                end
+%                 for j=1:inputSample.nrOfFrames
+%                     data=this.io.loader.load_data_frame(j);
+%                     for i=1:numel(this.algorithm)
+%                         data=this.algorithm{i}.run(data);
+%                     end
+%                     inputSample.results.features=vertcat(inputSample.results.features,data.features);
+%                     inputSample.results.classefication=vertcat(inputSample.results.classefication,data.classificationResults);
+%                     inputSample.results.thumbnails=vertcat(inputSample.results.thumbnails,data.thumbnails);
+%                 end
             end
         end
         
-        function  set.algorithm(this,value)
-            if any(cellfun(@(x) ~isa(x,'workflow_object'),value))
+        function  set.pipeline(this,value)
+            if any(cellfun(@(x) ~isa(x,'SampleProcessorObject'),value))
                 error('cannot add non workflow_objects to algorithm')                
             end
-            this.algorithm=value;
+            this.pipeline=value;
         end
+        
+        
      
     end
     
