@@ -14,7 +14,7 @@ classdef Logger < handle
     end
     
     methods
-        function this=logger(programLocation,level)
+        function this = Logger(programLocation,level)
             this.logPath=[programLocation,filesep,'log',filesep];
             
             if ~exist([programLocation filesep 'log'], 'dir') 

@@ -40,7 +40,7 @@ classdef SampleProcessor < handle
 %                         data=this.algorithm{i}.run(data);
 %                     end
 %                     inputSample.results.features=vertcat(inputSample.results.features,data.features);
-%                     inputSample.results.classefication=vertcat(inputSample.results.classefication,data.classificationResults);
+%                     inputSample.results.classification=vertcat(inputSample.results.classification,data.classificationResults);
 %                     inputSample.results.thumbnails=vertcat(inputSample.results.thumbnails,data.thumbnails);
 %                 end
             end

@@ -8,7 +8,7 @@ classdef Batchmode < Base
     end
     
     methods
-        function this=batchmode(varargin)
+        function this = Batchmode(varargin)
             %Build valid options for inputParser
             this.build_valid_input_arguments();
             %Parse input en set values. 

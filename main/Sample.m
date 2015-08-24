@@ -49,9 +49,9 @@ classdef Sample < handle
     
 
     methods
-        function this=sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames,priorLocations)
+        function this = Sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames,priorLocations)
             if nargin==8
-                this.name=name;
+                this.sampleId=name;
                 this.type=type;
                 this.pixelSize=pixelSize;
                 this.hasEdges=hasEdges;
@@ -61,7 +61,7 @@ classdef Sample < handle
                 this.nrOfFrames=nrOfFrames;
                 this.priorLocations=priorLocations;
             end
-            notify(this,'logMessage',logmessage(4,['New sample: ',this.name, ' is constructed.']));
+            notify(this,'logMessage',logmessage(4,['New sample: ',this.sampleId, ' is constructed.']));
                      
         end
         function add_measurements(this,frameNr,measurements)

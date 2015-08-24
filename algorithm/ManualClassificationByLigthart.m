@@ -38,12 +38,12 @@ classdef ManualClassificationByLigthart < WorkflowObject
                 this.nrObjects = inputFrame.measurements.nrObjects;    
             end
             
-            this.classTable = gate_sample(this,dataFrame); 
+            this.classTable = gate_objects(this,dataFrame); 
             
             returnFrame.classificationResults = this.classTable;
         end
         
-        function tbl = gate_sample(this,dataFrame)
+        function tbl = gate_objects(this,dataFrame)
             tbl = table();
             
             if this.nrObjects > 0

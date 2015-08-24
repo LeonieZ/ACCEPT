@@ -12,17 +12,17 @@ classdef Base < handle
     end
     
     methods
-        function this=base()
+        function this = Base()
             installDir = fileparts(which('ACCEPT.m'));
             %constructor will be called without arguments by children. It
             %starts the logging, profiler and parallel pool when turned on.
-            this.log=logger(installDir);
-            this.log.entry('',logmessage(1,['>>>> Session started <<<< actc version: ', this.programVersion]));
+            this.log=Logger(installDir);
+            this.log.entry('',LogMessage(1,['>>>> Session started <<<< ACCEPT version: ', this.programVersion]));
             
-            this.workflow=workflow();
+            this.workflow = Workflow();
        
             %adding log listeners
-            addlistener(this.workFlow,'logMessage',@this.log.entry);
+            addlistener(this.workflow,'logMessage',@this.log.entry);
             
             %show splash logo
             h=this.show_logo();
