@@ -56,7 +56,7 @@ function gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to gui (see VARARGIN)
 
 handles.base = varargin{1};
-handles.base.show_logo;
+%handles.base.show_logo;
 
 % Choose default command line output for gui
 handles.output = hObject;

@@ -61,7 +61,7 @@ classdef Sample < handle
                 this.nrOfFrames=nrOfFrames;
                 this.priorLocations=priorLocations;
             end
-            notify(this,'logMessage',logmessage(4,['New sample: ',this.sampleId, ' is constructed.']));
+            notify(this,'logMessage',LogMessage(4,['New sample: ',this.sampleId, ' is constructed.']));
                      
         end
 %         function add_measurements(this,frameNr,measurements)
