@@ -13,7 +13,7 @@ classdef Measurements < WorkflowObject
             this.nrObjects = max(inputFrame.labelImage(:));
 
             if this.nrObjects > 0
-                for ch = 1:size(inputFrame.rawImage,3)
+                for ch = 1:inputFrame.nrChannels
                     imTemp = inputFrame.rawImage(:,:,ch);
                     MsrTemp = regionprops(inputFrame.labelImage(:,:,ch), imTemp - median(imTemp(inputFrame.labelImage(:,:,ch) == 0)),...
                             'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
@@ -27,12 +27,12 @@ classdef Measurements < WorkflowObject
                            
                     MsrTemp=rmfield(MsrTemp,'PixelValues');
                     
-                    names = strcat(inputFrame.sample.channelNames(ch),'_',fieldnames(MsrTemp));
+                    names = strcat('ch_',num2str(ch),'_',fieldnames(MsrTemp));
                     tmpTable = struct2table(MsrTemp);
                     tmpTable.Properties.VariableNames = names;
-                    tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat(inputFrame.sample.channelNames{ch},'_StandardDeviation')});
-                    tmpMass = array2table(Mass,'VariableNames',{strcat(inputFrame.sample.channelNames{ch},'_Mass')});
-                    tmpP2A = array2table(P2A,'VariableNames',{strcat(inputFrame.sample.channelNames{ch},'_P2A')});
+                    tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat('ch_',num2str(ch),'_StandardDeviation')});
+                    tmpMass = array2table(Mass,'VariableNames',{strcat('ch_',num2str(ch),'_Mass')});
+                    tmpP2A = array2table(P2A,'VariableNames',{strcat('ch_',num2str(ch),'_P2A')});
                     this.msrTable=[this.msrTable tmpTable tmpStandardDeviation tmpMass tmpP2A];
                 end
             end

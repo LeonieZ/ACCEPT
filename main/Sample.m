@@ -64,12 +64,12 @@ classdef Sample < handle
             notify(this,'logMessage',logmessage(4,['New sample: ',this.sampleId, ' is constructed.']));
                      
         end
-        function add_measurements(this,frameNr,measurements)
-            this.measurements=[this.measurements; measurements];
-        end
-        function add_classification_results(this,frameNr,classificationResults)
-            this.classificationResults=[this.classificationResults; classificationResults];
-        end
+%         function add_measurements(this,frameNr,measurements)
+%             this.measurements=[this.measurements; measurements];
+%         end
+%         function add_classification_results(this,frameNr,classificationResults)
+%             this.classificationResults=[this.classificationResults; classificationResults];
+%         end
         function save_results(this)
         notify(this,'saveResults');
         end

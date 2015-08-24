@@ -14,8 +14,8 @@ classdef DetermineMask < WorkflowObject
             %neues dataframe objekt erzeugen mit dem image als rawimage und
             %dann active contour verwenden.
             
-            openImg = imopen(inputFrame.rawImage(:,:,inputFrame.sample.channelEdgeRemoval),se);
-            helperFrame = Dataframe([],[],false,openImg);
+            openImg = imopen(inputFrame.rawImage(:,:,inputFrame.channelEdgeRemoval),se);
+            helperFrame = Dataframe([],false,[],openImg);
             ac = ActiveContourSegmentation(10000, 50, 1);
             helperFrame = ac.run(helperFrame);
             [r,c] = find(helperFrame.segmentedImage == 1);

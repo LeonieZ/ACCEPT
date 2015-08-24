@@ -25,6 +25,8 @@ classdef Dataframe < handle
         frameNr = NaN;
         frameHasEdge = false;
         rawImage = [];
+        nrChannels = [];
+        channelEdgeRemoval = [];
     end
     
     properties(Access = public)
@@ -49,16 +51,18 @@ classdef Dataframe < handle
     end
           
     methods
-        function this = Dataframe(frameNr,frameHasEdge,rawImage)
+        function this = Dataframe(frameNr,frameHasEdge,channelEdgeRemoval,rawImage)
                 this.frameNr=frameNr;
                 this.frameHasEdge=frameHasEdge;
+                this.channelEdgeRemoval = channelEdgeRemoval;
                 this.rawImage=rawImage;
+                this.nrChannels = size(this.rawImage,3);
         end
         
         function value = get.labelImage(this)
             %remove doubles at boarder
             sumImage = sum(this.segmentedImage,3); 
-            labels = repmat(bwlabel(sumImage,4),1,1,this.sample.numChannels);
+            labels = repmat(bwlabel(sumImage,4),1,1,this.nrChannels);
             value = labels.*this.segmentedImage; 
         end
     end

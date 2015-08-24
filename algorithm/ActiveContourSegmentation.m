@@ -49,21 +49,21 @@ classdef ActiveContourSegmentation < WorkflowObject
                 
 
             if isempty(this.maskForChannels) && isempty(this.single_channel)
-                this.maskForChannels = 1:1:size(inputFrame.rawImage,3);
+                this.maskForChannels = 1:1:inputFrame.nrChannels;
             elseif ~isempty(this.single_channel)
-                this.maskForChannels = zeros(1,size(inputFrame.rawImage,3));
+                this.maskForChannels = zeros(1,inputFrame.nrChannels);
                 this.maskForChannels(this.single_channel) = this.single_channel;
             end
                                  
             if size(this.lambda,2) == 1
-                this.lambda = repmat(this.lambda,1, size(inputFrame.rawImage,3));
+                this.lambda = repmat(this.lambda,1, inputFrame.nrChannels);
             end
             
             if size(this.breg_it,2) == 1
-                this.breg_it = repmat(this.breg_it,1, size(this.currentFrame,3));
+                this.breg_it = repmat(this.breg_it,1, inputFrame.nrChannels);
             end
             
-            for i = 1:size(inputFrame.rawImage,3)
+            for i = 1:inputFrame.nrChannels
                 if any(this.maskForChannels == i)
                     tmp = bregman_cv(this, inputFrame, i, this.init);
                     tmp = bwareaopen(tmp, 10);
@@ -73,14 +73,14 @@ classdef ActiveContourSegmentation < WorkflowObject
             end
             
             if nargin < 6
-                this.segmentedFrame = this.segmentedFrame(:,:,this.maskForChannels);
+                returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
             end
         end
         
         function bin = bregman_cv(this, dataFrame, k, init)
         %BREGMAN_CV Summary of this function goes here
         %   Detailed explanation goes here
-        f = this.currentFrame(:,:,k);
+        f = dataFrame.rawImage(:,:,k);
 
         % dimensions
         [nx, ny] = size(f);
@@ -115,7 +115,7 @@ classdef ActiveContourSegmentation < WorkflowObject
         end
         
         if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
-            f(dataFrame.mask.mask) = mu0;
+            f(dataFrame.mask) = mu0;
         end
 
 
@@ -155,7 +155,7 @@ classdef ActiveContourSegmentation < WorkflowObject
                         mu1 = max(f(:));
                     end
                     if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
-                        f(dataFrame.mask.mask) = mu0;
+                        f(dataFrame.mask) = mu0;
                     end
                 end
 

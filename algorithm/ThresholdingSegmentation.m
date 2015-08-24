@@ -3,13 +3,10 @@ classdef ThresholdingSegmentation < WorkflowObject
     %   Detailed explanation goes here
     
     properties (SetAccess = private)
-%         currentFrame = [];
-%         segmentedFrame = [];
         thresholds = [];
         maskForChannels = [];
         meth = [];
         range = [];
-        dataType = '';
         offset = [];
     end
     
@@ -41,40 +38,38 @@ classdef ThresholdingSegmentation < WorkflowObject
                 this.thresholds = varargin{3};
             end
             
+            if strcmp(this.meth,'manual') && isempty(this.thresholds)
+                error('Please specify the threshold.')
+            end
+            
         end
         
         function returnFrame = run(this,inputFrame)
             returnFrame = inputFrame;
-            this.dataType = inputFrame.sample.dataTypeOriginalImage;
-            
-            if strcmp(this.dataType,'uint8')
-                bins = 255;
-            elseif strcmp(this.dataType,'uint16')
-                bins = 65535;
-            end
+            bins = 65535;
             
             if isempty(this.offset)
-            	this.offset = zeros(1,inputFrame.sample.nrChannels);
+            	this.offset = zeros(1,inputFrame.nrChannels);
             end
             
             if isempty(this.maskForChannels)
-                this.maskForChannels = 1:1:inputFrame.sample.nrChannels;
+                this.maskForChannels = 1:1:inputFrame.nrChannels;
             end
             
-            this.histogram = zeros(1,bins,inputFrame.sample.nrChannels);
+            this.histogram = zeros(1,bins,inputFrame.nrChannels);
             
             %create histogram if thresholding is local otherwise we assume
             %this was already done.
             
             if strcmp(this.range,'local') && ~strcmp(this.meth,'manual')
-                this.histogram = this.create_local_hist(inputFrame);
+                this.create_local_hist(inputFrame);
             end
             
             if isempty(this.thresholds)
-                this.calculate_thresholds()
+                this.calculate_threshold()
             end
                         
-            for i = 1:inputFrame.sample.nrChannels
+            for i = 1:inputFrame.nrChannels
                 tmp = inputFrame.rawImage(:,:,i) > this.thresholds(i);
                 if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
                     tmp(inputFrame.mask) = false;
@@ -90,22 +85,18 @@ classdef ThresholdingSegmentation < WorkflowObject
                     this.thresholds = this.otsu_method() + this.offset;
                 case 'triangle'
                     this.thresholds = this.triangle_method() + this.offset;
-                case 'manual'
-                    if isempty(this.thresholds)
-                        error('Please specify the threshold.')
-                    end
             end
         end
         
         function create_local_hist(this, inputFrame)
-            for j = 1:inputFrame.sample.nrChannels
+            for j = 1:inputFrame.nrChannels
                 if any(this.maskForChannels == j)                
                     imTemp = inputFrame.rawImage(:,:,j);
 
                     if inputFrame.frameHasEdge
                         imTemp = imTemp(~inputFrame.mask);
                     end
-                    this.histogram(:,:,j) = histc(imTemp(:),1:1:numel(this.hist))';
+                    this.histogram(:,:,j) = histc(imTemp(:),1:1:numel(this.histogram(:,:,j)))';
                 end
             end
         end
