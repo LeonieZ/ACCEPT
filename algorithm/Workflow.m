@@ -44,7 +44,7 @@ classdef Workflow < handle
             end
         end
         
-        function  set.algorithm(this,value)
+        function  set_algorithm(this,value)
             if any(cellfun(@(x) ~isa(x,'workflow_object'),value))
                 error('cannot add non workflow_objects to algorithm')                
             end
