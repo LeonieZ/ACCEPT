@@ -42,7 +42,7 @@ classdef Base < handle
         
         function run(this)
             % TODO: run sampleProcessor with sampleList
-            this.sampleProcessor.run_sample_processor(this.sampleList);
+            this.sampleProcessor.run(this.sampleList);
         end
 
         function h=show_logo(this)

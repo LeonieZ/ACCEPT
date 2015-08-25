@@ -1,4 +1,4 @@
-classdef ThresholdingSegmentation < WorkflowObject
+classdef ThresholdingSegmentation < DataframeProcessorObject
     %THRESHOLDING_SEGMENTATION Summary of this class goes here
     %   Detailed explanation goes here
     

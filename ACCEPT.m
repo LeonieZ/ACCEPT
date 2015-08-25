@@ -12,7 +12,7 @@ function uiHandle=ACCEPT(varargin)
     % pass information between functions. 
     clc;
     close all
-    clear actc
+%     clear actc
     %% Add subdirectories to path
     file = which('ACCEPT.m');
     installDir = fileparts(file);

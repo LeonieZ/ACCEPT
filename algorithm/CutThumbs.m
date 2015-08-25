@@ -1,4 +1,4 @@
-classdef CutThumbs < workflow_object
+classdef CutThumbs < DataframeProcessorObject
     %UNTITLED3 Summary of this class goes here
     %   Detailed explanation goes here
     

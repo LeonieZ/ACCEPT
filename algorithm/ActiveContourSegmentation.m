@@ -1,4 +1,4 @@
-classdef ActiveContourSegmentation < WorkflowObject
+classdef ActiveContourSegmentation < DataframeProcessorObject
     %ACTIVECONTOUR_SEGMENTATION Summary of this class goes here
     %   Detailed explanation goes here
     

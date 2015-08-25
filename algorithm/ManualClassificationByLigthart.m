@@ -1,4 +1,4 @@
-classdef ManualClassificationByLigthart < WorkflowObject
+classdef ManualClassificationByLigthart < SampleProcessorObject
     %MANUAL_CLASSIFICATION_BYLIGTHART Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -26,7 +26,7 @@ classdef ManualClassificationByLigthart < WorkflowObject
             end    
         end
         
-        function returnFrame = run(this, inputFrame)
+        function returnFrame = run(this, inputFrame) %change to sample
             returnFrame = inputFrame;
             
             if isempty(inputFrame.measurements)

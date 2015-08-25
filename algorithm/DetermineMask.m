@@ -1,4 +1,4 @@
-classdef DetermineMask < WorkflowObject
+classdef DetermineMask < DataframeProcessorObject
     %DETERMINE_MASK Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -16,7 +16,7 @@ classdef DetermineMask < WorkflowObject
             
             openImg = imopen(inputFrame.rawImage(:,:,inputFrame.channelEdgeRemoval),se);
             helperFrame = Dataframe([],false,[],openImg);
-            ac = ActiveContourSegmentation(10000, 50, 1);
+            ac = ActiveContourSegmentation(10000, 50, 1); %adapt when ac has new run function!
             helperFrame = ac.run(helperFrame);
             [r,c] = find(helperFrame.segmentedImage == 1);
             
