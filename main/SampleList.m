@@ -2,10 +2,10 @@ classdef SampleList < handle
     %SAMPLELIST keeps track if availablee samples are processed or not. 
     
     properties
-        sampleProcessorId='empty'
+        sampleProcessorId='empty';
         inputPath = '';
         resultPath = '';
-        isToBeProcessed = []
+        isToBeProcessed = [];
     end
     
     properties(SetAccess={?IO})
@@ -37,17 +37,17 @@ classdef SampleList < handle
             end
         end
         
-        function set.sampleProcessorId(this,value)
+        function set_sampleProcessorId(this,value)
             this.sampleProcessorId=value;
             notify(this,'updatedProcessorId');
         end
         
-        function set.inputPath(this,value)
+        function set_inputPath(this,value)
             this.inputPath=value;
             notify(this,'updatedInputPath')
         end
         
-        function set.resultPath(this,value)
+        function set_resultPath(this,value)
             this.resultPath=value;
             notify(this,'updatedResultPath')
         end
