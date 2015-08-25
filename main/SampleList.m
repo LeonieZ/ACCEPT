@@ -37,17 +37,17 @@ classdef SampleList < handle
             end
         end
         
-        function set_sampleProcessorId(this,value)
+        function set.sampleProcessorId(this,value)
             this.sampleProcessorId=value;
             notify(this,'updatedProcessorId');
         end
         
-        function set_inputPath(this,value)
+        function set.inputPath(this,value)
             this.inputPath=value;
             notify(this,'updatedInputPath')
         end
         
-        function set_resultPath(this,value)
+        function set.resultPath(this,value)
             this.resultPath=value;
             notify(this,'updatedResultPath')
         end

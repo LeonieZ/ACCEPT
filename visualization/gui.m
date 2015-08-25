@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 21-Aug-2015 11:59:09
+% Last Modified by GUIDE v2.5 25-Aug-2015 17:50:27
 
 %-------------------------------------------------------------------------
 
@@ -56,7 +56,6 @@ function gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to gui (see VARARGIN)
 
 handles.base = varargin{1};
-%handles.base.show_logo;
 
 % Choose default command line output for gui
 handles.output = hObject;
@@ -99,7 +98,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 % initialize choose button for tasks
-tasks = {'Feature extraction';'Dummy task 1'; 'Dummy task 2'};
+tasks = {'Feature Collection';};
 set(hObject,'String',tasks);
 
 
@@ -124,5 +123,26 @@ function loadButton_Callback(hObject, eventdata, handles)
 % hObject    handle to loadButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-display('Load samples via base')
-display(['The current program version is ', handles.base.programVersion])
+display('Load samples...')
+inputPath = '/Users/brunec/git/ACTC/examples/test_images';
+resultPath = '/Users/brunec/git/ACTC/examples/results';
+handles.base.sampleProcessor = SampleProcessor();
+handles.base.sampleList = handles.base.io.create_sample_list(...
+                        inputPath,resultPath,handles.base.sampleProcessor);
+sl = handles.base.sampleList;
+nbrSamples = size(sl.sampleNames,2);
+nbrAttributes = 4;
+dat = cell(nbrSamples,nbrAttributes);
+for r=1:nbrSamples
+    dat{r,1} = sl.sampleNames{1,r};
+    dat{r,2} = sl.sampleProcessorId;
+    dat{r,3} = sl.isProcessed(1,r);
+    dat{r,4} = sl.isToBeProcessed(1,r);    
+end                    
+cnames = {'   Sample Name   ','   Sample Processor   ','   is processed   ','   to be processed'   };
+rnames = {};
+% create details table
+tableSamples = uitable('Parent',handles.uipanelSampleList,'Units','normalized',...
+            'Data',dat,'ColumnName',cnames,'RowName',rnames,'ColumnWidth',{135},'Position',[0 0 1 1],...
+            'CellSelectionCallback',@(src,evnt)set(src,'UserData',evnt.Indices));
+%get(tableSamples,'UserData')

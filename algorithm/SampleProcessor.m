@@ -15,16 +15,16 @@ classdef SampleProcessor < handle
     end
     
     methods
-        function this=SampleProcessor(inputIO,inputSampleProcessor)
-            if nargin==2
-                validateattributes(inputSampleProcessor,{'SampleProcessor'},{'nonempty'},'','inputSampleProcessor');
-                this=inputSampleProcessor;
-            end
-                        
-            % therefore we need an io handler, e.g. for parallelization,
-            % housekeeping etc.
-            this.io=inputIO;
-        end
+%         function this=SampleProcessor(inputIO,inputSampleProcessor)
+%             if nargin==2
+%                 validateattributes(inputSampleProcessor,{'SampleProcessor'},{'nonempty'},'','inputSampleProcessor');
+%                 this=inputSampleProcessor;
+%             end
+%                         
+%             % therefore we need an io handler, e.g. for parallelization,
+%             % housekeeping etc.
+%             this.io=inputIO;
+%         end
         
         function outputStr=id(this)
             outputStr=[this.name,'_',this.version];
