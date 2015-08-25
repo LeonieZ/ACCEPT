@@ -1,15 +1,15 @@
-classdef Measurements < DataframeProcessorObject
+classdef ExtractFeatures < DataframeProcessorObject
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
         nrObjects = [];
-        msrTable = table();
     end
     
     methods
         function returnFrame = run(this,inputFrame)
             returnFrame = inputFrame;
+            returnFrame.features = table();
             this.nrObjects = max(inputFrame.labelImage(:));
 
             if this.nrObjects > 0
@@ -33,10 +33,9 @@ classdef Measurements < DataframeProcessorObject
                     tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat('ch_',num2str(ch),'_StandardDeviation')});
                     tmpMass = array2table(Mass,'VariableNames',{strcat('ch_',num2str(ch),'_Mass')});
                     tmpP2A = array2table(P2A,'VariableNames',{strcat('ch_',num2str(ch),'_P2A')});
-                    this.msrTable=[this.msrTable tmpTable tmpStandardDeviation tmpMass tmpP2A];
+                    returnFrame.features = [returnFrame.features tmpTable tmpStandardDeviation tmpMass tmpP2A];
                 end
             end
-            returnFrame.features = this.msrTable;
         end
 
         function MsrTemp=fillStruct(this, MsrTemp)

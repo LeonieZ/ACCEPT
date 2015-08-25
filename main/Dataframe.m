@@ -8,7 +8,7 @@ classdef Dataframe < handle
     %creation and cannot be overwritten. These are: the sample and io
     %classes, frameNr, frameHasEdge, rawImage and priorLocations. Algorithm
     %output variables that can be set are : preProcessedImage, LabelImage,
-    %measurements and classificationResults. Sample specific information
+    %features and classificationResults. Sample specific information
     %such as the names of the different channels are available in the
     %linked sample class. Use the linked io class for actions such as the
     %loading of an adjacent frame or the saving of a labeled image.

@@ -3,7 +3,6 @@ classdef ManualClassificationByLigthart < SampleProcessorObject
     %   Detailed explanation goes here
     
     properties
-        classTable = table();
         nrObjects
         index
         type = [];
@@ -26,24 +25,22 @@ classdef ManualClassificationByLigthart < SampleProcessorObject
             end    
         end
         
-        function returnFrame = run(this, inputFrame) %change to sample
-            returnFrame = inputFrame;
+        function returnSample = run(this, inputSample) %change to sample
+            returnSample = inputSample;
             
-            if isempty(inputFrame.measurements)
-                notify(this,'logMessage',logmessage(1,'No measurements available for classification.'));
+            if isempty(inputSample.results.features)
+                notify(this,'logMessage',logmessage(1,'No features available for classification.'));
                 return
             end
             
             if isempty(this.nrObjects)
-                this.nrObjects = inputFrame.measurements.nrObjects;    
+                this.nrObjects = size(inputSample.results.features,1); %size 1 or 2  
             end
             
-            this.classTable = gate_objects(this,dataFrame); 
-            
-            returnFrame.classificationResults = this.classTable;
+            returnSample.results.classification = gate_objects(this,inputSample);
         end
         
-        function tbl = gate_objects(this,dataFrame)
+        function tbl = gate_objects(this,inputSample)
             tbl = table();
             
             if this.nrObjects > 0
@@ -56,13 +53,13 @@ classdef ManualClassificationByLigthart < SampleProcessorObject
                     CTCGates = Prostate;
                 end
                 
-                tbl.isACTC = isGatedBy(this,dataFrame,this.index,CTCGates);
-                tbl.isWBC = isGatedBy(this,dataFrame,this.index,WBC);
-                tbl.isCellline = isGatedBy(this,dataFrame,this.index,Cellline);   
+                tbl.isACTC = isGatedBy(this,inputSample,this.index,CTCGates);
+                tbl.isWBC = isGatedBy(this,inputSample,this.index,WBC);
+                tbl.isCellline = isGatedBy(this,inputSample,this.index,Cellline);   
             end
         end
         
-        function bool = isGatedBy(this,dataFrame,index,gateStr)
+        function bool = isGatedBy(this,inputSample,index,gateStr)
         % This function returns if measured events falls in Gate
 
         % set gates for easy iteration
@@ -81,14 +78,14 @@ classdef ManualClassificationByLigthart < SampleProcessorObject
         if ~isempty(index)
             bool = true;
             for ii = 1:size(gateStr,1)
-                include_event = dataFrame.measurements.msrTable.(gateStr{ii,1})(index) > gate_valuesl(ii) & dataFrame.measurements.msrTable.(gateStr{ii,1})(index) < gate_valuesu(ii);
+                include_event = inputSample.results.features.(gateStr{ii,1})(index) > gate_valuesl(ii) & inputSample.results.features.(gateStr{ii,1})(index) < gate_valuesu(ii);
                 bool = bool & include_event;
             end
         else
             bool = true(this.nrObjects,1);
             for index = 1:this.nrObjects
                 for ii = 1:size(gateStr,1)
-                    include_event = dataFrame.measurements.msrTable.(gateStr{ii,1})(index) > gate_valuesl(ii) & dataFrame.measurements.msrTable.(gateStr{ii,1})(index) < gate_valuesu(ii);
+                    include_event = inputSample.results.features.(gateStr{ii,1})(index) > gate_valuesl(ii) & inputSample.results.features.(gateStr{ii,1})(index) < gate_valuesu(ii);
                     bool(index) = bool(index) & include_event;
                 end
             end
