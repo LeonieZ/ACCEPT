@@ -46,7 +46,7 @@ classdef SampleProcessor < handle
             end
         end
         
-        function  set_pipeline(this,value)
+        function  set.pipeline(this,value)
             if any(cellfun(@(x) ~isa(x,'SampleProcessorObject'),value))
                 error('cannot add non workflow_objects to algorithm')                
             end
