@@ -4,18 +4,14 @@ classdef DataframeProcessorObject < handle
     % analysis steps classes such as logging, interaction with the gui,
     % etc..  
     
-    properties
-
-      
+    properties  
     end
     
     events
         logMessage
     end
    
-    methods
-        function returnFrame = run(this,dataFrame)
-            returnFrame.name=dataFrame.name;
-        end
+    methods (Abstract)
+        run(this, dataFrame) %every DataframeProcessorObject needs a run function that acts on a dataframe
     end
-end % classdef
+end 
