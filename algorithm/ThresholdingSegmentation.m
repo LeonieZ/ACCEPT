@@ -67,7 +67,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     this.create_local_hist(inputFrame);
                 end
 
-                if isempty(this.thresholds)
+                if ~strcmp(this.meth,'manual')
                     this.calculate_threshold()
                 end
 
@@ -80,7 +80,8 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     returnFrame.segmentedImage(:,:,i) = tmp;    
                 end
             elseif isa(inputFrame,'double') || isa(inputFrame,'single') || isa(inputFrame,'uint8') || isa(inputFrame,'uint16')
-                %note: in case you are using the TS function on a double/single/... image using a mask is not possible
+                % note: 1. in case you are using the TS function on a double/single/... image using a mask is not possible
+                % 2. not for images scaled from 0 to 1.
                 returnFrame = false(size(inputFrame));
                 bins = 65535;
 
@@ -101,7 +102,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     this.create_local_hist(inputFrame);
                 end
 
-                if isempty(this.thresholds)
+                if ~strcmp(this.meth,'manual')
                     this.calculate_threshold()
                 end
 
