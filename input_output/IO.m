@@ -47,11 +47,11 @@ classdef IO < handle
             save([smplLst.save_path(),'processed.mat'],'processor','-append');
         end
         
-        function save_sample(this,currentSample)
-            save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample');
-            load([currentSample.savePath,'processed.mat'],'samplesProcessed')
+        function save_sample(this,currentSample,savePath)
+            save([savePath,filesep,'output',filesep,currentSample.id,'.mat'],'currentSample');
+            load([savePath,filesep,'processed.mat'],'samplesProcessed');
             samplesProcessed=union(samplesProcessed,{currentSample.id});
-            save([currentSample.savePath,'processed.mat'],'samplesProcessed','-append')
+            save([savePath,filesep,'processed.mat'],'samplesProcessed','-append');
         end
         
         function save_data_frame(this,currentSample,currentDataFrame)

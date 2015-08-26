@@ -115,12 +115,24 @@ selectedSamples = selectedCellsInTable(:,1);
 handles.base.sampleList.toBeProcessed(selectedSamples) = 1;
 handles.base.run();
 
+
 % --- Executes on button press in visualizeButton.
 function visualizeButton_Callback(hObject, eventdata, handles)
 % hObject    handle to visualizeButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-display('Visualize samples')
+display('Visualize samples...')
+selectedCellsInTable = get(handles.tableSamples,'UserData');
+selectedSamples = selectedCellsInTable(:,1);
+if numel(selectedSamples) == 1
+    % load selected sample
+    currentSample = handles.base.io.load_sample(handles.base.sampleList,selectedSamples);
+    currentSample
+    % run sampleVisGui with loaded sample
+    gui_sample_visualizer(handles.base,currentSample);
+else
+    warning('Too many samples selected for visualization');
+end
 
 
 % --- Executes on button press in loadButton.

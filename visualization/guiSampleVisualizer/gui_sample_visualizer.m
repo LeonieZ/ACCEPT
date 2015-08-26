@@ -52,14 +52,25 @@ function gui_sample_visualizer_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to gui_sample_visualizer (see VARARGIN)
 
-% Choose default command line output for gui_sample_visualizer
+handles.base = varargin{1};
+handles.currentFrame = varargin{2};
+
+% Choose default command line output for gui
 handles.output = hObject;
 
 % Visualize sample content
-dat = {'Data 1';0.01;'Data 2';0.02;'Data 3';0.03}; % values
-cnames = {}; % col titles
-rnames = {'Detail 1','Detail 2','Detail 3','Detail 4','Detail 5','Detail 6'};
+%dat = {'Data 1';0.01;'Data 2';0.02;'Data 3';0.03}; % values
+%cnames = {}; % col titles
+%rnames = {'Detail 1','Detail 2','Detail 3','Detail 4','Detail 5','Detail 6'};
 
+rnames = properties(handles.currentFrame);
+selectedProps = [1,2,3,5,6,8,9,10];
+rnames = rnames(selectedProps);
+cnames = {}; % col titles
+dat = cell(numel(rnames),1);
+for i = 1:numel(rnames)
+   dat{i} = eval(['handles.currentFrame.',rnames{i}]); %getfield(handles.currentFrame,rnames{i});
+end
 
 % create details table
 tableDetails = uitable('Parent',handles.uipanelSample,'Units','normalized',...
