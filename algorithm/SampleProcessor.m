@@ -15,36 +15,47 @@ classdef SampleProcessor < handle
     end
     
     methods
-%         function this=SampleProcessor(inputIO,inputSampleProcessor)
-%             if nargin==2
-%                 validateattributes(inputSampleProcessor,{'SampleProcessor'},{'nonempty'},'','inputSampleProcessor');
-%                 this=inputSampleProcessor;
+function this = SampleProcessor(dataframeProcessor,io,varargin)
+            this.io = io;
+            this.dataframeProcessor = dataframeProcessor;
+            
+            if nargin > 2
+                this.name = varargin{1};
+            end
+            
+            if nargin > 3
+                this.pipeline = varargin{2};  
+            end
+            
+            if nargin > 4
+                this.version = varargin{3};
+            end
+            
+            if isempty(varargin{1})
+                this.name = 'Empty';
+            end
+
+
+%             if strcmp(this.name,'...') && isempty(this.pipeline)
+%                 this.version = ...
+%                 pipe = ;
+%                 set.pipeline(pipe);
 %             end
-%                         
-%             % therefore we need an io handler, e.g. for parallelization,
-%             % housekeeping etc.
-%             this.io=inputIO;
-%         end
+        end
         
-        function outputStr=id(this)
+        function outputStr = id(this)
             outputStr=[this.name,'_',this.version];
         end
       
         
         function run(this,inputSample)
-            if isempty(this.dataframeProcessor)
-                inputSample.sampleId
+            if isempty(this.dataframeProcessor) || isempty(this.pipeline)
+                inputSample.sampleId %only for testing!
                 %notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
             else
-%                 for j=1:inputSample.nrOfFrames
-%                     data=this.io.loader.load_data_frame(j);
-%                     for i=1:numel(this.algorithm)
-%                         data=this.algorithm{i}.run(data);
-%                     end
-%                     inputSample.results.features=vertcat(inputSample.results.features,data.features);
-%                     inputSample.results.classification=vertcat(inputSample.results.classification,data.classificationResults);
-%                     inputSample.results.thumbnails=vertcat(inputSample.results.thumbnails,data.thumbnails);
-%                 end
+                for i = 1:numel(this.pipeline)
+                    this.pipeline{i}.run(inputFrame);
+                end
             end
         end
         
