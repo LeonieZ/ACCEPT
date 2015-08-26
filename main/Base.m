@@ -41,8 +41,14 @@ classdef Base < handle
         end
         
         function run(this)
-            % TODO: run sampleProcessor with sampleList
-            this.sampleProcessor.run(this.sampleList);
+            % run SampleProcessor with each sample marked as toBeProcessed
+            nbrSamples = size(this.sampleList.toBeProcessed,2);
+            for k=1:nbrSamples
+                if this.sampleList.isProcessed(k) == 0 && this.sampleList.toBeProcessed(k) == 1
+                    sample = this.io.load_sample(this.sampleList,k);
+                    this.sampleProcessor.run(sample);
+                end
+            end
         end
 
         function h=show_logo(this)

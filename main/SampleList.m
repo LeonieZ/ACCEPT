@@ -5,7 +5,7 @@ classdef SampleList < handle
         sampleProcessorId='empty';
         inputPath = '';
         resultPath = '';
-        isToBeProcessed = [];
+        toBeProcessed = [];
     end
     
     properties(SetAccess={?IO})
@@ -24,16 +24,16 @@ classdef SampleList < handle
     end
     
     methods
-        function this=SampleList(procId,inputP,resultP,smpleNames,isProc,isToBeProc,loaderUsed)
-            
-            if nargin==7
+        function this=SampleList(procId,inputP,resultP,smpleNames,isProc,loaderUsed)
+            if nargin==6
                 this.sampleProcessorId=procId;
                 this.inputPath=inputP;
                 this.resultPath=resultP;
                 this.sampleNames=smpleNames;
                 this.isProcessed=isProc;
-                this.isToBeProcessed=isToBeProc;
                 this.loaderToBeUsed=loaderUsed;
+                %this.isToBeProcessed=isToBeProc;
+                this.toBeProcessed=zeros(size(isProc)); 
             end
         end
         

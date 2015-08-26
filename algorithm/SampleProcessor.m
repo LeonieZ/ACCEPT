@@ -33,7 +33,8 @@ classdef SampleProcessor < handle
         
         function run(this,inputSample)
             if isempty(this.dataframeProcessor)
-                notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
+                inputSample.sampleId
+                %notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
             else
 %                 for j=1:inputSample.nrOfFrames
 %                     data=this.io.loader.load_data_frame(j);

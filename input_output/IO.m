@@ -17,8 +17,9 @@ classdef IO < handle
     methods
         function outputList = create_sample_list(this,inputPath,resultPath,sampleProcessor)
             [sampleNames,loaderUsed]=this.available_samples(inputPath);
-            [isProc,isToBeProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
-            outputList=SampleList(sampleProcessor.id(),inputPath,resultPath,sampleNames,isProc,isToBeProc,loaderUsed);
+            %[isProc,isToBeProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
+            [isProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
+            outputList=SampleList(sampleProcessor.id(),inputPath,resultPath,sampleNames,isProc,loaderUsed);
             addlistener(outputList,'updatedProcessorId',@this.updated_sample_processor);
             addlistener(outputList,'updatedInputPath',@this.updated_input_path);
             addlistener(outputList,'updatedResultPath',@this.updated_result_path);
@@ -157,7 +158,8 @@ classdef IO < handle
             end
         end
         
-        function [isProc,isToBeProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames);
+        %function [isProc,isToBeProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames)
+        function [isProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames)
             savepath=[resultsPath,filesep,sampleProcessorId];
             isProc=true(1,numel(sampleNames));
             isToBeProc=false(1,numel(sampleNames));
@@ -168,7 +170,7 @@ classdef IO < handle
                 samplesProcessed={};
                 save([savepath filesep 'processed.mat'],'samplesProcessed');
                 isProc=false(1,numel(sampleNames));
-                isToBeProc=true(1,numel(sampleNames));
+                %isToBeProc=true(1,numel(sampleNames));
             else
                 %Check in results dir if any samples are already processed.
                 try load([savepath filesep 'processed.mat'],'samplesProcessed')
@@ -178,10 +180,10 @@ classdef IO < handle
                 end
                 [~,index]=setdiff(sampleNames,samplesProcessed);
                 if this.overwriteResults==false
-                    isToBeProc(index)=true;
+                    %isToBeProc(index)=true;
                     isProc(index)=false;
                 else
-                    isToBeProc=true(1,numel(sampleNames));
+                    %isToBeProc=true(1,numel(sampleNames));
                     isProc(index)=false;
                 end
             end
