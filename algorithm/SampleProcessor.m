@@ -29,6 +29,7 @@ classdef SampleProcessor < handle
         function outputStr=id(this)
             outputStr=[this.name,'_',this.version];
         end
+      
         
         function run(this,inputSample)
             if isempty(this.dataframeProcessor)

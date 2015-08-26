@@ -28,6 +28,7 @@ classdef IO < handle
             loader=sampleList.loaderToBeUsed{sampleNr};
             loader.new_sample_path([sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
             outputSample=loader.sample;
+            outputSample.savePath=sampleList.save_path();
         end
         
         function outputFrame=load_data_frame(this,sample,frameNr)
@@ -41,31 +42,29 @@ classdef IO < handle
         end
 
         
-        function save_work_flow(this,workFlow)
-            save([this.resultsPath,filesep,'workflow.mat'],'workFlow');
+        function save_sample_processor(this,smplLst,processor)
+            save([smplLst.save_path(),'processed.mat'],'processor','-append');
         end
         
         function save_sample(this,currentSample)
-            save([this.resultsPath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample');
-        end
-        
-        function save_results(this,currentSample)
-            save([this.resultsPath,filesep,'output',filesep,currentSample.name,'.mat'],'currentSample.results','-append');        
+            save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample');
+            load([currentSample.savePath,'processed.mat'],'samplesProcessed')
+            samplesProcessed=union(samplesProcessed,{currentSample.id});
+            save([currentSample.savePath,'processed.mat'],'samplesProcessed','-append')
         end
         
         function save_data_frame(this,currentSample,currentDataFrame)
-            if ~exist([this.resultsPath,filesep,'frames',filesep,currentSample.name],'dir')
-                mkdir([this.resultsPath,filesep,'frames',filesep,currentSample.name]);
+            if ~exist([currentSample.savePath,filesep,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,filesep,'frames',filesep,currentSample.id]);
             end
-            save([this.resultsPath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame');            
-    
+            save([currentSample.savePath,filesep,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame');            
         end
         
         function save_data_frame_segmentation(this,currentSample,currentDataFrame)
-            if ~exist([this.resultsPath,filesep,'frames',filesep,currentSample.name],'dir')
-                mkdir([this.resultsPath,filesep,'frames',filesep,currentSample.name]);
+            if ~exist([currentSample.savePath,filesep,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,filesep,'frames',filesep,currentSample.id]);
             end
-            t=Tiff([this.resultsPath,filesep,'frames',filesep,currentSample.name,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
+            t=Tiff([currentSample.savePath,filesep,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
             t.setTag('Photometric',t.Photometric.MinIsBlack);
             t.setTag('Compression',t.Compression.LZW);
             t.setTag('ImageLength',size(currentDataFrame.segmentedImage,1));
@@ -78,10 +77,12 @@ classdef IO < handle
         end
         
         function save_thumbnail(this,currentSample,eventNr)
-            
+           %to be implemented 
         end
         
-        
+        function update_results(this,sampleList)
+        this.updated_results_path(sampleList)
+        end
          
     end
     
@@ -112,7 +113,7 @@ classdef IO < handle
         function updated_results_path(this,sampleList,~)
             [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
                                                 sampleList.sampleProcessorId,...
-                                                sampleLsit.sampleNames);
+                                                sampleList.sampleNames);
             sampleList.isProcessed=isProc;
             sampleList.isToBeProcessed=isToBeProc;
         end

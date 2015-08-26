@@ -38,9 +38,9 @@ classdef CellTracks < Loader
             this.sample.priorPath = this.find_dir(samplePath,'xml',1);
             splitPath = regexp(samplePath, filesep, 'split');
             if isempty(splitPath{end})
-                this.sample.sampleId=splitPath{end-1};
+                this.sample.id=splitPath{end-1};
             else
-                this.sample.sampleId=splitPath{end};
+                this.sample.id=splitPath{end};
             end
             this.preload_tiff_headers();
             this.sample.pixelSize = this.pixelSize;

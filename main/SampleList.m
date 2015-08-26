@@ -37,6 +37,10 @@ classdef SampleList < handle
             end
         end
         
+        function outputStr=save_path(this)
+            outputStr=[this.resultPath,filesep,this.sampleProcessorId,filesep];
+        end
+            
         function set.sampleProcessorId(this,value)
             this.sampleProcessorId=value;
             notify(this,'updatedProcessorId');
