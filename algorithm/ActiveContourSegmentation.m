@@ -44,43 +44,82 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         end
         
         function returnFrame = run(this, inputFrame)
-            returnFrame = inputFrame;
-            returnFrame.segmentedImage = false(size(inputFrame.rawImage));
-                
+            if isa(inputFrame,'Dataframe')
+                returnFrame = inputFrame;
+                returnFrame.segmentedImage = false(size(inputFrame.rawImage));
 
-            if isempty(this.maskForChannels) && isempty(this.single_channel)
-                this.maskForChannels = 1:1:inputFrame.nrChannels;
-            elseif ~isempty(this.single_channel)
-                this.maskForChannels = zeros(1,inputFrame.nrChannels);
-                this.maskForChannels(this.single_channel) = this.single_channel;
-            end
-                                 
-            if size(this.lambda,2) == 1
-                this.lambda = repmat(this.lambda,1, inputFrame.nrChannels);
-            end
-            
-            if size(this.breg_it,2) == 1
-                this.breg_it = repmat(this.breg_it,1, inputFrame.nrChannels);
-            end
-            
-            for i = 1:inputFrame.nrChannels
-                if any(this.maskForChannels == i)
-                    tmp = bregman_cv(this, inputFrame, i, this.init);
-                    tmp = bwareaopen(tmp, 10);
-                    returnFrame.segmentedImage(:,:,i) = tmp;
-                    clear grad div
+
+                if isempty(this.maskForChannels) && isempty(this.single_channel)
+                    this.maskForChannels = 1:1:inputFrame.nrChannels;
+                elseif ~isempty(this.single_channel)
+                    this.maskForChannels = zeros(1,inputFrame.nrChannels);
+                    this.maskForChannels(this.single_channel) = this.single_channel;
                 end
-            end
-            
-            if nargin < 6
-                returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
+
+                if size(this.lambda,2) == 1
+                    this.lambda = repmat(this.lambda,1, inputFrame.nrChannels);
+                end
+
+                if size(this.breg_it,2) == 1
+                    this.breg_it = repmat(this.breg_it,1, inputFrame.nrChannels);
+                end
+
+                for i = 1:inputFrame.nrChannels
+                    if any(this.maskForChannels == i)
+                        tmp = bregman_cv(this, inputFrame, i, this.init);
+                        tmp = bwareaopen(tmp, 10);
+                        returnFrame.segmentedImage(:,:,i) = tmp;
+                        clear grad div
+                    end
+                end
+
+                if isempty(this.single_channel)
+                    returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
+                end
+            elseif isa(inputFrame,'double')
+                returnFrame = false(size(inputFrame));
+
+                if isempty(this.maskForChannels) && isempty(this.single_channel)
+                    this.maskForChannels = 1:1:size(inputFrame,3);
+                elseif ~isempty(this.single_channel)
+                    this.maskForChannels = zeros(1,size(inputFrame,3));
+                    this.maskForChannels(this.single_channel) = this.single_channel;
+                end
+
+                if size(this.lambda,2) == 1
+                    this.lambda = repmat(this.lambda,1,size(inputFrame,3));
+                end
+
+                if size(this.breg_it,2) == 1
+                    this.breg_it = repmat(this.breg_it,1,size(inputFrame,3));
+                end
+
+                for i = 1:size(inputFrame,3)
+                    if any(this.maskForChannels == i)
+                        tmp = bregman_cv(this, inputFrame, i, this.init);
+                        tmp = bwareaopen(tmp, 10);
+                        returnFrame(:,:,i) = tmp;
+                        clear grad div
+                    end
+                end
+
+                if isempty(this.single_channel)
+                    returnFrame = returnFrame(:,:,this.maskForChannels);
+                end
+                
+            else
+                error('Active Contour Segmentation can only be used on dataframes or double images.')
             end
         end
         
         function bin = bregman_cv(this, dataFrame, k, init)
         %BREGMAN_CV Summary of this function goes here
         %   Detailed explanation goes here
-        f = dataFrame.rawImage(:,:,k);
+        if isa(dataFrame,'Dataframe')
+            f = dataFrame.rawImage(:,:,k);
+        elseif isa(dataFrame,'double')
+            f = dataFrame;
+        end
 
         % dimensions
         [nx, ny] = size(f);
@@ -114,9 +153,9 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             mu1 = max(f(:));
         end
         
-        if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
+        if isa(dataFrame,'Dataframe') && dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
             f(dataFrame.mask) = mu0;
-        end
+        end %note: in case you are using the AC function on a double image using a mask is not possible
 
 
         i = 1; j = 1;
@@ -154,7 +193,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                         mu0 = mean(mean(f(init(:,:,k)<0.5)));
                         mu1 = max(f(:));
                     end
-                    if dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
+                    if isa(dataFrame,'Dataframe')&& dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
                         f(dataFrame.mask) = mu0;
                     end
                 end

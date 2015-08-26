@@ -3,27 +3,53 @@ classdef DetermineMask < DataframeProcessorObject
     %   Detailed explanation goes here
     
     properties
-        mask = []
+        channelEdgeRemoval = []
     end
     
-    methods        
+    methods
+        function this = DetermineMask(varargin)
+            if nargin > 0
+                this.channelEdgeRemoval = varargin{1};
+            end
+        end
+        
         function returnFrame = run(this,inputFrame)
-            returnFrame = inputFrame;
-            this.mask = false(size(inputFrame.rawImage,1),size(inputFrame.rawImage,2));
-            se = strel('disk',50);
-            %neues dataframe objekt erzeugen mit dem image als rawimage und
-            %dann active contour verwenden.
-            
-            openImg = imopen(inputFrame.rawImage(:,:,inputFrame.channelEdgeRemoval),se);
-            helperFrame = Dataframe([],false,[],openImg);
-            ac = ActiveContourSegmentation(10000, 50, 1); %adapt when ac has new run function!
-            helperFrame = ac.run(helperFrame);
-            [r,c] = find(helperFrame.segmentedImage == 1);
-            
-            % adapt for corner images;
-            this.mask(min(r):max(r),min(c):max(c)) = true;
-            this.mask = bwmorph(this.mask,'thicken',100);
-            returnFrame.mask = this.mask;
+            if isa(inputFrame,'Dataframe')
+                returnFrame = inputFrame;
+                returnFrame.mask = false(size(inputFrame.rawImage,1),size(inputFrame.rawImage,2));
+                se = strel('disk',50);
+                
+                if isempty(this.channelEdgeRemoval)
+                    this.channelEdgeRemoval = inputFrame.channelEdgeRemoval;
+                end
+                
+                openImg = imopen(inputFrame.rawImage(:,:,this.channelEdgeRemoval),se);
+                ac = ActiveContourSegmentation(10000, 50, 1);
+                binImg = ac.run(openImg);
+                [r,c] = find(binImg == 1);
+
+                % adapt for corner images;
+                returnFrame.mask(min(r):max(r),min(c):max(c)) = true;
+                returnFrame.mask = bwmorph(returnFrame.mask,'thicken',100);
+            elseif isa(inputFrame,'double')
+                returnFrame = false(size(inputFrame,1),size(inputFrame,2));
+                se = strel('disk',50);
+                
+                if isempty(this.channelEdgeRemoval)
+                    this.channelEdgeRemoval = 1;
+                end
+                
+                openImg = imopen(inputFrame(:,:,this.channelEdgeRemoval),se);
+                ac = ActiveContourSegmentation(10000, 50, 1);
+                binImg = ac.run(openImg);
+                [r,c] = find(binImg == 1);
+
+                % adapt for corner images;
+                returnFrame(min(r):max(r),min(c):max(c)) = true;
+                returnFrame = bwmorph(returnFrame,'thicken',100);
+            else
+                error('Determine Mask can only be used on dataframes or double images.')
+            end
         end
     end
     

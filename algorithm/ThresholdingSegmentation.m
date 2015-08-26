@@ -45,37 +45,73 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
         end
         
         function returnFrame = run(this,inputFrame)
-            returnFrame = inputFrame;
-            bins = 65535;
-            
-            if isempty(this.offset)
-            	this.offset = zeros(1,inputFrame.nrChannels);
-            end
-            
-            if isempty(this.maskForChannels)
-                this.maskForChannels = 1:1:inputFrame.nrChannels;
-            end
-            
-            this.histogram = zeros(1,bins,inputFrame.nrChannels);
-            
-            %create histogram if thresholding is local otherwise we assume
-            %this was already done.
-            
-            if strcmp(this.range,'local') && ~strcmp(this.meth,'manual')
-                this.create_local_hist(inputFrame);
-            end
-            
-            if isempty(this.thresholds)
-                this.calculate_threshold()
-            end
-                        
-            for i = 1:inputFrame.nrChannels
-                tmp = inputFrame.rawImage(:,:,i) > this.thresholds(i);
-                if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
-                    tmp(inputFrame.mask) = false;
+            if isa(inputFrame,'Dataframe')
+                returnFrame = inputFrame;
+                returnFrame.segmentedImage = false(size(inputFrame.rawImage));
+                bins = 65535;
+
+                if isempty(this.offset)
+                    this.offset = zeros(1,inputFrame.nrChannels);
                 end
-                tmp = bwareaopen(tmp, 10);
-                returnFrame.segmentedImage(:,:,i) = tmp;    
+
+                if isempty(this.maskForChannels)
+                    this.maskForChannels = 1:1:inputFrame.nrChannels;
+                end
+
+                this.histogram = zeros(1,bins,inputFrame.nrChannels);
+
+                %create histogram if thresholding is local otherwise we assume
+                %this was already done.
+
+                if strcmp(this.range,'local') && ~strcmp(this.meth,'manual')
+                    this.create_local_hist(inputFrame);
+                end
+
+                if isempty(this.thresholds)
+                    this.calculate_threshold()
+                end
+
+                for i = 1:inputFrame.nrChannels
+                    tmp = inputFrame.rawImage(:,:,i) > this.thresholds(i);
+                    if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
+                        tmp(inputFrame.mask) = false;
+                    end
+                    tmp = bwareaopen(tmp, 10);
+                    returnFrame.segmentedImage(:,:,i) = tmp;    
+                end
+            elseif isa(inputFrame,'double') || isa(inputFrame,'single') || isa(inputFrame,'uint8') || isa(inputFrame,'uint16')
+                %note: in case you are using the TS function on a double/single/... image using a mask is not possible
+                returnFrame = false(size(inputFrame));
+                bins = 65535;
+
+                if isempty(this.offset)
+                    this.offset = zeros(1,size(inputFrame,3));
+                end
+
+                if isempty(this.maskForChannels)
+                    this.maskForChannels = 1:1:size(inputFrame,3);
+                end
+
+                this.histogram = zeros(1,bins,size(inputFrame,3));
+
+                %create histogram if thresholding is local otherwise we assume
+                %this was already done.
+
+                if strcmp(this.range,'local') && ~strcmp(this.meth,'manual')
+                    this.create_local_hist(inputFrame);
+                end
+
+                if isempty(this.thresholds)
+                    this.calculate_threshold()
+                end
+
+                for i = 1:size(inputFrame,3)
+                    tmp = inputFrame(:,:,i) > this.thresholds(i);
+                    tmp = bwareaopen(tmp, 10);
+                    returnFrame(:,:,i) = tmp;    
+                end
+            else
+                error('Thresholding Segmentation can only be used on dataframe or single/double/uint8/uint16 images.')
             end
         end
         
@@ -89,14 +125,23 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
         end
         
         function create_local_hist(this, inputFrame)
-            for j = 1:inputFrame.nrChannels
-                if any(this.maskForChannels == j)                
-                    imTemp = inputFrame.rawImage(:,:,j);
+            if isa(inputFrame,'Dataframe')
+                for j = 1:inputFrame.nrChannels
+                    if any(this.maskForChannels == j)                
+                        imTemp = inputFrame.rawImage(:,:,j);
 
-                    if inputFrame.frameHasEdge
-                        imTemp = imTemp(~inputFrame.mask);
+                        if inputFrame.frameHasEdge
+                            imTemp = imTemp(~inputFrame.mask);
+                        end
+                        this.histogram(:,:,j) = histc(imTemp(:),1:1:numel(this.histogram(:,:,j)))';
                     end
-                    this.histogram(:,:,j) = histc(imTemp(:),1:1:numel(this.histogram(:,:,j)))';
+                end
+            elseif isa(inputFrame,'double') || isa(inputFrame,'single') || isa(inputFrame,'uint8') || isa(inputFrame,'uint16')
+                for j = 1:size(inputFrame,3)
+                    if any(this.maskForChannels == j)                
+                        imTemp = inputFrame(:,:,j);
+                        this.histogram(:,:,j) = histc(imTemp(:),1:1:numel(this.histogram(:,:,j)))';
+                    end
                 end
             end
         end
