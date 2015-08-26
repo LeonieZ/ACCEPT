@@ -49,8 +49,9 @@ function this = SampleProcessor(dataframeProcessor,io,varargin)
       
         
         function run(this,inputSample)
+
             if isempty(this.dataframeProcessor) || isempty(this.pipeline)
-                inputSample.sampleId %only for testing!
+                inputSample.id %only for testing!
                 %notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
             else
                 for i = 1:numel(this.pipeline)
