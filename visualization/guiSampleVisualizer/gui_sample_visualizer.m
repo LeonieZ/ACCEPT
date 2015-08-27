@@ -69,7 +69,7 @@ rnames = rnames(selectedProps);
 cnames = {}; % col titles
 dat = cell(numel(rnames),1);
 for i = 1:numel(rnames)
-   dat{i} = eval(['handles.currentFrame.',rnames{i}]); %getfield(handles.currentFrame,rnames{i});
+   dat{i} = eval(['handles.currentSample.',rnames{i}]); %getfield(handles.currentFrame,rnames{i});
 end
 
 % create details table
