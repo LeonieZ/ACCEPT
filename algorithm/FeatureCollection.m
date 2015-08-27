@@ -13,7 +13,7 @@ classdef FeatureCollection < SampleProcessorObject
             this.dataProcessor = inputDataframeProcessor;
             this.io = io;
             if nargin > 1
-                this.load_thumbs = varargin{1};
+                this.use_thumbs = varargin{1};
             end
         end
         
@@ -28,10 +28,10 @@ classdef FeatureCollection < SampleProcessorObject
                 end
             elseif this.use_thumbs == 1
                 for i = 1:inputSample.size(priorLocations,1)
-                    thumbFrame = this.io.load_thumbnail_frame(inputSample,i);
+                    thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
                     this.dataProcessor.run(thumbFrame);
                     returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
-                    returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, thumbFrame.thumbnails); %empty - what do we want to save here?
+                    returnSample.results.thumbnails=vertcat(returnSample.priorLocations); %fill with prior locations
                 end
             end
         end

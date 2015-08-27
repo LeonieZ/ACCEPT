@@ -29,13 +29,6 @@ classdef DataframeProcessor < handle
             if isempty(varargin{1})
                 this.name = 'Empty';
             end
-
-
-%             if strcmp(this.name,'...') && isempty(this.pipeline)
-%                 this.version = ...
-%                 pipe = ;
-%                 set.pipeline(pipe);
-%             end
         end
         
         

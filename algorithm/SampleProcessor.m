@@ -15,33 +15,28 @@ classdef SampleProcessor < handle
     end
     
     methods
-function this = SampleProcessor(dataframeProcessor,io,varargin)
-            this.io = io;
-            this.dataframeProcessor = dataframeProcessor;
-            
-            if nargin > 2
-                this.name = varargin{1};
-            end
-            
-            if nargin > 3
-                this.pipeline = varargin{2};  
-            end
-            
-            if nargin > 4
-                this.version = varargin{3};
-            end
-            
-            if isempty(varargin{1})
-                this.name = 'Empty';
-            end
+        function this = SampleProcessor(dataframeProcessor,io,varargin)
+            if nargin > 0
+                this.io = io;
+                this.dataframeProcessor = dataframeProcessor;
 
+                if nargin > 2
+                    this.name = varargin{1};
+                end
 
-%             if strcmp(this.name,'...') && isempty(this.pipeline)
-%                 this.version = ...
-%                 pipe = ;
-%                 set.pipeline(pipe);
-%             end
-        end
+                if nargin > 3
+                    this.pipeline = varargin{2};  
+                end
+
+                if nargin > 4
+                    this.version = varargin{3};
+                end
+
+                if isempty(varargin{1})
+                    this.name = 'Empty';
+                end
+            end
+         end
         
         function outputStr = id(this)
             outputStr=[this.name,'_',this.version];
@@ -55,7 +50,7 @@ function this = SampleProcessor(dataframeProcessor,io,varargin)
                 %notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
             else
                 for i = 1:numel(this.pipeline)
-                    this.pipeline{i}.run(inputFrame);
+                    this.pipeline{i}.run(inputSample);
                 end
             end
         end
