@@ -59,11 +59,27 @@ classdef CellTracks < Loader
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
         
-        function dataFrame=load_thumb_frame(this,thumbNr)
-            frameNr = this.sample.priorLocations.frameNr(thumbNr);
-            boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
-                [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
-            dataFrame=Dataframe(thumbNr,false,this.read_im_and_scale(frameNr,boundingBox));
+        function dataFrame=load_thumb_frame(this,thumbNr,option)
+            if strcmp('prior',option)
+                if isempty(this.sample.priorLocations)
+                    error('This sample contains no prior locations')
+                end
+                frameNr = this.sample.priorLocations.frameNr(thumbNr);
+                boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
+                    [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+                dataFrame=Dataframe(thumbNr,false,this.read_im_and_scale(frameNr,boundingBox));
+            else
+                if 
+                    error('This sample contains no thumbnail locations')
+                end
+                frameNr = this.sample.results.thumbnails.frameNr(thumbNr);
+                boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
+                    [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
+                dataFrame=Dataframe(thumbNr,false,this.read_im_and_scale(frameNr,boundingBox));
+                %some function is needed to load any possible saved
+                %dataframes/segmentation.
+            end
+            
         end
     end
     methods(Access=private)
