@@ -28,8 +28,8 @@ classdef Base < handle
             
             %show splash logo
             h=this.show_logo();
-            pause(1);
-            close(h);
+            %pause(1);
+            %close(h);
             
             if this.profiler
                 profile -memory on;

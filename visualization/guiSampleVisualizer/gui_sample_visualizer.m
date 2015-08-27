@@ -53,7 +53,7 @@ function gui_sample_visualizer_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to gui_sample_visualizer (see VARARGIN)
 
 handles.base = varargin{1};
-handles.currentFrame = varargin{2};
+handles.currentSample = varargin{2};
 
 % Choose default command line output for gui
 handles.output = hObject;
@@ -63,7 +63,7 @@ handles.output = hObject;
 %cnames = {}; % col titles
 %rnames = {'Detail 1','Detail 2','Detail 3','Detail 4','Detail 5','Detail 6'};
 
-rnames = properties(handles.currentFrame);
+rnames = properties(handles.currentSample);
 selectedProps = [1,2,3,5,6,8,9,10];
 rnames = rnames(selectedProps);
 cnames = {}; % col titles

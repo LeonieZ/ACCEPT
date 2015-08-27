@@ -1,12 +1,12 @@
-classdef FeatureCollection < SampleProcessor
-    %FEATURECOLLECTION SampleProcessor for the Feature Collection use case.
+classdef Manual_Classification < SampleProcessor
+    %Manual_Classification SampleProcessor for the Feature Collection use case.
     % Acts on preselected thumbnails, does segmentation (otsu thresholding)
     % an extracts features for every cell. No classification!
     
     %NOTE:change segmentation to AC lateron.
     
     properties
-        name='FeatureCollection'
+        name='Manual_Classification'
         version='0.1'
         dataframeProcessor 
         pipeline = cell(0)
@@ -14,7 +14,7 @@ classdef FeatureCollection < SampleProcessor
     end
     
     methods 
-        function this = FeatureCollection()
+        function this = Manual_Classification()
             this.dataframeProcessor = DataframeProcessor('Thumbnail_Analysis', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end
