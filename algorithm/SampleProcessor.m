@@ -16,25 +16,26 @@ classdef SampleProcessor < handle
     
     methods
 function this = SampleProcessor(dataframeProcessor,io,varargin)
-            this.io = io;
-            this.dataframeProcessor = dataframeProcessor;
-            
-            if nargin > 2
-                this.name = varargin{1};
-            end
-            
-            if nargin > 3
-                this.pipeline = varargin{2};  
-            end
-            
-            if nargin > 4
-                this.version = varargin{3};
-            end
-            
-            if isempty(varargin{1})
-                this.name = 'Empty';
-            end
+            if nargin > 0
+                this.io = io;
+                this.dataframeProcessor = dataframeProcessor;
 
+                if nargin > 2
+                    this.name = varargin{1};
+                end
+
+                if nargin > 3
+                    this.pipeline = varargin{2};  
+                end
+
+                if nargin > 4
+                    this.version = varargin{3};
+                end
+
+                if isempty(varargin{1})
+                    this.name = 'Empty';
+                end
+            end
 
 %             if strcmp(this.name,'...') && isempty(this.pipeline)
 %                 this.version = ...
