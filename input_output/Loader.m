@@ -4,7 +4,11 @@ classdef (Abstract) Loader < handle
     %   defines the functions which must be implemented in its subclasses
     %   so that the io class is able to load the appropriate data. 
     
-    properties
+    properties(Abstract)
+        name
+        hasEdges
+        pixelSize
+        sample
         
     end
     
@@ -13,19 +17,15 @@ classdef (Abstract) Loader < handle
     end
     
     
+    methods(Abstract)
+        new_sample_path(this,samplePath)
+        dataFrame = load_data_frame(this,frameNr)
+    end
+     
     methods
-        function sample=load_sample(this,samplePath)
-        
-        end
-       
-        function dataFrame = load_data_frame(this,frameNr)
-
-        end
-        function this=new_sample_path(this,samplePath)
-        
-        end
-            
-   end
+          
+    end
+    
     methods(Static)
         function bool = can_load_this_folder(path)
             %function that must be present in all loader types to test

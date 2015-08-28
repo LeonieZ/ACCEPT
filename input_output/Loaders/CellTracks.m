@@ -60,22 +60,24 @@ classdef CellTracks < Loader
         end
         
         function dataFrame=load_thumb_frame(this,thumbNr,option)
-            if strcmp('prior',option)
-                if isempty(this.sample.priorLocations)
-                    error('This sample contains no prior locations')
+            if exist('option','var')
+                if strcmp('prior',option)
+                    if isempty(this.sample.priorLocations)
+                        error('This sample contains no prior locations')
+                    end
+                    frameNr = this.sample.priorLocations.frameNr(thumbNr);
+                    boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
+                        [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+                    dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im_and_scale(frameNr,boundingBox));
                 end
-                frameNr = this.sample.priorLocations.frameNr(thumbNr);
-                boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
-                    [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
-                dataFrame=Dataframe(thumbNr,false,this.read_im_and_scale(frameNr,boundingBox));
             else
-                if 
+                if isempty(this.sample.results.thumbnails)
                     error('This sample contains no thumbnail locations')
                 end
                 frameNr = this.sample.results.thumbnails.frameNr(thumbNr);
                 boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
                     [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
-                dataFrame=Dataframe(thumbNr,false,this.read_im_and_scale(frameNr,boundingBox));
+                dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im_and_scale(frameNr,boundingBox));
                 %some function is needed to load any possible saved
                 %dataframes/segmentation.
             end
@@ -158,20 +160,20 @@ classdef CellTracks < Loader
                 boundingBox={[1 this.sample.imageSize(1)],[1 this.sample.imageSize(2)]}
             else
                 %limit boundingBox to frame
-                x = boundingBox{1};
+                x = boundingBox{2};
                 y = boundingBox{1};
                 x = min(x,this.sample.imageSize(1));
                 x = max(x,1);
                 y = min(y,this.sample.imageSize(2));
                 y = max(y,1);
-                boundingBox = {x,y};
-                sizex = boundingBox{1}(2)-boundingBox{1}(1)+1;
-                sizey = boundingBox{2}(2)-boundingBox{2}(1)+1;
-                rawImage = zeros(sizex,sizey,this.sample.imageSize(3));
+                boundingBox = {y,x};
+                sizex = boundingBox{2}(2)-boundingBox{2}(1)+1;
+                sizey = boundingBox{1}(2)-boundingBox{1}(1)+1;
+                rawImage = zeros(sizey,sizex,this.sample.imageSize(3));
             end
             for i=1:this.sample.nrOfChannels;
                 try
-                    imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr},'PixelRegion',boundingBox));
+                    imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr}));
                 catch
                     notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr}, 'from channel ' num2str(i) ' is not readable!'])) ;
                     return
@@ -185,15 +187,14 @@ classdef CellTracks < Loader
 
 
                     % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
-                    rawImage(:,:,this.channelRemapping(1,i)) = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
+                    imagetemp = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
+                    rawImage(:,:,this.channelRemapping(1,i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
                 else
                     if max(imagetemp) > 32767
                         imagetemp = imagetemp - 32768;
                     end
-                    rawImage(:,:,this.channelRemapping(1,i))=imagetemp;
+                    rawImage(:,:,this.channelRemapping(1,i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
                 end
-
-                            
             end
         end
 

@@ -37,11 +37,22 @@ classdef IO < handle
             outputFrame=loader.load_data_frame(frameNr);
         end
         
-        function outputFrame=load_thumbnail_frame(this,sample,thumbNr)
+        function outputFrame=load_thumbnail_frame(this,sample,thumbNr,option)
             loader=sample.loader(sample);
-            outputFrame=loader.load_thumb_frame(thumbNr);
+            if exist('option','var')
+                outputFrame=loader.load_thumb_frame(thumbNr,option);
+            else
+                outputFrame=loader.load_thumb_frame(thumbNr);
+            end
+        end
+        
+        function image=load_thumbnail(this,sample,resultNr)
+        
         end
 
+        function image=load_sample_overview(this,sample)
+        
+        end
         
         function save_sample_processor(this,smplLst,processor)
             save([smplLst.save_path(),'processed.mat'],'processor','-append');
