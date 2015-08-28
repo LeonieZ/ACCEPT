@@ -6,6 +6,7 @@ classdef Base < handle
         programVersion= 'v0.1';
         sampleList;
         sampleProcessor;
+        availableSampleProcessors;
         io;
         profiler=false;
         parallelProcessing=false;
@@ -16,7 +17,11 @@ classdef Base < handle
     methods
         function this = Base()
             this.io = IO();
-                        
+            
+            % search for available SampleProcessors
+            tmp = what('sampleProcessors');
+            this.availableSampleProcessors = tmp.m;
+            
             installDir = fileparts(which('ACCEPT.m'));
             %constructor will be called without arguments by children. It
             %starts the logging, profiler and parallel pool when turned on.

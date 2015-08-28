@@ -57,6 +57,22 @@ function gui_OpeningFcn(hObject, eventdata, handles, varargin)
 
 handles.base = varargin{1};
 
+%-------
+
+% Update chooseButton for tasks via available sampleProcessors
+tasks_raw = handles.base.availableSampleProcessors;
+% convert sampleProcessor m-file names to readable Strings
+tasks = strrep(strrep(tasks_raw,'_',' '),'.m','');
+set(handles.chooseTask,'String',tasks);
+% select DEFAULT sampleProcessor number (in alphabetical order) for visualization
+defaultSampleProcessorNumber = 2;
+set(handles.chooseTask,'Value',defaultSampleProcessorNumber);
+% create sampleProcessor object for - per default - selected sampleProcessor 
+currentSampleProcessorName = strrep(tasks_raw{get(handles.chooseTask,'Value')},'.m','');
+eval(['handles.base.sampleProcessor = ',currentSampleProcessorName,'();']);
+
+%-------
+
 % Choose default command line output for gui
 handles.output = hObject;
 
@@ -84,7 +100,11 @@ function chooseTask_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 contents = cellstr(get(hObject,'String')); %returns chooseTask contents as cell array
-contents{get(hObject,'Value')} %returns selected item from chooseTask
+selectedSampleProcessor = contents{get(hObject,'Value')}; %returns selected item from chooseTask
+selectedSampleProcessor = strrep(selectedSampleProcessor,' ','_');
+eval(['handles.base.sampleProcessor = ',selectedSampleProcessor,'();']);
+% Update handles structure
+%guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -97,9 +117,6 @@ function chooseTask_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-% initialize choose button for tasks
-tasks = {'Feature collection';};
-set(hObject,'String',tasks);
 
 
 % --- Executes on button press in processButton.
@@ -110,7 +127,7 @@ function processButton_Callback(hObject, eventdata, handles)
 display('Process samples...')
 selectedCellsInTable = get(handles.tableSamples,'UserData');
 selectedSamples = selectedCellsInTable(:,1);
-
+handles.base.sampleProcessor
 % update the current sampleList: selected samples should be processed
 handles.base.sampleList.toBeProcessed(selectedSamples) = 1;
 handles.base.run();
@@ -127,7 +144,6 @@ selectedSamples = selectedCellsInTable(:,1);
 if numel(selectedSamples) == 1
     % load selected sample
     currentSample = handles.base.io.load_sample(handles.base.sampleList,selectedSamples);
-    currentSample
     % run sampleVisGui with loaded sample
     gui_sample_visualizer(handles.base,currentSample);
 else
@@ -143,7 +159,6 @@ function loadButton_Callback(hObject, eventdata, handles)
 display('Load samples...')
 inputPath = get(handles.editInputFolder,'String');
 resultPath = get(handles.editResultsFolder,'String');
-handles.base.sampleProcessor = SampleProcessor();
 handles.base.sampleList = handles.base.io.create_sample_list(...
                         inputPath,resultPath,handles.base.sampleProcessor);
 sl = handles.base.sampleList;
@@ -153,11 +168,9 @@ dat = cell(nbrSamples,nbrAttributes);
 for r=1:nbrSamples
     dat{r,1} = sl.sampleNames{1,r};
     dat{r,2} = sl.isProcessed(1,r);
-    %dat{r,x} = sl.isToBeProcessed(1,r);
-    %dat{r,x} = sl.sampleProcessorId;
 end                    
 cnames = {'<html><center /><font size=4>   Sample name   </font></html>',...
-          '<html><center /><font size=4>   Processed   </font></html>'};%,'   Sample Processor   ','   to be processed'   };
+          '<html><center /><font size=4>   Processed   </font></html>'};
 rnames = {};
 % create details table
 panelWidth = get(handles.uipanelSampleList,'Position'); panelWidth = panelWidth(3);
