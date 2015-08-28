@@ -55,10 +55,17 @@ function gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to gui (see VARARGIN)
 
-handles.base = varargin{1};
+im = imread('logo.png'); imageWidth  = size(im,2); imageHeight = size(im,1);
+handles.axesLogoLeft = axes('Units','pixels','Position',[630 830 0.75*imageWidth 0.75*imageHeight],'visible','off');
+image(im); set(handles.axesLogoLeft,'visible','off');
+
+im = imread('logo3.png'); imageWidth  = size(im,2); imageHeight = size(im,1);
+handles.axesLogoLeft = axes('Units','pixels','Position',[520 30 0.75*imageWidth 0.75*imageHeight],'visible','off');
+image(im); set(handles.axesLogoLeft,'visible','off');
 
 %-------
 
+handles.base = varargin{1};
 % Update chooseButton for tasks via available sampleProcessors
 tasks_raw = handles.base.availableSampleProcessors;
 % convert sampleProcessor m-file names to readable Strings
