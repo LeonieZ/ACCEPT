@@ -59,7 +59,7 @@ classdef CellTracks < Loader
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
         
-        function dataFrame=load_thumb_frame(this,thumbNr,option)
+        function dataFrame = load_thumb_frame(this,thumbNr,option)
             if exist('option','var')
                 if strcmp('prior',option)
                     if isempty(this.sample.priorLocations)
@@ -83,6 +83,23 @@ classdef CellTracks < Loader
             end
             
         end
+        
+        function frameOrder = calculate_frame_nr_order(this)
+            frameOrder=zeros(this.sample.rows,this.sample.columns);
+            for i=1:this.sample.nrOfFrames
+                row = ceil(i/this.sample.columns);
+                cols = this.sample.columns;
+                switch row
+                    case {2,4,6} 
+                        col=(1+cols-(i-(row-1)*this.sample.columns));
+                        frameOrder(row,col)=i;
+                    otherwise
+                        col=i-(row-1)*cols;
+                        frameOrder(row,col)=i;
+                end
+            end
+        end
+            
     end
     methods(Access=private)
         function Dir_out = find_dir(this,Dir_in,fileExtension,numberOfFiles)
@@ -157,7 +174,7 @@ classdef CellTracks < Loader
             % normal tiff is returned.
             if nargin==2
                 rawImage = zeros(this.sample.imageSize);
-                boundingBox={[1 this.sample.imageSize(1)],[1 this.sample.imageSize(2)]}
+                boundingBox={[1 this.sample.imageSize(1)],[1 this.sample.imageSize(2)]};
             else
                 %limit boundingBox to frame
                 x = boundingBox{2};

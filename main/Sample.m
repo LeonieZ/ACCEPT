@@ -34,14 +34,14 @@ classdef Sample < handle
     properties (Access={?IO,?Loader})
         loader
         savePath
+        rows
+        columns
     end
     properties (Access={?Loader})
         imagePath
         priorPath
         imageFileNames
         tiffHeaders
-        rows
-        columns
     end
     
     events
