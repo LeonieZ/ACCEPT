@@ -6,15 +6,13 @@ classdef CTC_Marker_Characterization < SampleProcessor
     %NOTE:change segmentation to AC lateron.
     
     properties
-        name='CTC_Marker_Characterization'
-        version='0.1'
-        dataframeProcessor 
-        pipeline = cell(0)
-        io = IO();
     end
     
     methods 
         function this = CTC_Marker_Characterization()
+            this.name = 'CTC Marker Characterization';
+            this.version = '0.1';
+            this.io = IO();  
             this.dataframeProcessor = DataframeProcessor('Thumbnail_Analysis', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end

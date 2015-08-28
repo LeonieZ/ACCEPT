@@ -27,7 +27,7 @@ classdef FeatureCollection < SampleProcessorObject
                     inputSample.results.features=vertcat(inputSample.results.features, dataFrame.features);
                 end
             elseif this.use_thumbs == 1
-                for i = 1:inputSample.size(priorLocations,1)
+                for i = 1:size(inputSample.priorLocations,1)
                     thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
                     this.dataProcessor.run(thumbFrame);
                     returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);

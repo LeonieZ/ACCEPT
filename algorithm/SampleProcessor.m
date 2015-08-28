@@ -3,8 +3,8 @@ classdef SampleProcessor < handle
     %   Detailed explanation goes here
     
     properties
-        name='Empty'
-        version='0.1'
+        name
+        version
         dataframeProcessor;
         pipeline=cell(0);
         io;
@@ -30,9 +30,11 @@ classdef SampleProcessor < handle
 
                 if nargin > 4
                     this.version = varargin{3};
+                else
+                    this.version = '0.1';
                 end
 
-                if isempty(varargin{1})
+                if isempty(this.name)
                     this.name = 'Empty';
                 end
             end

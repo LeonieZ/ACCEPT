@@ -26,7 +26,7 @@ classdef DataframeProcessor < handle
                 this.version = varargin{3};
             end
             
-            if isempty(varargin{1})
+            if isempty(this.name)
                 this.name = 'Empty';
             end
         end
@@ -43,7 +43,7 @@ classdef DataframeProcessor < handle
         end
         
         function  set.pipeline(this,value)
-            if any(cellfun(@(x) ~isa(x,'DateframeProcessorObject'),value))
+            if any(cellfun(@(x) ~isa(x,'DataframeProcessorObject'),value))
                 error('Cannot add non DataframeProcessorObjects to the pipeline.')                
             end
             this.pipeline=value;

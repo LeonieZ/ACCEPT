@@ -6,33 +6,25 @@ classdef Manual_Classification < SampleProcessor
     %NOTE:change segmentation to AC lateron.
     
     properties
-        name='Manual_Classification'
-        version='0.1'
-        dataframeProcessor 
-        pipeline = cell(0)
-        io = IO();
     end
     
     methods 
         function this = Manual_Classification()
-            this.dataframeProcessor = DataframeProcessor('Thumbnail_Analysis', this.make_dataframe_pipeline(),'0.1');
+            this.name = 'Manual Classification';
+            this.version = '0.1';
+            this.io = IO();
+            this.dataframeProcessor = DataframeProcessor('', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end
         
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);
-            fc = FeatureCollection(this.dataframeProcessor,this.io,1);
-            pipeline{1} = fc;
         end
     end
     
     methods (Static)    
         function pipeline = make_dataframe_pipeline()
             pipeline = cell(0);
-            ts = ThresholdingSegmentation('otsu','local');
-            ef = ExtractFeatures();
-            pipeline{1} = ts;
-            pipeline{2} = ef;
         end     
     end
     
