@@ -56,11 +56,15 @@ function gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to gui (see VARARGIN)
 
 im = imread('logo.png'); imageWidth  = size(im,2); imageHeight = size(im,1);
-handles.axesLogoLeft = axes('Units','pixels','Position',[630 830 0.75*imageWidth 0.75*imageHeight],'visible','off');
+handles.axesLogoLeft = axes('Units','pixels','Position',[625 766 0.75*imageWidth 0.75*imageHeight],'visible','off');
 image(im); set(handles.axesLogoLeft,'visible','off');
 
 im = imread('logo3.png'); imageWidth  = size(im,2); imageHeight = size(im,1);
-handles.axesLogoLeft = axes('Units','pixels','Position',[520 30 0.75*imageWidth 0.75*imageHeight],'visible','off');
+handles.axesLogoLeft = axes('Units','pixels','Position',[525 15 0.75*imageWidth 0.75*imageHeight],'visible','off');
+image(im); set(handles.axesLogoLeft,'visible','off');
+
+im = imread('title.png'); imageWidth  = size(im,2); imageHeight = size(im,1);
+handles.axesLogoLeft = axes('Units','pixels','Position',[116 702 0.5*imageWidth 0.5*imageHeight],'visible','off');
 image(im); set(handles.axesLogoLeft,'visible','off');
 
 %-------
