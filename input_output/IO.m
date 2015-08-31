@@ -81,27 +81,6 @@ classdef IO < handle
                 end
             end
         end
-     
-
-        function load_sample_overview(this,sample)
-            if isempty(sample.overviewImage)
-                loader = sample.loader(sample);
-                frameOrder = loader.calculate_frame_nr_order;
-                reductionFactor = 1/8;
-                reducedSize = [ceil(sample.imageSize(1)*reductionFactor(1)),sample.imageSize(2)*reductionFactor(1),sample.imageSize(3)];
-                reducedSize=ceil(reducedSize);
-                sample.overviewImage = zeros(reducedSize(1)*sample.rows,reducedSize(2)*sample.columns,reducedSize(3),'uint16');
-                for i=1:sample.rows
-                    for j=1:sample.columns
-                        offset=[reducedSize(1)*(i-1)+1,reducedSize(2)*(j-1)+1];
-                        frame=loader.load_data_frame(frameOrder(i,j));
-                        
-                        tempImage=imresize(frame.rawImage,reductionFactor);
-                        sample.overviewImage(offset(1):offset(1)+reducedSize(1)-1,offset(2):offset(2)+reducedSize(2)-1,:)=tempImage;
-                    end
-                end
-            end
-        end
         
         function save_sample_processor(this,smplLst,processor)
             save([smplLst.save_path(),'processed.mat'],'processor','-append');

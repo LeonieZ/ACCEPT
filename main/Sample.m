@@ -28,11 +28,15 @@ classdef Sample < handle
         dataTypeOriginalImage='uint16';
         pixelSize=1;
         priorLocations=[];
-        results=Result();
-        overviewImage=[];
+        results=Result();    
     end
     
-    properties (Access={?IO,?Loader})
+    properties (SetAccess={?SampleOverviewLoading})
+        overviewImage=[];
+        histogram = [];
+    end 
+    
+    properties (Access={?IO,?Loader,?SampleOverviewLoading})
         loader
         savePath
         rows
@@ -53,7 +57,7 @@ classdef Sample < handle
     methods
         function this = Sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames,priorLocations)
             if nargin==8
-                this.sampleId=name;
+                this.id=name;
                 this.type=type;
                 this.pixelSize=pixelSize;
                 this.hasEdges=hasEdges;

@@ -53,7 +53,7 @@ classdef Base < handle
                     sample = this.io.load_sample(this.sampleList,k);
                     this.sampleProcessor.run(sample);
                     % we assume to save processing results in resultPath/sampleProcName/output
-                    this.io.save_sample(sample,[this.sampleList.resultPath,filesep,this.sampleProcessor.id]);
+                    this.io.save_sample(sample);
                 end
             end
         end

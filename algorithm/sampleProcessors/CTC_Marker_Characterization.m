@@ -19,17 +19,21 @@ classdef CTC_Marker_Characterization < SampleProcessor
         
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);
+            sol = SampleOverviewLoading();
             fc = FeatureCollection(this.dataframeProcessor,this.io,1);
-            pipeline{1} = fc;
+            pipeline{1} = sol;
+            pipeline{2} = fc;
         end
     end
     
     methods (Static)    
         function pipeline = make_dataframe_pipeline()
             pipeline = cell(0);
-            ts = ThresholdingSegmentation('otsu','local');
+            ac = ActiveContourSegmentation(50, 100, 1);
+%             ts = ThresholdingSegmentation('otsu','local');
             ef = ExtractFeatures();
-            pipeline{1} = ts;
+%             pipeline{1} = ts;
+            pipeline{1} = ac;
             pipeline{2} = ef;
         end     
     end
