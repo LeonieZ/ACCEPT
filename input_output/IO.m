@@ -26,55 +26,90 @@ classdef IO < handle
         end
         
         function outputSample=load_sample(this,sampleList,sampleNr)
-            loader=sampleList.loaderToBeUsed{sampleNr};
-            loader.new_sample_path([sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
-            outputSample=loader.sample;
-            outputSample.savePath=sampleList.save_path();
+            if exist(this.saved_sample_path(sampleList,sampleNr),'file');
+                load(this.saved_sample_path(sampleList,sampleNr))
+                outputSample=currentSample;
+            else
+                loader=sampleList.loaderToBeUsed{sampleNr};
+                loader.new_sample_path([sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
+                outputSample=loader.sample;
+                outputSample.savePath=sampleList.save_path();
+            end
         end
         
         function outputFrame=load_data_frame(this,sample,frameNr)
-            loader=sample.loader(sample);
-            outputFrame=loader.load_data_frame(frameNr);
+            if exist(this.saved_data_frame_path(sample,frameNr),'file')
+                load(this.saved_data_frame_path(sample,frameNr));
+                outputFrame=currentDataFrame;
+            else
+                loader=sample.loader(sample);
+                outputFrame=loader.load_data_frame(frameNr);
+            end
         end
         
         function outputFrame=load_thumbnail_frame(this,sample,thumbNr,option)
             loader=sample.loader(sample);
             if exist('option','var')
-                outputFrame=loader.load_thumb_frame(thumbNr,option);
+                if strcmp('prior',option)
+                    if isempty(sample.priorLocations)
+                        error('This sample contains no prior locations')
+                    end
+                    frameNr = sample.priorLocations.frameNr(thumbNr);
+                    boundingBox = {[sample.priorLocations.yBottomLeft(thumbNr) sample.priorLocations.yTopRight(thumbNr)],...
+                        [sample.priorLocations.xBottomLeft(thumbNr) sample.priorLocations.xTopRight(thumbNr)]};
+                    outputFrame=loader.load_data_frame(frameNr,boundingBox);
+                end
             else
-                outputFrame=loader.load_thumb_frame(thumbNr);
-            end
-        end
-        
-        function image=load_thumbnail(this,sample,resultNr)
-        
-        end
-
-        function image=load_sample_overview(this,sample)
-            loader = sample.loader(sample);
-            frameOrder = loader.calculate_frame_nr_order;
-            reductionFactor = 1/8;
-            reducedSize = [ceil(sample.imageSize(1)*reductionFactor(1)),sample.imageSize(2)*reductionFactor(1),sample.imageSize(3)];
-            reducedSize=ceil(reducedSize);
-            image = zeros(reducedSize(1)*sample.rows,reducedSize(2)*sample.columns,reducedSize(3),'uint16');
-            for i=1:sample.rows
-                for j=1:sample.columns
-                    offset=[reducedSize(1)*(i-1)+1,reducedSize(2)*(j-1)+1];
-                    frame=loader.load_data_frame(frameOrder(i,j));
-                    tempImage=imresize(frame.rawImage,reductionFactor);
-                    image(offset(1):offset(1)+reducedSize(1)-1,offset(2):offset(2)+reducedSize(2)-1,:)=tempImage;
+                if isempty(this.sample.results.thumbnails)
+                    error('This sample contains no thumbnail locations')
+                end
+                frameNr = this.sample.results.thumbnails.frameNr(thumbNr);
+                boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
+                    [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
+                if exist(this.saved_frame_path(sample,frameNr),'file');
+                    load(this.saved_frame_path(sample,frameNr));
+                    outputFrame=DataFrame(frameNr,currentDataFrame.frameHasEdge,...
+                        currentDataFrame.channelEdgeRemoval,...
+                        currentDataFrame.rawImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:));
+                    outputFrame.adjacentFrames=currentDataFrame.adjacentFrames(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
+                    outputFrame.preProcessedImage=currentDataFrame.preProcessedImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
+                    outputFrame.segmentedImage=currentDataFrame.segmentedImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
+                    outputFrame.mask=currentDataFrame.mask(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
+                else
+                    outputFrame=loader.load_data_frame(frameNr,boundingBox);
                 end
             end
         end
+     
+
+        function load_sample_overview(this,sample)
+            if isempty(sample.overviewImage)
+                loader = sample.loader(sample);
+                frameOrder = loader.calculate_frame_nr_order;
+                reductionFactor = 1/8;
+                reducedSize = [ceil(sample.imageSize(1)*reductionFactor(1)),sample.imageSize(2)*reductionFactor(1),sample.imageSize(3)];
+                reducedSize=ceil(reducedSize);
+                sample.overviewImage = zeros(reducedSize(1)*sample.rows,reducedSize(2)*sample.columns,reducedSize(3),'uint16');
+                for i=1:sample.rows
+                    for j=1:sample.columns
+                        offset=[reducedSize(1)*(i-1)+1,reducedSize(2)*(j-1)+1];
+                        frame=loader.load_data_frame(frameOrder(i,j));
+                        tempImage=imresize(frame.rawImage,reductionFactor);
+                        sample.overviewImage(offset(1):offset(1)+reducedSize(1)-1,offset(2):offset(2)+reducedSize(2)-1,:)=tempImage;
+                    end
+                end
+            end
+        end
+        
         function save_sample_processor(this,smplLst,processor)
             save([smplLst.save_path(),'processed.mat'],'processor','-append');
         end
         
-        function save_sample(this,currentSample,savePath)
-            save([savePath,filesep,'output',filesep,currentSample.id,'.mat'],'currentSample');
-            load([savePath,filesep,'processed.mat'],'samplesProcessed');
+        function save_sample(this,currentSample)
+            save([currentSample.savePath,filesep,'output',filesep,currentSample.id,'.mat'],'currentSample');
+            load([currentSample.savePath,filesep,'processed.mat'],'samplesProcessed');
             samplesProcessed=union(samplesProcessed,{currentSample.id});
-            save([savePath,filesep,'processed.mat'],'samplesProcessed','-append');
+            save([currentSample.savePath,filesep,'processed.mat'],'samplesProcessed','-append');
         end
         
         function save_data_frame(this,currentSample,currentDataFrame)
@@ -105,7 +140,7 @@ classdef IO < handle
         end
         
         function update_results(this,sampleList)
-        this.updated_results_path(sampleList)
+            this.updated_results_path(sampleList);
         end
          
     end
@@ -181,7 +216,6 @@ classdef IO < handle
             end
         end
         
-        %function [isProc,isToBeProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames)
         function [isProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames)
             savepath=[resultsPath,filesep,sampleProcessorId];
             isProc=true(1,numel(sampleNames));
@@ -211,8 +245,23 @@ classdef IO < handle
                 end
             end
         end
+          
+    end
+    
+    methods (Static, Access = private)
+        function location=saved_sample_path(sampleList,sampleNr)
+            location=[sampleList.save_path(),filesep,'output',filesep,sampleList.sampleNames{sampleNr},'.mat'];
+        end
+    
+        function location=saved_data_frame_path(sample,frameNr)
+            location=[sample.savePath,filesep,'frames',filesep,sample.id,filesep,num2str(frameNr),'.mat'];
+        end
+        
     end
 end
+ 
+
         
+
 
 

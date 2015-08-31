@@ -51,11 +51,11 @@ classdef CellTracks < Loader
             this.sample.priorLocations = this.prior_locations_in_sample;
         end
    
-        function dataFrame = load_data_frame(this,frameNr)
+        function dataFrame = load_data_frame(this,frameNr,varargin)
             dataFrame = Dataframe(frameNr,...
             this.does_frame_have_edge(frameNr),...
             this.channelEdgeRemoval,...
-            this.read_im_and_scale(frameNr));
+            this.read_im_and_scale(frameNr,varargin{:}));
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
         

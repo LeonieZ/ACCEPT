@@ -13,7 +13,7 @@ classdef Sample < handle
     %additional channels = extra markers
     
     
-    properties (SetAccess={?Loader})
+    properties (SetAccess={?Loader,?IO})
         id='Empty' %the sample name or identifier.
         type='Default'; % this can be replaced with a specific data type such as CellSearch. 
         hasEdges = false; % do we need to removeEdges using this datatype (for example CellSearch )
@@ -29,6 +29,7 @@ classdef Sample < handle
         pixelSize=1;
         priorLocations=[];
         results=Result();
+        overviewImage=[];
     end
     
     properties (Access={?IO,?Loader})

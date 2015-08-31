@@ -80,7 +80,7 @@ classdef Base < handle
 
         function delete(this)
             %destructor takes care of the profiler and parpool. 
-            this.log.entry('',logmessage(1,'>>>> Session stopped <<<< '));
+            this.log.entry('',LogMessage(1,'>>>> Session stopped <<<< '));
             delete(this.log)
             if this.profiler
                 profile off;
