@@ -77,6 +77,7 @@ classdef IO < handle
                     outputFrame.mask=currentDataFrame.mask(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
                 else
                     outputFrame=loader.load_data_frame(frameNr,boundingBox);
+                    
                 end
             end
         end
@@ -94,6 +95,7 @@ classdef IO < handle
                     for j=1:sample.columns
                         offset=[reducedSize(1)*(i-1)+1,reducedSize(2)*(j-1)+1];
                         frame=loader.load_data_frame(frameOrder(i,j));
+                        
                         tempImage=imresize(frame.rawImage,reductionFactor);
                         sample.overviewImage(offset(1):offset(1)+reducedSize(1)-1,offset(2):offset(2)+reducedSize(2)-1,:)=tempImage;
                     end
@@ -256,7 +258,7 @@ classdef IO < handle
         function location=saved_data_frame_path(sample,frameNr)
             location=[sample.savePath,filesep,'frames',filesep,sample.id,filesep,num2str(frameNr),'.mat'];
         end
-        
+                      
     end
 end
  
