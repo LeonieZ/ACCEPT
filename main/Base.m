@@ -52,7 +52,6 @@ classdef Base < handle
                 if this.sampleList.isProcessed(k) == 0 && this.sampleList.toBeProcessed(k) == 1
                     sample = this.io.load_sample(this.sampleList,k);
                     this.sampleProcessor.run(sample);
-                    % we assume to save processing results in resultPath/sampleProcName/output
                     this.io.save_sample(sample);
                 end
             end

@@ -78,7 +78,7 @@ tableDetails = uitable('Parent',handles.uipanelSample,'Units','normalized',...
 % create overview image per channel
 axesOverview = axes('Parent',handles.uipanelSample,'Units','normalized',...
             'Position',[0.25 0.07 0.73 0.82]);
-defCh = 1; % default channel for overview when starting the sample visualizer
+defCh = 2; % default channel for overview when starting the sample visualizer
 handles.imageOverview = imagesc(handles.currentSample.overviewImage(:,:,1));
 colormap(jet); axis image; axis off;
 

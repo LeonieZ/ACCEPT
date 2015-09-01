@@ -49,6 +49,9 @@ classdef CellTracks < Loader
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
             this.processXML();
             this.sample.priorLocations = this.prior_locations_in_sample;
+            this.sample.results = Result();
+            this.sample.overviewImage = [];
+            this.sample.histogram = [];
         end
    
         function dataFrame = load_data_frame(this,frameNr,varargin)

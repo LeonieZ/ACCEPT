@@ -31,7 +31,7 @@ classdef Sample < handle
         results=Result();    
     end
     
-    properties (SetAccess={?SampleOverviewLoading})
+    properties (SetAccess={?Loader,?IO,?SampleOverviewLoading})
         overviewImage=[];
         histogram = [];
     end 
