@@ -79,7 +79,7 @@ tableDetails = uitable('Parent',handles.uipanelSample,'Units','normalized',...
 axesOverview = axes('Parent',handles.uipanelSample,'Units','normalized',...
             'Position',[0.25 0.07 0.73 0.82]);
 defCh = 2; % default channel for overview when starting the sample visualizer
-handles.imageOverview = imagesc(handles.currentSample.overviewImage(:,:,1));
+handles.imageOverview = imagesc(handles.currentSample.overviewImage(:,:,defCh));
 colormap(jet); axis image; axis off;
 
 % create choose button to switch color channel
@@ -88,6 +88,7 @@ popupChannel = uicontrol('Style','popup','Units','normalized',...
            'Position',[0.4 -0.12 0.12 0.85],...
            'FontSize',15,...
            'Callback',@(hObject,eventdata)gui_sample_visualizer('popupChannel_Callback',hObject,eventdata,guidata(hObject)));
+set(popupChannel,'Value',defCh);
 
 % create scatter plot axes
 uipScatter = handles.uipScatter;
