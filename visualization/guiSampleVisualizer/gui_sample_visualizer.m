@@ -22,7 +22,7 @@ function varargout = gui_sample_visualizer(varargin)
 
 % Edit the above text to modify the response to help gui_sample_visualizer
 
-% Last Modified by GUIDE v2.5 23-Jul-2015 15:56:53
+% Last Modified by GUIDE v2.5 01-Sep-2015 14:50:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,50 +55,49 @@ function gui_sample_visualizer_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.base = varargin{1};
 handles.currentSample = varargin{2};
 
-% Choose default command line output for gui
+% choose default command line output for gui
 handles.output = hObject;
 
-% Visualize sample content
-%dat = {'Data 1';0.01;'Data 2';0.02;'Data 3';0.03}; % values
-%cnames = {}; % col titles
-%rnames = {'Detail 1','Detail 2','Detail 3','Detail 4','Detail 5','Detail 6'};
-
+% create table with sample properties as overview
 rnames = properties(handles.currentSample);
-selectedProps = [1,2,3,5,6,8,9,10];
-rnames = rnames(selectedProps);
+selectedProps = [1,2,3,5,6,8,9,10]; % properties of data sample to be visualized
+rnames = rnames(selectedProps); % row titles
 cnames = {}; % col titles
 dat = cell(numel(rnames),1);
 for i = 1:numel(rnames)
    dat{i} = eval(['handles.currentSample.',rnames{i}]); %getfield(handles.currentFrame,rnames{i});
 end
-
-% create details table
 tableDetails = uitable('Parent',handles.uipanelSample,'Units','normalized',...
-            'Position',[0.03 0.07 0.28 0.85],'Data',dat,...
+            'Position',[0.03 0.07 0.2 0.85],'Data',dat,...
             'ColumnName',cnames,'RowName',rnames);
 % tabExtend = get(tableDetails,'Extent')
 % tabPosition = get(tableDetails,'Position');
 % tabPosition(3:4) = tabExtend(3:4);
 % set(tableDetails,'Position',tabPosition);
 
-
-% create overview axes
+% create overview image per channel
 axesOverview = axes('Parent',handles.uipanelSample,'Units','normalized',...
-            'Position',[0.4 0.07 0.55 0.85]);
-gca;
-X = imread('cell.tif');
-imagesc(X); colormap(jet); axis image;
+            'Position',[0.25 0.07 0.73 0.82]);
+defCh = 1; % default channel for overview when starting the sample visualizer
+handles.imageOverview = imagesc(handles.currentSample.overviewImage(:,:,1));
+colormap(jet); axis image; axis off;
 
+% create choose button to switch color channel
+popupChannel = uicontrol('Style','popup','Units','normalized',...
+           'String',handles.currentSample.channelNames,...
+           'Position',[0.4 -0.12 0.12 0.85],...
+           'FontSize',15,...
+           'Callback',@(hObject,eventdata)gui_sample_visualizer('popupChannel_Callback',hObject,eventdata,guidata(hObject)));
 
 % create scatter plot axes
 uipScatter = handles.uipScatter;
-axesOverview = axes('Parent',uipScatter,'Units','normalized',...
+axesScatter = axes('Parent',uipScatter,'Units','normalized',...
             'Position',[0.06 0.06 0.85 0.85]);
 % create data for scatter plot
 gca;
 x = linspace(0,3*pi,200); y = cos(x) + rand(1,200); a = 25;
 c = linspace(1,10,length(x));
-scatter(x,y,a,c,'filled'); axis image;
+scatter(x,y,a,c,'filled'); axis image; axis off;
 
 % create axes for thumbnail gallery
 axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
@@ -107,7 +106,8 @@ axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
 % Choose default command line output for imageGallery
 addpath(cd);
 handles.output = hObject;
-setappdata(handles.sampleVisualizer,'actionItems',[handles.pushbuttonLoad]);
+
+%setappdata(handles.sampleVisualizer,'actionItems',[handles.pushbuttonLoad]);
         
 % Update handles structure
 guidata(hObject, handles);
@@ -125,6 +125,12 @@ function varargout = gui_sample_visualizer_OutputFcn(hObject, eventdata, handles
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+
+
+% --- Executes on selection in popupChannel.
+function popupChannel_Callback(hObject, eventdata, handles)
+selectedChannel = get(hObject,'Value');
+set(handles.imageOverview,'CData',handles.currentSample.overviewImage(:,:,selectedChannel));
 
 
 % --- Executes on button press in pushbuttonLoad.
@@ -273,3 +279,25 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
+
+% --- Executes on selection change in popupmenu1.
+function popupmenu1_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu1 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu1
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
