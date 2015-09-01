@@ -25,13 +25,19 @@ classdef FeatureCollection < SampleProcessorObject
                     dataFrame = this.io.load_data_frame(inputSample,i);
                     this.dataProcessor.run(dataFrame);
                     inputSample.results.features=vertcat(inputSample.results.features, dataFrame.features);
+                    %thumbnails,frameNr,coordinates,... missing
                 end
             elseif this.use_thumbs == 1
                 for i = 1:size(inputSample.priorLocations,1)
                     thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
                     this.dataProcessor.run(thumbFrame);
+                    thumbNr = array2table(i*(ones(size(thumbFrame.features,1),1)),'VariableNames',{'ThumbNr'});
+                    thumbFrame.features = [thumbNr thumbFrame.features];
+                    width(returnSample.results.features)
+                    width(thumbFrame.features)
                     returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
-                    returnSample.results.thumbnails=vertcat(returnSample.priorLocations); %fill with prior locations
+                    returnSample.results.thumbnails=vertcat(returnSample.priorLocations);
+                    returnSample.results.segmentation{i} = thumbFrame.segmentedImage;
                 end
             end
         end

@@ -99,7 +99,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if isempty(this.single_channel)
                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 end
-                icy_im3show(returnFrame.rawImage);icy_im3show(returnFrame.segmentedImage);
+
             elseif isa(inputFrame,'double')
                 returnFrame = false(size(inputFrame));
 
