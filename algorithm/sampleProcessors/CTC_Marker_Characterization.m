@@ -17,6 +17,16 @@ classdef CTC_Marker_Characterization < SampleProcessor
             this.pipeline = this.make_sample_pipeline();
         end
         
+        function run(this,inputSample)
+            this.pipeline{1}.run(inputSample);
+            ac = ActiveContourSegmentation(100, 100, 1,{'triangle','global', inputSample.histogram});
+            this.dataframeProcessor.pipeline{1} = ac;
+ 
+            for i = 2:numel(this.pipeline)
+                this.pipeline{i}.run(inputSample);
+            end      
+        end
+        
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);
             sol = SampleOverviewLoading();
@@ -29,11 +39,11 @@ classdef CTC_Marker_Characterization < SampleProcessor
     methods (Static)    
         function pipeline = make_dataframe_pipeline()
             pipeline = cell(0);
-            ac = ActiveContourSegmentation(50, 100, 1);
+%             
 %             ts = ThresholdingSegmentation('otsu','local');
             ef = ExtractFeatures();
 %             pipeline{1} = ts;
-            pipeline{1} = ac;
+            pipeline{1} = [];
             pipeline{2} = ef;
         end     
     end

@@ -36,7 +36,9 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             this.breg_it = breg_it;
  
             this.inner_it = inner_it;
-            this.mu_update = round(0.5*inner_it);
+%             this.mu_update = round(0.5*inner_it);
+            this.mu_update = inner_it+1;
+            
             
             if nargin > 3
                 this.init = varargin{1};
@@ -63,19 +65,41 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if size(this.breg_it,2) == 1
                     this.breg_it = repmat(this.breg_it,1, inputFrame.nrChannels);
                 end
+                
+                if ~isempty(this.init) 
+                    if isa(this.init,'double') || isa(this.init,'logical')
+                        cvInit = this.init;
+                    elseif isa(this.init,'cell') && isa(this.init{1},'char') && isa(this.init{2},'char')
+                        validatestring(this.init{1},{'otsu','triangle'});
+                        validatestring(this.init{2},{'global','local'});
+                        if strcmp(this.init{2},'local')
+                            threshSeg = ThresholdingSegmentation(this.init{1},'local',[],this.maskForChannels);
+                        elseif strcmp(this.init{2},'global') && ~isempty(this.init{3})
+                            threshSeg = ThresholdingSegmentation(this.init{1},'global',this.init{3},this.maskForChannels);
+                        end
+                        cvInit = threshSeg.run(inputFrame.rawImage);
+                    elseif isa(this.init,'cell') && isa(this.init{1},'char') && strcmp(this.init{1},'manual')
+                        manualSeg = ThresholdingSegmentation('manual','local',[],[],[],this.init{2});
+                        cvInit = manualSeg.run(inputFrame.rawImage);
+                    else
+                        cvInit = [];
+                    end
+                else
+                    cvInit = [];
+                end
 
                 for i = 1:inputFrame.nrChannels
                     if any(this.maskForChannels == i)
-                        tmp = bregman_cv(this, inputFrame, i, this.init);
+                        tmp = bregman_cv(this, inputFrame, i, cvInit);
                         tmp = bwareaopen(tmp, 10);
                         returnFrame.segmentedImage(:,:,i) = tmp;
-                        clear grad div
                     end
                 end
 
                 if isempty(this.single_channel)
                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 end
+                icy_im3show(returnFrame.rawImage);icy_im3show(returnFrame.segmentedImage);
             elseif isa(inputFrame,'double')
                 returnFrame = false(size(inputFrame));
 
@@ -93,13 +117,34 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if size(this.breg_it,2) == 1
                     this.breg_it = repmat(this.breg_it,1,size(inputFrame,3));
                 end
+                
+                if ~isempty(this.init) 
+                    if isa(this.init,'double') || isa(this.init,'logical')
+                        cvInit = this.init;
+                    elseif isa(this.init,'cell') && isa(this.init{1},'char') && isa(this.init{2},'char')
+                        validatestring(this.init{1},{'otsu','triangle'});
+                        validatestring(this.init{2},{'global','local'});
+                        if strcmp(this.init{2},'local')
+                            threshSeg = ThresholdingSegmentation(this.init{1},'local',[],this.maskForChannels);
+                        elseif strcmp(this.init{2},'global') && ~isempty(this.init{3})
+                            threshSeg = ThresholdingSegmentation(this.init{1},'global',this.init{3},this.maskForChannels);
+                        end
+                        cvInit = threshSeg.run(inputFrame);
+                    elseif isa(this.init,'cell') && isa(this.init{1},'char') && strcmp(this.init{1},'manual')
+                        manualSeg = ThresholdingSegmentation('manual','local',[],[],[],this.init{2});
+                        cvInit = manualSeg.run(inputFrame);
+                    else
+                        cvInit = [];
+                    end
+                else
+                    cvInit = [];
+                end
 
                 for i = 1:size(inputFrame,3)
                     if any(this.maskForChannels == i)
-                        tmp = bregman_cv(this, inputFrame, i, this.init);
+                        tmp = bregman_cv(this, inputFrame, i, cvInit);
                         tmp = bwareaopen(tmp, 10);
                         returnFrame(:,:,i) = tmp;
-                        clear grad div
                     end
                 end
 
@@ -224,6 +269,11 @@ persistent Dx_div Dy_div
 N = size(v,2);
 M = size(v,1);
 
+if size(Dx_div,1) ~= N || size(Dy_div,1) ~= M
+    Dx_div = [];
+    Dy_div = [];
+end
+
 if isempty(Dx_div) && strcmp(method,'lr')
     Dx_div = spdiags([-ones(N,1) ones(N,1)],[0 1],N,N); Dx_div(N,:) = 0;
     Dy_div = spdiags([-ones(M,1) ones(M,1)],[0 1],M,M); Dy_div(M,:) = 0;
@@ -258,6 +308,10 @@ persistent Dx_grad Dy_grad
 
 N = size(u,2);
 M = size(u,1);
+if size(Dx_grad,1) ~= N || size(Dy_grad,1) ~= M
+    Dx_grad = [];
+    Dy_grad = [];
+end
 
 if isempty(Dx_grad) && strcmp(method,'lr')
     Dx_grad = spdiags([-ones(N,1) ones(N,1)],[0 1],N,N); Dx_grad(N,:) = 0;
@@ -280,8 +334,12 @@ if strcmp(method,'shift')
     grad_u(:,:,2) = hy^(-1) * cat(2, u(:,2:ny) - u(:,1:ny-1), zeros(nx,1));
 elseif strcmp(method,'lr')
     %% GRAD DIV, left-right definition
-    % (FASTEST, but only works for double images, since no sparse single arrays available)
-    grad_u = cat(3,u*Dx_grad',Dy_grad*u);
+    % (FASTEST, but only works for double images, since no sparse single arrays available) 
+    if issparse(u*Dx_grad') || issparse(Dy_grad*u)
+        grad_u = cat(3,full(u*Dx_grad'),full(Dy_grad*u));
+    else 
+        grad_u = cat(3,u*Dx_grad',Dy_grad*u);
+    end
 end
 end
 

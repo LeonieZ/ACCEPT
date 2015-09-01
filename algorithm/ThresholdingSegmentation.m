@@ -17,7 +17,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
     methods
         function this = ThresholdingSegmentation(meth,range,varargin)
              
-            %varargin(1) = masksforchannels, varargin(2) = offsets varargin(3) =
+            %varargin(1) = histogram, varargin(2) = masksforchannels, varargin(3) = offsets varargin(4) =
             %thresholds of manual ones
             
             validatestring(meth,{'otsu','triangle','manual'});
@@ -26,16 +26,20 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
             validatestring(range,{'global','local'});
             this.range = range;
             
+            if nargin > 2
+                this.histogram = varargin{1};
+            end
+            
             if nargin > 3
-                this.maskForChannels = varargin{1};  
+                this.maskForChannels = varargin{2};  
             end
             
             if nargin > 4
-                this.offset = varargin{2};
+                this.offset = varargin{3};
             end
             
             if nargin > 5
-                this.thresholds = varargin{3};
+                this.thresholds = varargin{4};
             end
             
             if strcmp(this.meth,'manual') && isempty(this.thresholds)
@@ -57,8 +61,10 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                 if isempty(this.maskForChannels)
                     this.maskForChannels = 1:1:inputFrame.nrChannels;
                 end
-
-                this.histogram = zeros(1,bins,inputFrame.nrChannels);
+                
+                if isempty(this.histogram)
+                    this.histogram = zeros(1,bins,inputFrame.nrChannels);
+                end
 
                 %create histogram if thresholding is local otherwise we assume
                 %this was already done.
@@ -66,11 +72,11 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                 if strcmp(this.range,'local') && ~strcmp(this.meth,'manual')
                     this.create_local_hist(inputFrame);
                 end
-
+                                
                 if ~strcmp(this.meth,'manual')
                     this.calculate_threshold()
                 end
-
+                
                 for i = 1:inputFrame.nrChannels
                     tmp = inputFrame.rawImage(:,:,i) > this.thresholds(i);
                     if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
@@ -92,8 +98,10 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                 if isempty(this.maskForChannels)
                     this.maskForChannels = 1:1:size(inputFrame,3);
                 end
-
-                this.histogram = zeros(1,bins,size(inputFrame,3));
+                
+                if isempty(this.histogram)
+                    this.histogram = zeros(bins,size(inputFrame,3));
+                end
 
                 %create histogram if thresholding is local otherwise we assume
                 %this was already done.
@@ -134,14 +142,14 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                         if inputFrame.frameHasEdge
                             imTemp = imTemp(~inputFrame.mask);
                         end
-                        this.histogram(:,:,j) = histc(imTemp(:),1:1:numel(this.histogram(:,:,j)))';
+                        this.histogram(:,j) = histc(imTemp(:),1:1:numel(this.histogram(:,j)))';
                     end
                 end
             elseif isa(inputFrame,'double') || isa(inputFrame,'single') || isa(inputFrame,'uint8') || isa(inputFrame,'uint16')
                 for j = 1:size(inputFrame,3)
                     if any(this.maskForChannels == j)                
                         imTemp = inputFrame(:,:,j);
-                        this.histogram(:,:,j) = histc(imTemp(:),1:1:numel(this.histogram(:,:,j)))';
+                        this.histogram(:,j) = histc(imTemp(:),1:1:numel(this.histogram(:,j)))';
                     end
                 end
             end
@@ -151,15 +159,15 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
         function thresh = otsu_method(this)
             % Function carried over from Matlab function graythresh.
             hist = this.histogram;
-            thresh = zeros(1,size(hist,3));
+            thresh = zeros(1,size(hist,2));
             
-            for i = 1:size(hist,3)
+            for i = 1:size(hist,2)
                 if any(this.maskForChannels == i)
                     % Variable names are chosen to be similar to the formulas in
                     % the Otsu paper.
 
-                    num_bins = size(hist(:,:,i),2);
-                    p = hist(:,:,i) / sum(hist(:,:,i));
+                    num_bins = size(hist(:,i),1);
+                    p = hist(:,i) / sum(hist(:,i));
                     omega = cumsum(p);
                     mu = cumsum(p .* (1:num_bins));
                     mu_t = mu(end);
@@ -186,17 +194,17 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
             % Function carried over from old ACTC script by Sjoerd.
             % adapted it a bit  - need to test if it works correctly!
             hist = this.histogram;
-            thresh = zeros(1,size(hist,3));
-            num_bins = size(hist(:,:,1),2);
+            thresh = zeros(1,size(hist,2));
+            num_bins = size(hist(:,1),1);
             
-            for i = 1:size(hist,3)
+            for i = 1:size(hist,2)
                 if any(this.maskForChannels == i)
                     % function to determine a threshold value using the "triangle threshold"
                     % method. This method determines the maximum distance of the image
                     % histogram to a line from the maximum count to the maximum bin. 
 
                     % determine maximum counts and index to derive slope
-                    hist_temp=smooth(hist(:,:,i),10)';
+                    hist_temp=smooth(hist(:,i),10)';
                     maxBin = find(hist_temp, 1, 'last');
                     [maxCounts, index]= max(hist_temp);
 
