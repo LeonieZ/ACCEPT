@@ -80,7 +80,7 @@ axesOverview = axes('Parent',handles.uipanelSample,'Units','normalized',...
             'Position',[0.25 0.07 0.73 0.82]);
 defCh = 2; % default channel for overview when starting the sample visualizer
 handles.imageOverview = imagesc(handles.currentSample.overviewImage(:,:,defCh));
-colormap(jet); axis image; axis off;
+axis image; axis off;
 
 % create choose button to switch color channel
 popupChannel = uicontrol('Style','popup','Units','normalized',...
@@ -103,6 +103,119 @@ scatter(x,y,a,c,'filled'); axis image; axis off;
 % create axes for thumbnail gallery
 axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
             'Position',[0.06 0.06 0.85 0.85],'visible','off');
+
+%====================================
+
+% Create thumbnail gallery
+    %maxNumFiles = 100;
+    %maxNumCols  = 5;
+    %set(handles.cancell,'value',0);
+
+%     [files dirName] = uigetfile({'*.tiff ; *.tif ; *.jpg ; *.bmp'},'MultiSelect','on');
+%     if ~dirName
+%         return;
+%     end
+%     
+%     if ~iscell(files)
+%         temp = files;
+%         files = cell(1);
+%         files{1} = temp;
+%     end
+%     cd(dirName);
+%     % save filenames in appdata of sampleVisualizer
+%     setappdata(handles.sampleVisualizer,'files',files);
+% 
+%     N = size(files,2);
+%     % Exception handling: too many dataframes loaded
+%     if N > maxNumFiles
+%         warndlg(['Maximum number of data frames is ' num2str(maxNumFiles) '!'],'To many data frames');
+%         N = maxNumFiles;
+%         files = files(1:N);
+%     end
+    
+    nbrAvailableThumbnails = size(handles.currentSample.priorLocations,1)
+    nbrVisualizedThumbnails = 5
+    nbrChannels = 4; 
+    N = nbrVisualizedThumbnails * (nbrChannels+1);
+    
+    maxNumCols  = 5; % design decision, % maxNumCols = 1 (overlay) + nbrChannels
+    
+    % create relative dimensions of the grid
+    if N > maxNumCols^2
+        cols = maxNumCols;
+        rows = ceil(N/cols);
+        ratio = rows/cols;
+        height = ratio*0.95;
+        pos = [0 -(height-0.95) 0.95 height];
+        %set(handles.uipGallery,'position',pos);
+        set(handles.slider1,'enable','on','value',1); % enable and upper position
+    else
+        cols = ceil( sqrt(N) );    % number of columns
+        rows = cols - floor( (cols^2 - N)/cols );
+        %set(handles.uipGallery,'position',[0 0 0.95 0.95]);
+        set(handles.slider1,'enable','off');
+    end
+    
+    setappdata(handles.sampleVisualizer,'cols',cols);
+    
+    % pitch (box for axis) height and width
+    rPitch  = 0.98/rows;
+    cPitch  = 0.98/cols;
+    
+    % axis height and width
+    axHight = 0.9/rows;
+    axWidth = 0.9/cols;
+    
+    % clear previous axes handles for the thumbnail gallery
+    hAxes = getappdata(handles.sampleVisualizer,'hAxes');
+    if ~isempty(hAxes)
+        f = find ( ishandle(hAxes) & hAxes);
+        delete(hAxes(f));
+    end
+    
+    % define common properties and values for all axes
+    axesProp = {'dataaspectratio' ,...
+                                'Parent',...
+                                'PlotBoxAspectRatio', ...
+                                'xgrid' ,...
+                                'ygrid'};
+    axesVal = {[1,1,1] , ...
+                            handles.uipGallery,...
+                            [1 1 1]...
+                            'off',...
+                            'off'};
+%     imageProp = { 'ButtonDownFcn'};
+%     imageVal = { 'openSpecificImage( guidata(gcf) )'};
+    hAxes = zeros(N,1);
+    %ind = 1;
+    hActions = getappdata(handles.sampleVisualizer,'actionItems');
+    set(hActions,'enable','off');
+    
+    % Creating thumbnail axes at adequate positions
+    
+    % go through all thumbnails (resp. dataframes)
+    for thumbInd=1:nbrVisualizedThumbnails
+        % specify row location for all columns
+        y = 0.98-thumbInd*rPitch;
+        % obtain dataFrame from io
+        dataFrame = handles.base.io.load_thumbnail_frame(handles.currentSample,thumbInd,'prior');
+        % plot overlay image in first column
+        x = 0;
+        ind = (thumbInd-1)*nbrChannels + nbrChannels + 1; % index for first column element
+        hAxes(ind) = axes('position',[x y axWidth axHight],axesProp,axesVal);
+        plotImInAxis(dataFrame.rawImage,hAxes(ind));
+        % plot image for each color channel in column 2 till nbrChannels
+        for ch = 1:nbrChannels
+            x = 0.98-(nbrChannels-ch+1)*cPitch;
+            ind = (thumbInd-1)*nbrChannels + ch;
+            hAxes(ind) = axes('position',[x y axWidth axHight],axesProp,axesVal);
+            plotImInAxis(dataFrame.rawImage(:,:,ch),hAxes(ind));
+        end
+    end    
+    set(hActions,'enable','on');
+    setappdata(handles.sampleVisualizer,'hAxes',hAxes);
+
+%=================================
 
 % Choose default command line output for imageGallery
 addpath(cd);
@@ -133,131 +246,23 @@ function popupChannel_Callback(hObject, eventdata, handles)
 selectedChannel = get(hObject,'Value');
 set(handles.imageOverview,'CData',handles.currentSample.overviewImage(:,:,selectedChannel));
 
-
-% --- Executes on button press in pushbuttonLoad.
-function pushbuttonLoad_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbuttonLoad (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-    maxNumFiles = 100;
-    maxNumCols = 4;
-    %set(handles.cancell,'value',0);
-
-    [files dirName] = uigetfile({'*.tiff ; *.tif ; *.jpg ; *.bmp'},'MultiSelect','on');
-    if ~dirName
-        return;
-    end
-    
-    if ~iscell(files)
-        temp = files;
-        files = cell(1);
-        files{1} = temp;
-    end
-    cd(dirName);
-    % save filenames in appdata of sampleVisualizer
-    setappdata(handles.sampleVisualizer,'files',files);
-
-    N = size(files,2);
-    if N > maxNumFiles
-        warndlg(['Maximum number of files is ' num2str(maxNumFiles) '!'],'To many files');
-        N = maxNumFiles;
-        files = files(1:N);
-    end
-        
-    if N > maxNumCols^2
-        cols = maxNumCols;
-        rows = ceil(N/cols);
-        ratio = rows/cols;
-        hight = ratio*0.95;
-        pos = [0 -(hight-0.95) 0.95 hight];
-        %set(handles.uipGallery,'position',pos);
-        set(handles.slider1,'enable','on','value',1); % enable and upper position
-    else
-        cols = ceil( sqrt(N) );    % number of columns
-        rows = cols - floor( (cols^2 - N)/cols );
-        %set(handles.uipGallery,'position',[0 0 0.95 0.95]);
-        set(handles.slider1,'enable','off');
-    end
-    
-    setappdata(handles.sampleVisualizer,'cols',cols);
-    
-    rPitch = 0.98/rows;
-    cPitch = 0.98/cols;
-    axWidth = 0.9/(cols);
-    axHight = 0.9/(rows);
-    
-    hAxes = getappdata(handles.sampleVisualizer,'hAxes');
-    if ~isempty(hAxes)
-        f = find ( ishandle(hAxes) & hAxes);
-        delete(hAxes(f));
-    end
-    
-    axesProp = {'dataaspectratio' ,...
-                                'Parent',...
-                                'PlotBoxAspectRatio', ...
-                                'xgrid' ,...
-                                'ygrid'};
-    axesVal = {[1,1,1] , ...
-                            handles.uipGallery,...
-                            [1 1 1]...
-                            'off',...
-                            'off'};
-%     imageProp = { 'ButtonDownFcn'};
-%     imageVal = { 'openSpecificImage( guidata(gcf) )'};
-    hAxes = zeros(N,1);
-    ind = 1;
-    hActions = getappdata(handles.sampleVisualizer,'actionItems');
-    set(hActions,'enable','off');
-    while ind <= N
-        [r c] = ind2sub([rows cols],ind);
-        x = 0.98-(c)*cPitch;
-        y = 0.98-(r)*rPitch;
-        hAxes(ind) = axes( 'position', [x y axWidth axHight],axesProp,axesVal);
-        im = imread( [dirName files{ind}] );
-
-% Enable this line in case of large amount of data... 
-% MAke sure to change the processing function to run on the image file and not on the data in the gui !!!
-%         im = imresize(im,1/4);
-        
-        plotImInAxis(im,hAxes(ind),files{ind},11-cols)
-        %pause(0.01);    %to allow the GUI response to "Cancell" button
-        ind = ind+1;
-    end 
-    set(hActions,'enable','on');
-    setappdata(handles.sampleVisualizer,'hAxes',hAxes);
-
     
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
-function plotImInAxis(im,hAx,str,fontSize)
+function plotImInAxis(im,hAx)%,str,fontSize)
     imageProp = {'ButtonDownFcn'};
     imageVal = {'openSpecificImage( guidata(gcf) )'};
-    
-    imagesc(im, imageProp,imageVal,'parent',hAx );
+    if size(im,3) > 1
+        % create overlay image here
+        imagesc(sum(im,3),imageProp,imageVal,'parent',hAx);
+    else
+        imagesc(im,imageProp,imageVal,'parent',hAx);
+    end
     axis(hAx,'image');
-    axis(hAx,'off');    
-    str = strrep( str,'_',' ');
-    title( hAx,str,'fontsize',fontSize);
+    axis(hAx,'off');
+    colormap(gray);
     drawnow;    
 
-    
-% --- Helper function used in thumbnail gallery to visualize single images
-function openSpecificImage(handles)
-    type = get(gcf,'SelectionType');
-    switch type
-        case 'open' % double-click
-            im = get( gcbo,'cdata' );
-            % if you have "imtool" it's nicer to open the image in it...
-%             imtool(im, [min(im(:)) max(im(:))] ); 
-            figure; imagesc(im); colorbar;  axis equal; axis off;
-        case 'normal'   
-            %left mouse button action
-        case 'extend'
-            % shift & left mouse button action
-        case 'alt'
-            % alt & left mouse button action
-    end
-
-    
+   
 % --- Executes on slider movement.
 function slider1_Callback(hObject, eventdata, handles)
 % hObject    handle to slider1 (see GCBO)
