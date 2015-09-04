@@ -281,7 +281,7 @@ classdef CellTracks < Loader
                 this.xmlData.locations = [];
                 this.xmlData.score=[];
                 this.xmlData.frameNr=[];
-                this.xmlData.camYSize=1384
+                this.xmlData.camYSize=1384;
                 this.xmlData.camXSize=1036;
                 if isfield(this.xmlData,'archive')
                     this.xmlData.num_events = size(this.xmlData.archive{2}.events.record,2);

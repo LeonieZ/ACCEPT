@@ -27,7 +27,7 @@ classdef IO < handle
         
         function outputSample=load_sample(this,sampleList,sampleNr)
             if exist(this.saved_sample_path(sampleList,sampleNr),'file');
-                load(this.saved_sample_path(sampleList,sampleNr))
+                load(this.saved_sample_path(sampleList,sampleNr));
                 outputSample=currentSample;
             else
                 loader=sampleList.loaderToBeUsed{sampleNr};
@@ -135,7 +135,7 @@ classdef IO < handle
             flist = temp.m;
 
             for i=1:numel(flist)
-               [~,filename,fileext]=fileparts(flist{i}); % get just the filename
+               [~,filename,filetext]=fileparts(flist{i}); % get just the filename
                if exist(filename, 'class') && ismember('loader', superclasses(filename))
                  this.loaderTypesAvailable{end+1} = filename();
                end
@@ -192,8 +192,8 @@ classdef IO < handle
             % anything that starts with a .*.
             samples = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
             for i=1:numel(samples)
-                sampleNames{i}=samples(i).name
-                loaderUsed{i}=this.check_sample_type([inputPath,filesep,samples(i).name])
+                sampleNames{i}=samples(i).name;
+                loaderUsed{i}=this.check_sample_type([inputPath,filesep,samples(i).name]);
             end
         end
         

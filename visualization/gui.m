@@ -138,7 +138,7 @@ function processButton_Callback(hObject, eventdata, handles)
 display('Process samples...')
 selectedCellsInTable = get(handles.tableSamples,'UserData');
 selectedSamples = selectedCellsInTable(:,1);
-handles.base.sampleProcessor
+handles.base.sampleProcessor;
 % update the current sampleList: selected samples should be processed
 handles.base.sampleList.toBeProcessed(selectedSamples) = 1;
 handles.base.run();

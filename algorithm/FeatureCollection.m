@@ -33,8 +33,6 @@ classdef FeatureCollection < SampleProcessorObject
                     this.dataProcessor.run(thumbFrame);
                     thumbNr = array2table(i*(ones(size(thumbFrame.features,1),1)),'VariableNames',{'ThumbNr'});
                     thumbFrame.features = [thumbNr thumbFrame.features];
-                    width(returnSample.results.features)
-                    width(thumbFrame.features)
                     returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                     returnSample.results.thumbnails=vertcat(returnSample.priorLocations);
                     returnSample.results.segmentation{i} = thumbFrame.segmentedImage;

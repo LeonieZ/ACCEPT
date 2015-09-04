@@ -169,7 +169,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     num_bins = size(hist(:,i),1);
                     p = hist(:,i) / sum(hist(:,i));
                     omega = cumsum(p);
-                    mu = cumsum(p .* (1:num_bins));
+                    mu = cumsum(p .* (1:num_bins)');
                     mu_t = mu(end);
 
                     sigma_b_squared = (mu_t * omega - mu).^2 ./ (omega .* (1 - omega));
