@@ -72,7 +72,7 @@ classdef Sample < handle
         end
 
         function save_results(this)
-        notify(this,'saveResults');
+            notify(this,'saveResults');
         end
     end
 end

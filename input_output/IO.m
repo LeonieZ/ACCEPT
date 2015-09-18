@@ -120,6 +120,11 @@ classdef IO < handle
            %to be implemented 
         end
         
+        function save_results_as_xls(this,currentSample)
+            tempTable=horzcat(currentSample.results.classefication,currentSample.results.features);
+            writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.xls'])
+        end
+        
         function update_results(this,sampleList)
             this.updated_results_path(sampleList);
         end
