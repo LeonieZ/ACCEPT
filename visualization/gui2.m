@@ -2,9 +2,9 @@ function scoring_gui(varargin)
 
 global i score gui name score_res
 
-uni_logo = imread('logo3.png'); [uni_logo_x, uni_logo_y] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y;
-cancerid_logo = imread('logo.png'); [cancerid_logo_x, cancerid_logo_y] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y;
-subtitle = imread('title.png'); [subtitle_x, subtitle_y] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
+uni_logo = imread('logo3.png'); [uni_logo_x, uni_logo_y, ~] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y
+cancerid_logo = imread('logo.png'); [cancerid_logo_x, cancerid_logo_y, ~] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y
+subtitle = imread('title.png'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
 
 % if nargin == 1
 %     input = varargin{1};
@@ -48,26 +48,32 @@ subtitle = imread('title.png'); [subtitle_x, subtitle_y] = size(subtitle); subti
 
 %Menu
 screensize = get( 0, 'Screensize' );
+rel = (0.5*screensize(3))/(0.75*screensize(4));
 
 %window
-posx = 0.25; posy = 0.15; width = 0.5; height = 0.8;
+posx = 0.25; posy = 0.15; width = 0.5; height = 0.75;
 gui_color = [0.82 0.82 0.82];
 gui.fig_main = figure('Units','normalized','Position',[posx posy width height],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
-    'NumberTitle','off','Color', [1 1 1]);
+    'NumberTitle','off','Color', [1 1 1],'Resize','off');
 
-gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','normalized','Position',[0.22 0.1 0.22 0.05],'FontSize',14,'Callback', @process); 
-gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','normalized','Position',[0.56 0.1 0.22 0.05],'FontSize',14,'Callback', @visualize);
-gui.update_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Update sample list','Units','normalized','Position',[0.685 0.566 0.15 0.05],'FontSize',14,'Callback', @update);
-gui.titel = uicontrol(gui.fig_main,'Style','text', 'String','ACCEPT','Units','normalized','Position',[0.41 0.83 0.18 0.04],'FontSize',40,'BackgroundColor',[1 1 1],'ForegroundColor',[0.729 0.161 0.208]);
+gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','normalized','Position',[0.22 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', @process); 
+gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','normalized','Position',[0.56 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', @visualize);
+gui.update_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Update sample list','Units','normalized','Position',[0.75 0.62 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', @update);
 
-gui.uni_logo_axes = axes('Units','normalized','Position',[0.57 0.025 0.4 uni_logo_rel]);
+gui.titel = uicontrol(gui.fig_main,'Style','text', 'String','ACCEPT','Units','normalized','Position',[0.41 0.83 0.18 0.04],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1],'ForegroundColor',[0.729 0.161 0.208]);
+
+gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.03 0.65 0.6 0.04],'FontUnits','normalized', 'FontSize',0.3);
+gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.03 0.6 0.6 0.04],'FontUnits','normalized', 'FontSize',0.3);
+
+
+gui.uni_logo_axes = axes('Units','normalized','Position',[0.57 0.025 0.4 0.4*uni_logo_rel*rel]);
 gui.uni_logo = imagesc(uni_logo);  axis off;
 
-gui.cancerid_logo_axes = axes('Units','normalized','Position',[0.66 0.83 0.3 cancerid_logo_rel]); 
+gui.cancerid_logo_axes = axes('Units','normalized','Position',[0.66 0.83 0.3 0.3*cancerid_logo_rel*rel]); 
 gui.cancerid_logo = imagesc(cancerid_logo); axis off;
 
-gui.subtitle_axes = axes('Units','normalized','Position',[0.13 0.75 0.74 subtitle_rel/0.74]);
-gui.subtitle = imagesc(subtitle);  %axis off;
+gui.subtitle_axes = axes('Units','normalized','Position',[0.13 0.77 0.74 0.74*subtitle_rel*rel]);
+gui.subtitle = imagesc(subtitle);  axis off;
 
 
 
