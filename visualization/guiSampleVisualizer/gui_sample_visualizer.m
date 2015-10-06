@@ -52,6 +52,14 @@ function gui_sample_visualizer_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to gui_sample_visualizer (see VARARGIN)
 
+% set background colors to white
+bgcolor = [1 1 1];
+set(gcf,'Color',bgcolor,'Resize','off');
+set(handles.uipanelSample,'BackgroundColor',bgcolor);
+set(handles.uipScatter,'BackgroundColor',bgcolor);
+set(handles.uipGallery,'BackgroundColor',bgcolor);
+set(handles.text1,'BackgroundColor',bgcolor);
+
 handles.base = varargin{1};
 handles.currentSample = varargin{2};
 
@@ -90,21 +98,11 @@ popupChannel = uicontrol('Style','popup','Units','normalized',...
            'Callback',@(hObject,eventdata)gui_sample_visualizer('popupChannel_Callback',hObject,eventdata,guidata(hObject)));
 set(popupChannel,'Value',defCh);
 
-% create scatter plot axes
-uipScatter = handles.uipScatter;
-axesScatter = axes('Parent',uipScatter,'Units','normalized',...
-            'Position',[0.06 0.06 0.85 0.85]);
-% create data for scatter plot
-gca;
-x = linspace(0,3*pi,200); y = cos(x) + rand(1,200); a = 25;
-c = linspace(1,10,length(x));
-scatter(x,y,a,c,'filled'); axis image; axis off;
+%====================================
 
 % create axes for thumbnail gallery
 axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
             'Position',[0.06 0.06 0.85 0.85],'visible','off');
-
-%====================================
 
 % Create thumbnail gallery
     %maxNumFiles = 100;
@@ -217,6 +215,83 @@ axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
 
 %=================================
 
+% create scatter plots
+uipScatter = handles.uipScatter; % current frame
+sampleFeatures = handles.currentSample.results.features;
+marker_size = 30;
+
+% create data for scatter plot at the top
+axes('Parent',uipScatter,'Units','normalized','Position',[0.17 0.72 0.75 0.23]); %[left bottom width height]
+topFeatureIndex1 = 1;
+topFeatureIndex2 = 1;
+gca; handles.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                      sampleFeatures.(topFeatureIndex2+1),marker_size,'filled');
+set(gca,'TickDir','out');
+% create choose button to switch feature index1 (x-axis)
+popupFeatureSelectTopIndex1 = uicontrol('Parent',uipScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[0.39 -0.16 0.6 0.85],...
+            'FontSize',10,...
+            'Callback',@(hObject,eventdata)gui_sample_visualizer('popupFeatureTopIndex1_Callback',hObject,eventdata,guidata(hObject)));
+set(popupFeatureSelectTopIndex1,'Value',topFeatureIndex1);
+% create choose button to switch feature index2 (y-axis)
+popupFeatureSelectTopIndex2 = uicontrol('Parent',uipScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[-0.01 0.14 0.6 0.85],...
+            'FontSize',10,...
+            'Callback',@(hObject,eventdata)gui_sample_visualizer('popupFeatureTopIndex2_Callback',hObject,eventdata,guidata(hObject)));
+set(popupFeatureSelectTopIndex2,'Value',topFeatureIndex2);
+
+%----
+
+% create data for scatter plot in the middle
+axes('Parent',uipScatter,'Units','normalized','Position',[0.17 0.39 0.75 0.23]); %[left bottom width height]
+middleFeatureIndex1 = 2;
+middleFeatureIndex2 = 2;
+gca; handles.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled');
+set(gca,'TickDir','out');
+% create choose button to switch feature index1 (x-axis)
+popupFeatureSelectMiddleIndex1 = uicontrol('Parent',uipScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[0.39 -0.49 0.6 0.85],...
+            'FontSize',10,...
+            'Callback',@(hObject,eventdata)gui_sample_visualizer('popupFeatureMiddleIndex1_Callback',hObject,eventdata,guidata(hObject)));
+set(popupFeatureSelectMiddleIndex1,'Value',middleFeatureIndex1);
+% create choose button to switch feature index2 (y-axis)
+popupFeatureSelectMiddleIndex2 = uicontrol('Parent',uipScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[-0.01 -0.19 0.6 0.85],...
+            'FontSize',10,...
+            'Callback',@(hObject,eventdata)gui_sample_visualizer('popupFeatureMiddleIndex2_Callback',hObject,eventdata,guidata(hObject)));
+set(popupFeatureSelectMiddleIndex2,'Value',middleFeatureIndex2);
+
+%----
+
+% create scatter plot at the bottom
+axes('Parent',uipScatter,'Units','normalized','Position',[0.17 0.06 0.75 0.23]); %[left bottom width height]
+bottomFeatureIndex1 = 3;
+bottomFeatureIndex2 = 3;
+gca; handles.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled');
+set(gca,'TickDir','out');
+% create choose button to switch feature index1 (x-axis)
+popupFeatureSelectBottomIndex1 = uicontrol('Parent',uipScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[0.39 -0.82 0.6 0.85],...
+            'FontSize',10,...
+            'Callback',@(hObject,eventdata)gui_sample_visualizer('popupFeatureBottomIndex1_Callback',hObject,eventdata,guidata(hObject)));
+set(popupFeatureSelectBottomIndex1,'Value',bottomFeatureIndex1);
+% create choose button to switch feature index2 (y-axis)
+popupFeatureSelectBottomIndex2 = uicontrol('Parent',uipScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[-0.01 -0.52 0.6 0.85],...
+            'FontSize',10,...
+            'Callback',@(hObject,eventdata)gui_sample_visualizer('popupFeatureBottomIndex2_Callback',hObject,eventdata,guidata(hObject)));
+set(popupFeatureSelectBottomIndex2,'Value',bottomFeatureIndex2);
+
+%=================================
+
 % Choose default command line output for imageGallery
 addpath(cd);
 handles.output = hObject;
@@ -246,7 +321,38 @@ function popupChannel_Callback(hObject, eventdata, handles)
 selectedChannel = get(hObject,'Value');
 set(handles.imageOverview,'CData',handles.currentSample.overviewImage(:,:,selectedChannel));
 
-    
+
+% --- Executes on selection in topFeatureIndex1 (x-axis)
+function popupFeatureTopIndex1_Callback(hObject, eventdata, handles)
+selectedFeature = get(hObject,'Value');
+set(handles.axesScatterTop,'XData',handles.currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+
+% --- Executes on selection in topFeatureIndex2 (y-axis)
+function popupFeatureTopIndex2_Callback(hObject, eventdata, handles)
+selectedFeature = get(hObject,'Value');
+set(handles.axesScatterTop,'YData',handles.currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+
+% --- Executes on selection in middleFeatureIndex1 (x-axis)
+function popupFeatureMiddleIndex1_Callback(hObject, eventdata, handles)
+selectedFeature = get(hObject,'Value');
+set(handles.axesScatterMiddle,'XData',handles.currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+
+% --- Executes on selection in middleFeatureIndex2 (y-axis)
+function popupFeatureMiddleIndex2_Callback(hObject, eventdata, handles)
+selectedFeature = get(hObject,'Value');
+set(handles.axesScatterMiddle,'YData',handles.currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+
+% --- Executes on selection in bottomFeatureIndex1 (x-axis)
+function popupFeatureBottomIndex1_Callback(hObject, eventdata, handles)
+selectedFeature = get(hObject,'Value');
+set(handles.axesScatterBottom,'XData',handles.currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+
+% --- Executes on selection in bottomFeatureIndex2 (y-axis)
+function popupFeatureBottomIndex2_Callback(hObject, eventdata, handles)
+selectedFeature = get(hObject,'Value');
+set(handles.axesScatterBottom,'YData',handles.currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+
+
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
 function plotImInAxis(im,hAx)%,str,fontSize)
     imageProp = {'ButtonDownFcn'};
