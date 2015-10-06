@@ -194,7 +194,7 @@ axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
     % Creating thumbnail axes at adequate positions
     
     % go through all thumbnails (resp. dataframes)
-    for thumbInd=1:nbrVisualizedThumbnails
+    for thumbInd=1:min(nbrVisualizedThumbnails,nbrAvailableThumbnails)
         % specify row location for all columns
         y = 0.98-thumbInd*rPitch;
         % obtain dataFrame from io

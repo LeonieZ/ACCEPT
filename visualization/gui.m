@@ -1,178 +1,90 @@
-function varargout = gui(varargin)
-% gui MATLAB code for gui.fig
-%      gui, by itself, creates a new gui or raises the existing
-%      singleton*.
-%
-%      H = gui returns the handle to a new gui or the handle to
-%      the existing singleton*.
-%
-%      gui('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in gui.M with the given input arguments.
-%
-%      gui('Property','Value',...) creates a new gui or raises the
-%      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before gui_OpeningFcn gets called.  An
-%      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to gui_OpeningFcn via varargin.
-%
-%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
-%      instance to run (singleton)".
-%
-% See also: GUIDE, GUIDATA, GUIHANDLES
+function handle = gui(base)
 
-% Edit the above text to modify the response to help gui
+global gui
 
-% Last Modified by GUIDE v2.5 26-Aug-2015 14:16:56
+tasks = [];
+% gui.base = base;
 
-%-------------------------------------------------------------------------
 
-% Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
-gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @gui_OpeningFcn, ...
-                   'gui_OutputFcn',  @gui_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
-if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
-end
-
-if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
-else
-    gui_mainfcn(gui_State, varargin{:});
-end
-% End initialization code - DO NOT EDIT
-
-%-------------------------------------------------------------------------
-
-% --- Executes just before gui is made visible.
-function gui_OpeningFcn(hObject, eventdata, handles, varargin)
-% This function has no output args, see OutputFcn.
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to gui (see VARARGIN)
-
-im = imread('logo.png'); imageWidth  = size(im,2); imageHeight = size(im,1);
-handles.axesLogoLeft = axes('Units','pixels','Position',[625 766 0.75*imageWidth 0.75*imageHeight],'visible','off');
-image(im); set(handles.axesLogoLeft,'visible','off');
-
-im = imread('logo3.png'); imageWidth  = size(im,2); imageHeight = size(im,1);
-handles.axesLogoLeft = axes('Units','pixels','Position',[525 15 0.75*imageWidth 0.75*imageHeight],'visible','off');
-image(im); set(handles.axesLogoLeft,'visible','off');
-
-im = imread('title.png'); imageWidth  = size(im,2); imageHeight = size(im,1);
-handles.axesLogoLeft = axes('Units','pixels','Position',[116 702 0.5*imageWidth 0.5*imageHeight],'visible','off');
-image(im); set(handles.axesLogoLeft,'visible','off');
-
-%-------
-
-handles.base = varargin{1};
 % Update chooseButton for tasks via available sampleProcessors
-tasks_raw = handles.base.availableSampleProcessors;
+gui.tasks_raw = base.availableSampleProcessors;
 % convert sampleProcessor m-file names to readable Strings
-tasks = strrep(strrep(tasks_raw,'_',' '),'.m','');
-set(handles.chooseTask,'String',tasks);
+if ~isempty(gui.tasks_raw)
+    tasks = strrep(strrep(gui.tasks_raw,'_',' '),'.m','');
+end
 % select DEFAULT sampleProcessor number (in alphabetical order) for visualization
 defaultSampleProcessorNumber = 2;
-set(handles.chooseTask,'Value',defaultSampleProcessorNumber);
+
+uni_logo = imread('logo3.png'); [uni_logo_x, uni_logo_y, ~] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y;
+cancerid_logo = imread('logo.png'); [cancerid_logo_x, cancerid_logo_y, ~] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y;
+subtitle = imread('title.png'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
+
+%Menu
+gui.screensize = get( 0, 'Screensize' );
+rel = (0.5*gui.screensize(3))/(0.75*gui.screensize(4));
+
+%window
+posx = 0.25; posy = 0.15; width = 0.5; height = 0.75;
+
+gui.fig_main = figure('Units','normalized','Position',[posx posy width height],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
+    'NumberTitle','off','Color', [1 1 1],'Resize','off');
+
+gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','normalized','Position',[0.22 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', {@process,base}); 
+gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','normalized','Position',[0.56 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', {@visualize,base});
+gui.update_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Update sample list','Units','normalized','Position',[0.711 0.561 0.15 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', {@update,base});
+
+gui.titel = uicontrol(gui.fig_main,'Style','text', 'String','ACCEPT','Units','normalized','Position',[0.41 0.83 0.18 0.04],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1],'ForegroundColor',[0.729 0.161 0.208]);
+
+gui.task = uicontrol(gui.fig_main,'Style','text', 'String','Choose a task:','Units','normalized','Position',[0.22 0.7 0.15 0.02],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1]);
+gui.task_list = uicontrol('Style', 'popup','String', tasks,'Units','normalized','Position', [0.39 0.703 0.39 0.019],'Callback', {@choosetask,base}, 'FontUnits','normalized', 'FontSize',1);  
+set(gui.task_list,'Value',defaultSampleProcessorNumber);
 % create sampleProcessor object for - per default - selected sampleProcessor 
-currentSampleProcessorName = strrep(tasks_raw{get(handles.chooseTask,'Value')},'.m','');
-eval(['handles.base.sampleProcessor = ',currentSampleProcessorName,'();']);
+currentSampleProcessorName = strrep(gui.tasks_raw{get(gui.task_list,'Value')},'.m','');
+eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
 
-%-------
+gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.14 0.597 0.359 0.038]);
+gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.143 0.608 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
+gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','normalized','Position',[0.5 0.597 0.2 0.038],'FontUnits','normalized', 'FontSize',0.4,'Callback', @input_path);
 
-% Choose default command line output for gui
-handles.output = hObject;
+gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.14 0.537 0.359 0.038]);
+gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.143 0.548 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
+gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','normalized','Position',[0.5 0.537 0.2 0.038],'FontUnits','normalized', 'FontSize',0.4,'Callback', @results_path);
 
-% Update handles structure
-guidata(hObject, handles);
+gui.uni_logo_axes = axes('Units','normalized','Position',[0.57 0.025 0.4 0.4*uni_logo_rel*rel]);
+gui.uni_logo = imagesc(uni_logo);  axis off;
 
-% UIWAIT makes gui wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
+gui.cancerid_logo_axes = axes('Units','normalized','Position',[0.66 0.83 0.3 0.3*cancerid_logo_rel*rel]); 
+gui.cancerid_logo = imagesc(cancerid_logo); axis off;
 
+gui.subtitle_axes = axes('Units','normalized','Position',[0.13 0.77 0.74 0.74*subtitle_rel*rel]);
+gui.subtitle = imagesc(subtitle);  axis off;
 
-% --- Outputs from this function are returned to the command line.
-function varargout = gui_OutputFcn(hObject, eventdata, handles) 
-% varargout  cell array for returning output args (see VARARGOUT);
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+gui.table_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.34 0.1805 0.32 0.326], 'BackgroundColor', [1 1 1]);
+gui.table = uitable('Parent', gui.table_frame, 'Data', [],'ColumnName', {'Sample name','Processed'},'ColumnFormat', {'char','logical'},'ColumnEditable', false,'RowName',[],'Units','normalized',...
+    'Position', [0 0 1 1],'ColumnWidth',{0.32*0.5869*0.5*gui.screensize(3) 0.32*0.3869*0.5*gui.screensize(3)}, 'FontUnits','normalized', 'FontSize',0.05,'CellSelectionCallback',@(src,evnt)set(src,'UserData',evnt.Indices));
 
-% Get default command line output from handles structure
-varargout{1} = handles.output;
-
-
-% --- Executes on selection change in chooseTask.
-function chooseTask_Callback(hObject, eventdata, handles)
-% hObject    handle to chooseTask (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-contents = cellstr(get(hObject,'String')); %returns chooseTask contents as cell array
-selectedSampleProcessor = contents{get(hObject,'Value')}; %returns selected item from chooseTask
-selectedSampleProcessor = strrep(selectedSampleProcessor,' ','_');
-eval(['handles.base.sampleProcessor = ',selectedSampleProcessor,'();']);
-% Update handles structure
-%guidata(hObject, handles);
-
-
-% --- Executes during object creation, after setting all properties.
-function chooseTask_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to chooseTask (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+handle = gui.fig_main;
 end
 
 
-% --- Executes on button press in processButton.
-function processButton_Callback(hObject, eventdata, handles)
-% hObject    handle to processButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+function process(~,~,base)
+global gui
 display('Process samples...')
-selectedCellsInTable = get(handles.tableSamples,'UserData');
+selectedCellsInTable = get(gui.table,'UserData');
 selectedSamples = selectedCellsInTable(:,1);
-handles.base.sampleProcessor;
 % update the current sampleList: selected samples should be processed
-handles.base.sampleList.toBeProcessed(selectedSamples) = 1;
-handles.base.run();
-
-
-% --- Executes on button press in visualizeButton.
-function visualizeButton_Callback(hObject, eventdata, handles)
-% hObject    handle to visualizeButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-display('Visualize samples...')
-selectedCellsInTable = get(handles.tableSamples,'UserData');
-selectedSamples = selectedCellsInTable(:,1);
-if numel(selectedSamples) == 1
-    % load selected sample
-    currentSample = handles.base.io.load_sample(handles.base.sampleList,selectedSamples);
-    % run sampleVisGui with loaded sample
-    gui_sample_visualizer(handles.base,currentSample);
-else
-    warning('Too many samples selected for visualization');
+base.sampleList.toBeProcessed(selectedSamples) = 1;
+base.run();
 end
 
-
-% --- Executes on button press in loadButton.
-function loadButton_Callback(hObject, eventdata, handles)
-% hObject    handle to loadButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+function update(~,~,base)
+global gui
 display('Load samples...')
-inputPath = get(handles.editInputFolder,'String');
-resultPath = get(handles.editResultsFolder,'String');
-handles.base.sampleList = handles.base.io.create_sample_list(...
-                        inputPath,resultPath,handles.base.sampleProcessor);
-sl = handles.base.sampleList;
+inputPath = get(gui.input_path,'String');
+resultPath = get(gui.results_path,'String');
+base.sampleList = base.io.create_sample_list(...
+                        inputPath,resultPath,base.sampleProcessor);
+sl = base.sampleList;
 nbrSamples = size(sl.sampleNames,2);
 nbrAttributes = 2;
 dat = cell(nbrSamples,nbrAttributes);
@@ -180,79 +92,42 @@ for r=1:nbrSamples
     dat{r,1} = sl.sampleNames{1,r};
     dat{r,2} = sl.isProcessed(1,r);
 end                    
-cnames = {'<html><center /><font size=4>   Sample name   </font></html>',...
-          '<html><center /><font size=4>   Processed   </font></html>'};
-rnames = {};
-% create details table
-panelWidth = get(handles.uipanelSampleList,'Position'); panelWidth = panelWidth(3);
-
-tableSamples = uitable('Parent',handles.uipanelSampleList,'Units','normalized',...
-            'Data',dat,'ColumnName',cnames,'RowName',rnames,'ColumnWidth',{0.975*2/3*panelWidth,0.975*1/3*panelWidth},...
-            'Position',[0 0 1 1],'FontSize',15,...
-            'CellSelectionCallback',@(src,evnt)set(src,'UserData',evnt.Indices));
-handles.tableSamples = tableSamples;
-% Update handles structure
-guidata(hObject, handles);
-
-
-function editInputFolder_Callback(hObject, eventdata, handles)
-% hObject    handle to editInputFolder (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editInputFolder as text
-%        str2double(get(hObject,'String')) returns contents of editInputFolder as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function editInputFolder_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editInputFolder (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+set(gui.table,'data', dat);
 end
 
+function visualize(~,~,base)
+global gui
+display('Visualize samples...')
+selectedCellsInTable = get(gui.table,'UserData');
+selectedSamples = selectedCellsInTable(:,1);
+if numel(selectedSamples) == 1
+    % load selected sample
+    currentSample = base.io.load_sample(base.sampleList,selectedSamples);
+    % run sampleVisGui with loaded sample
+    gui_sample_visualizer(base,currentSample);
+else
+    warning('Too many samples selected for visualization');
+end
+end
 
-% --- Executes on button press in pushbuttonBrowseInput.
-function pushbuttonBrowseInput_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbuttonBrowseInput (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-%inputPath = '/Users/brunec/git/ACTC/examples/test_images';
+function input_path(~,~)
+global gui
 inputPath = uigetdir(pwd,'Please select an input folder.');
-set(handles.editInputFolder,'String',inputPath);
-
-
-% --- Executes on button press in pushbuttonBrowseResults.
-function pushbuttonBrowseResults_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbuttonBrowseResults (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-%resultPath = '/Users/brunec/git/ACTC/examples/results';
-resultPath = uigetdir(pwd,'Please select a results folder.');
-set(handles.editResultsFolder,'String',resultPath);
-
-
-function editResultsFolder_Callback(hObject, eventdata, handles)
-% hObject    handle to editResultsFolder (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% Hints: get(hObject,'String') returns contents of editResultsFolder as text
-%        str2double(get(hObject,'String')) returns contents of editResultsFolder as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function editResultsFolder_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editResultsFolder (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+set(gui.input_path,'String',inputPath);
 end
+
+function results_path(~,~)
+global gui
+resultPath = uigetdir(pwd,'Please select a results folder.');
+set(gui.results_path,'String',resultPath);
+end
+
+function choosetask(source,~,base)
+global gui
+val = get(source,'Value');        
+set(gui.task_list,'Value',val);
+% create sampleProcessor object for selected sampleProcessor 
+currentSampleProcessorName = strrep(gui.tasks_raw{val},'.m','');
+eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
+end
+
