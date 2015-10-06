@@ -52,9 +52,13 @@ function gui_sample_visualizer_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to gui_sample_visualizer (see VARARGIN)
 
-% set background colors to white
+% set properies (size, color) of main figure, panels and text
+%screensize = get(0,'Screensize');
+%rel = (0.5*screensize(3))/(0.75*screensize(4)); % relative screen size
+posx = 0.25; posy = 0.15; width = 0.5; height = 0.75;
+% background colors to white
 bgcolor = [1 1 1];
-set(gcf,'Color',bgcolor,'Resize','off');
+set(gcf,'Units','normalized','Position',[posx posy width height],'Color',bgcolor,'Resize','off');
 set(handles.uipanelSample,'BackgroundColor',bgcolor);
 set(handles.uipScatter,'BackgroundColor',bgcolor);
 set(handles.uipGallery,'BackgroundColor',bgcolor);
