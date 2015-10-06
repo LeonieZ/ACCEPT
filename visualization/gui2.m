@@ -2,8 +2,8 @@ function scoring_gui(varargin)
 
 global i score gui name score_res
 
-uni_logo = imread('logo3.png'); [uni_logo_x, uni_logo_y, ~] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y
-cancerid_logo = imread('logo.png'); [cancerid_logo_x, cancerid_logo_y, ~] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y
+uni_logo = imread('logo3.png'); [uni_logo_x, uni_logo_y, ~] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y;
+cancerid_logo = imread('logo.png'); [cancerid_logo_x, cancerid_logo_y, ~] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y;
 subtitle = imread('title.png'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
 
 % if nargin == 1
@@ -47,8 +47,8 @@ subtitle = imread('title.png'); [subtitle_x, subtitle_y, ~] = size(subtitle); su
 % gui.map_green = zeros(64,3);gui.map_green(:,2) = linspace(0,1,64);
 
 %Menu
-screensize = get( 0, 'Screensize' );
-rel = (0.5*screensize(3))/(0.75*screensize(4));
+gui.screensize = get( 0, 'Screensize' );
+rel = (0.5*gui.screensize(3))/(0.75*gui.screensize(4));
 
 %window
 posx = 0.25; posy = 0.15; width = 0.5; height = 0.75;
@@ -58,13 +58,21 @@ gui.fig_main = figure('Units','normalized','Position',[posx posy width height],'
 
 gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','normalized','Position',[0.22 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', @process); 
 gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','normalized','Position',[0.56 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', @visualize);
-gui.update_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Update sample list','Units','normalized','Position',[0.75 0.62 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', @update);
+gui.update_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Update sample list','Units','normalized','Position',[0.711 0.561 0.15 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', @update);
 
 gui.titel = uicontrol(gui.fig_main,'Style','text', 'String','ACCEPT','Units','normalized','Position',[0.41 0.83 0.18 0.04],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1],'ForegroundColor',[0.729 0.161 0.208]);
 
-gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.03 0.65 0.6 0.04],'FontUnits','normalized', 'FontSize',0.3);
-gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.03 0.6 0.6 0.04],'FontUnits','normalized', 'FontSize',0.3);
+gui.task = uicontrol(gui.fig_main,'Style','text', 'String','Choose a task:','Units','normalized','Position',[0.22 0.7 0.15 0.02],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1]);
+gui.task_list = uicontrol('Style', 'popup','String', {'Dummy1','Dummy2','Dummy3','Dummy4'},'Units','normalized','Position', [0.39 0.703 0.39 0.019],'Callback', @choosetask, 'FontUnits','normalized', 'FontSize',1);  
 
+
+gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.14 0.597 0.359 0.038]);
+gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.143 0.608 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
+gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','normalized','Position',[0.5 0.597 0.2 0.038],'FontUnits','normalized', 'FontSize',0.4,'Callback', @input_path);
+
+gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.14 0.537 0.359 0.038]);
+gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.143 0.548 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
+gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','normalized','Position',[0.5 0.537 0.2 0.038],'FontUnits','normalized', 'FontSize',0.4,'Callback', @results_path);
 
 gui.uni_logo_axes = axes('Units','normalized','Position',[0.57 0.025 0.4 0.4*uni_logo_rel*rel]);
 gui.uni_logo = imagesc(uni_logo);  axis off;
@@ -74,6 +82,17 @@ gui.cancerid_logo = imagesc(cancerid_logo); axis off;
 
 gui.subtitle_axes = axes('Units','normalized','Position',[0.13 0.77 0.74 0.74*subtitle_rel*rel]);
 gui.subtitle = imagesc(subtitle);  axis off;
+
+gui.table_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.34 0.1805 0.32 0.326], 'BackgroundColor', [1 1 1]);
+gui.table = uitable('Parent', gui.table_frame, 'Data', [],'ColumnName', {'Sample name','Processed'},'ColumnFormat', {'char','logical'},'ColumnEditable', false,'RowName',[],'Units','normalized',...
+    'Position', [0 0 1 1],'ColumnWidth',{0.32*0.585*0.5*gui.screensize(3) 0.32*0.385*0.5*gui.screensize(3)}, 'FontUnits','normalized', 'FontSize',0.05);
+
+
+
+% 
+% % Set width and height
+% t.Position(3) = t.Extent(3);
+% t.Position(4) = t.Extent(4); 
 
 
 
@@ -152,9 +171,32 @@ function process(~,~)
 end
 
 function update(~,~)
+global gui
+% Define the data
+d =    {6.125678  true;...
+        6.75     false;...   
+        7        false;};
+set(gui.table,'data', d);
 end
 
 function visualize(~,~)
 end
 
+function input_path(~,~)
+global gui
+ set(gui.input_path, 'String','test');
+end
+
+function results_path(~,~)
+global gui
+ set(gui.results_path, 'String','blablub');
+end
+
+function choosetask(source,~)
+%         val = source.Value;
+%         maps = source.String;
+        % For R2014a and earlier: 
+        val = get(source,'Value')
+        maps = get(source,'String') 
+end
 
