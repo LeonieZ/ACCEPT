@@ -53,9 +53,13 @@ function gui_sample_visualizer_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to gui_sample_visualizer (see VARARGIN)
 
 % set properies (size, color) of main figure, panels and text
-%screensize = get(0,'Screensize');
-%rel = (0.5*screensize(3))/(0.75*screensize(4)); % relative screen size
-posx = 0.25; posy = 0.15; width = 0.5; height = 0.75;
+screensize = get(0,'Screensize');
+rel = (screensize(3))/(screensize(4)); % relative screen size
+maxRelHeight = 0.9;
+posx = 0.25; posy = 0.15;
+width = ((16/12)/rel)*maxRelHeight; % use 16/12 window ratio on all computer screens
+height = maxRelHeight;
+
 % background colors to white
 bgcolor = [1 1 1];
 set(gcf,'Units','normalized','Position',[posx posy width height],'Color',bgcolor,'Resize','off');
@@ -147,26 +151,32 @@ axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
         cols = maxNumCols;
         rows = ceil(N/cols);
         ratio = rows/cols;
+        %pos(2) = pos(2)-(1-ratio)*pos(4);
+        %pos(4) = ratio*pos(4);
         height = ratio*0.95;
-        pos = [0 -(height-0.95) 0.95 height];
-        %set(handles.uipGallery,'position',pos);
+        %pos = [0 -(height-0.95) 0.95 height];
+        %set(axesGallery,'Position',pos);
+        %pos = [0.06 0.06 0.85 1.2*0.85];
+        get(handles.uipGallery,'Position')
+        shift = 0.2*0.6289;
+        set(handles.uipGallery,'Position',[0.0225 0.0208-shift 0.6904 0.6289+shift])
         set(handles.slider1,'enable','on','value',1); % enable and upper position
     else
         cols = ceil( sqrt(N) );    % number of columns
         rows = cols - floor( (cols^2 - N)/cols );
-        %set(handles.uipGallery,'position',[0 0 0.95 0.95]);
         set(handles.slider1,'enable','off');
+        %set(handles.uipGallery,'position',[0 0 0.95 0.95]);
     end
     
     setappdata(handles.sampleVisualizer,'cols',cols);
     
     % pitch (box for axis) height and width
-    rPitch  = 0.98/rows;
-    cPitch  = 0.98/cols;
+    rPitch  = 0.98/5; %/rows;
+    cPitch  = 0.98/5; %/cols;
     
     % axis height and width
-    axHight = 0.9/rows;
-    axWidth = 0.9/cols;
+    axHight = 0.9/5; %/rows;
+    axWidth = 0.9/5; %/cols;
     
     % clear previous axes handles for the thumbnail gallery
     hAxes = getappdata(handles.sampleVisualizer,'hAxes');
@@ -204,13 +214,13 @@ axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
         % plot overlay image in first column
         x = 0;
         ind = (thumbInd-1)*nbrChannels + nbrChannels + 1; % index for first column element
-        hAxes(ind) = axes('position',[x y axWidth axHight],axesProp,axesVal);
+        hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
         plotImInAxis(dataFrame.rawImage,hAxes(ind));
         % plot image for each color channel in column 2 till nbrChannels
         for ch = 1:nbrChannels
             x = 0.98-(nbrChannels-ch+1)*cPitch;
             ind = (thumbInd-1)*nbrChannels + ch;
-            hAxes(ind) = axes('position',[x y axWidth axHight],axesProp,axesVal);
+            hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
             plotImInAxis(dataFrame.rawImage(:,:,ch),hAxes(ind));
         end
     end    
@@ -378,10 +388,14 @@ function slider1_Callback(hObject, eventdata, handles)
 % hObject    handle to slider1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-
+% pos = get(handles.uipGallery,'position');
+% height = pos(4);
+% if height > 0.6289
+%     val = get(hObject,'value');
+%     yPos = pos(2) + (1-val)*height;
+%     pos(2) = yPos;
+%     set(handles.uipGallery,'position',pos);
+% end
 
 
 % --- Executes during object creation, after setting all properties.
