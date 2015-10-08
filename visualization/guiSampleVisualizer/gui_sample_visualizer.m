@@ -139,6 +139,7 @@ axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
 %         files = files(1:N);
 %     end
     
+    %needs to be changed in order to use it for non CellSearch data
     nbrAvailableThumbnails = size(handles.currentSample.priorLocations,1)
     nbrVisualizedThumbnails = 5
     nbrChannels = 4; 
@@ -210,6 +211,7 @@ axesGallery = axes('Parent',handles.uipGallery,'Units','normalized',...
         % specify row location for all columns
         y = 0.98-thumbInd*rPitch;
         % obtain dataFrame from io
+        %needs to be changed in order to use it for non CellSearch data
         dataFrame = handles.base.io.load_thumbnail_frame(handles.currentSample,thumbInd,'prior');
         % plot overlay image in first column
         x = 0;
