@@ -239,6 +239,7 @@ classdef CellTracks < Loader
             if isempty(this.xmlData)
                 this.processXML();
             end
+            %index=[1:this.xmlData.num_events];
             index=find(this.xmlData.score==1);
             if isempty(index)
                 locations=[];
@@ -384,7 +385,7 @@ classdef CellTracks < Loader
             yBottomLeft=this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row;
             xTopRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
             yTopRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;
-            locations=table(frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
+            locations=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
         end
         
     end

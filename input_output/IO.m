@@ -118,6 +118,19 @@ classdef IO < handle
         
         function save_thumbnail(this,currentSample,eventNr)
            %to be implemented 
+           currentDataFrame=this.load_thumbnail_frame(currentSample,eventNr,'prior')
+           currentDataFrame.preProcessedImage=currentDataFrame.rawImage(:,:,3);
+           currentDataFrame.preProcessedImage(2:7,2:7)=4095;
+            t=Tiff([num2str(eventNr),'_thumb.tif'],'w');
+            t.setTag('Photometric',t.Photometric.MinIsBlack);
+            t.setTag('Compression',t.Compression.LZW);
+            t.setTag('ImageLength',size(currentDataFrame.rawImage,1));
+            t.setTag('ImageWidth',size(currentDataFrame.rawImage,2));
+            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+            t.setTag('BitsPerSample',8);
+            t.setTag('SamplesPerPixel',1);
+            t.write(uint8(currentDataFrame.preProcessedImage./4095.*255));
+            t.close;
         end
         
         function save_results_as_xls(this,currentSample)
