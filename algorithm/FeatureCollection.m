@@ -36,6 +36,8 @@ classdef FeatureCollection < SampleProcessorObject
                     returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                     returnSample.results.thumbnails=vertcat(returnSample.priorLocations);
                     returnSample.results.segmentation{i} = thumbFrame.segmentedImage;
+                    %delete later!?
+                    returnSample.results.thumbnail_images{i} = thumbFrame.rawImage;
                 end
             end
         end

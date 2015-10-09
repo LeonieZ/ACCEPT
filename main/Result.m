@@ -5,6 +5,7 @@ classdef Result < handle
         features=table();
         classification=table();
         thumbnails=[];% containing the mapping of the thumbnails. 
+        thumbnail_images = cell(0);
         segmentation = cell(0);
     end
 end
