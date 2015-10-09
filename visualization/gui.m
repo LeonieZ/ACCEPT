@@ -113,7 +113,7 @@ if numel(selectedSamples) == 1
     % load selected sample
     currentSample = base.io.load_sample(base.sampleList,selectedSamples);
     % run sampleVisGui with loaded sample
-    gui_sample_visualizer(base,currentSample);
+    gui_sample(base,currentSample);
 else
     warning('Too many samples selected for visualization');
 end

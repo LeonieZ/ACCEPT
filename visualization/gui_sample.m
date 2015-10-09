@@ -75,6 +75,7 @@ gui_sample.popupChannel = uicontrol('Style','popup','String',currentSample.chann
 
                                 
 %% Fill uiPanelGallery
+debug = 0;
 
 % create slider for gallery
 gui_sample.slider = uicontrol('Style','Slider','Parent',gui_sample.uiPanelGallery,...
@@ -85,14 +86,13 @@ gui_sample.slider = uicontrol('Style','Slider','Parent',gui_sample.uiPanelGaller
 gui_sample.uiPanelThumbsOuter = uipanel('Parent',gui_sample.uiPanelGallery,...
                                         'Position',[0 0 0.98 0.95],...
                                         'BackgroundColor',[1 1 1]);
-
 %-----
+if ~debug
 % compute relative dimension of the thumbnail grid
-nbrAvailableRows = size(currentSample.priorLocations,1)
+nbrAvailableRows = size(currentSample.priorLocations,1);
 nbrColorChannels = 4; 
 nbrImages        = nbrAvailableRows * (nbrColorChannels+1);
 maxNumCols       = 5; % design decision, % maxNumCols = 1 (overlay) + nbrChannels
-
 if nbrImages > maxNumCols^2
     cols  = maxNumCols;
     rows  = ceil(nbrImages/cols);
@@ -108,16 +108,20 @@ cPitch  = 0.98/cols;
 % axis height and width
 axHight = 0.9/rows;
 axWidth = 0.9/cols;
+end
 %-----
-
+if ~debug
 height = rows/cols;
-%height = 3; %3 means 300% size of inner panel containing the image axes
+end
+if debug
+height = 3; %3 means 300% size of inner panel containing the image axes
+end
 width  = 1;
 gui_sample.uiPanelThumbsInner = uipanel('Parent',gui_sample.uiPanelThumbsOuter,...
                                         'Position',[0 1-height width height],...
                                         'BackgroundColor',[1 1 1]);
-
 %-----
+if ~debug
 hAxes = zeros(nbrImages,1);
 % define common properties and values for all axes
 axesProp = {'dataaspectratio' ,...
@@ -150,15 +154,86 @@ for thumbInd=1:nbrAvailableRows
         plotImInAxis(dataFrame.rawImage(:,:,ch),hAxes(ind));
     end
 end
+end
+%-----
+if debug
+% TEST: a test axis and image to check scrolling behaviour
+gui_sample.bigTestAxes = axes('Parent',gui_sample.uiPanelThumbsInner,...
+                   'Position',[0 0 1 1],'xgrid','off','ygrid','off');
+imagesc(imread('eight.tif'),'parent',gui_sample.bigTestAxes); axis image;
+end
 %-----
 
-%-----
-% TEST: a test axis and image to check scrolling behaviour
-% gui_sample.bigTestAxes = axes('Parent',gui_sample.uiPanelThumbsInner,...
-%                    'Position',[0 0 1 1],'xgrid','off','ygrid','off');
-% imagesc(imread('eight.tif'),'parent',gui_sample.bigTestAxes); axis image;
-%-----
-                                
+
+%% Fill uiPanelScatter
+% TODO: make font size in choose buttons relativ
+%
+sampleFeatures = currentSample.results.features;
+marker_size = 30;
+% create data for scatter plot at the top
+axes('Parent',gui_sample.uiPanelScatter,'Units','normalized','Position',[0.17 0.72 0.75 0.23]); %[left bottom width height]
+topFeatureIndex1 = 1; topFeatureIndex2 = 1;
+gca; gui_sample.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                      sampleFeatures.(topFeatureIndex2+1),marker_size,'filled');
+set(gca,'TickDir','out');
+% create choose button to switch feature index1 (x-axis)
+popupFeatureSelectTopIndex1 = uicontrol('Parent',gui_sample.uiPanelScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[0.39 -0.16 0.6 0.85],...
+            'FontSize',10,...
+            'Value',topFeatureIndex1,...
+            'Callback',{@popupFeatureTopIndex1_Callback});
+% create choose button to switch feature index2 (y-axis)
+popupFeatureSelectTopIndex2 = uicontrol('Parent',gui_sample.uiPanelScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[-0.01 0.14 0.6 0.85],...
+            'FontSize',10,...
+            'Value',topFeatureIndex2,...
+            'Callback',{@popupFeatureTopIndex2_Callback});
+%----
+% create data for scatter plot in the middle
+axes('Parent',gui_sample.uiPanelScatter,'Units','normalized','Position',[0.17 0.39 0.75 0.23]); %[left bottom width height]
+middleFeatureIndex1 = 2; middleFeatureIndex2 = 2;
+gca; gui_sample.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled');
+set(gca,'TickDir','out');
+% create choose button to switch feature index1 (x-axis)
+popupFeatureSelectMiddleIndex1 = uicontrol('Parent',gui_sample.uiPanelScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[0.39 -0.49 0.6 0.85],...
+            'FontSize',10,...
+            'Value',middleFeatureIndex1,...
+            'Callback',{@popupFeatureMiddleIndex1_Callback});
+% create choose button to switch feature index2 (y-axis)
+popupFeatureSelectMiddleIndex2 = uicontrol('Parent',gui_sample.uiPanelScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[-0.01 -0.19 0.6 0.85],...
+            'FontSize',10,...
+            'Value',middleFeatureIndex2,...
+            'Callback',{@popupFeatureMiddleIndex2_Callback});
+%----
+% create scatter plot at the bottom
+axes('Parent',gui_sample.uiPanelScatter,'Units','normalized','Position',[0.17 0.06 0.75 0.23]); %[left bottom width height]
+bottomFeatureIndex1 = 3; bottomFeatureIndex2 = 3;
+gca; gui_sample.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled');
+set(gca,'TickDir','out');
+% create choose button to switch feature index1 (x-axis)
+popupFeatureSelectBottomIndex1 = uicontrol('Parent',gui_sample.uiPanelScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[0.39 -0.82 0.6 0.85],...
+            'FontSize',10,...
+            'Value',bottomFeatureIndex1,...
+            'Callback',{@popupFeatureBottomIndex1_Callback});
+% create choose button to switch feature index2 (y-axis)
+popupFeatureSelectBottomIndex2 = uicontrol('Parent',gui_sample.uiPanelScatter,'Style','popup','Units','normalized',...
+            'String',sampleFeatures.Properties.VariableNames(2:end),...
+            'Position',[-0.01 -0.52 0.6 0.85],...
+            'FontSize',10,...
+            'Value',bottomFeatureIndex2,...
+            'Callback',{@popupFeatureBottomIndex2_Callback});
+
+
                                 
 %% Callback and helper functions
 
@@ -166,6 +241,42 @@ end
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
     set(gui_sample.imageOverview,'CData',currentSample.overviewImage(:,:,selectedChannel));
+end
+
+% --- Executes on selection in topFeatureIndex1 (x-axis)
+function popupFeatureTopIndex1_Callback(hObject,~,~)
+    selectedFeature = get(hObject,'Value');
+    set(gui_sample.axesScatterTop,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+end
+
+% --- Executes on selection in topFeatureIndex2 (y-axis)
+function popupFeatureTopIndex2_Callback(hObject,~,~)
+    selectedFeature = get(hObject,'Value');
+    set(gui_sample.axesScatterTop,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+end
+
+% --- Executes on selection in middleFeatureIndex1 (x-axis)
+function popupFeatureMiddleIndex1_Callback(hObject,~,~)
+    selectedFeature = get(hObject,'Value');
+    set(gui_sample.axesScatterMiddle,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+end
+
+% --- Executes on selection in middleFeatureIndex2 (y-axis)
+function popupFeatureMiddleIndex2_Callback(hObject,~,~)
+    selectedFeature = get(hObject,'Value');
+    set(gui_sample.axesScatterMiddle,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+end
+
+% --- Executes on selection in bottomFeatureIndex1 (x-axis)
+function popupFeatureBottomIndex1_Callback(hObject,~,~)
+    selectedFeature = get(hObject,'Value');
+    set(gui_sample.axesScatterBottom,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+end
+
+% --- Executes on selection in bottomFeatureIndex2 (y-axis)
+function popupFeatureBottomIndex2_Callback(hObject,~,~)
+    selectedFeature = get(hObject,'Value');
+    set(gui_sample.axesScatterBottom,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on slider movement.
@@ -178,14 +289,14 @@ end
 function plotImInAxis(im,hAx)
     if size(im,3) > 1
         % create overlay image here
-        imagesc(sum(im,3),{'ButtonDownFcn'},{'openSpecificImage( guidata(gcf) )'},'parent',hAx);
+        imagesc(sum(im,3),{'ButtonDownFcn'},{'openSpecificImage( gcf )'},'parent',hAx);
     else
-        imagesc(im,{'ButtonDownFcn'},{'openSpecificImage( guidata(gcf) )'},'parent',hAx);
+        imagesc(im,{'ButtonDownFcn'},{'openSpecificImage( gcf )'},'parent',hAx);
     end
     axis(hAx,'image');
     axis(hAx,'off');
     colormap(gray);
-    drawnow;
+    %drawnow;
 end
 
 
@@ -193,118 +304,3 @@ end
 handle = gui_sample;
 
 end
-                                 
-                                 
-%% ----
-
-% gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','normalized','Position',[0.22 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', {@process,base}); 
-% gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','normalized','Position',[0.56 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', {@visualize,base});
-% gui.update_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Update sample list','Units','normalized','Position',[0.711 0.561 0.15 0.05],'FontUnits','normalized', 'FontSize',0.3,'Callback', {@update,base});
-% 
-% % gui.titel = uicontrol(gui.fig_main,'Style','text', 'String','ACCEPT','Units','normalized','Position',[0.41 0.83 0.18 0.04],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1],'ForegroundColor',[0.729 0.161 0.208]);
-% % gui.title_axes = axes('Units','normalized','Position',[0.41 0.83 0.18 0.04]);
-% % gui.titel = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} ACCEPT','Units','normalized','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','left');
-% gui.title_axes = axes('Units','normalized','Position',[0.5 0.83 0.18 0.04]); axis off;
-% gui.titel = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} ACCEPT','Units','normalized','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','center');
-% 
-% gui.subtitle_axes = axes('Units','normalized','Position',[0.082 0.77 0.85 0.03]);axis off;
-% gui.subtitel = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208}A\color[rgb]{0,0,0}utom\color[rgb]{0,0,0}ated \color[rgb]{0.729,0.161,0.208}C\color[rgb]{0,0,0}TC \color[rgb]{0.729,0.161,0.208}C\color[rgb]{0,0,0}lassification \color[rgb]{0.729,0.161,0.208}E\color[rgb]{0,0,0}numeration and \color[rgb]{0.729,0.161,0.208}P\color[rgb]{0,0,0}heno\color[rgb]{0.729,0.161,0.208}T\color[rgb]{0,0,0}yping','Units','normalized','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','left');
-% % gui.subtitle_axes = axes('Units','normalized','Position',[0.5 0.77 0.5 0.03]);
-% % gui.subtitel = text('Position',[0 0],'String','Automated CTC Classification Enumeration and PhenoTyping','Units','normalized','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','center');
-% 
-% 
-% gui.task = uicontrol(gui.fig_main,'Style','text', 'String','Choose a task:','Units','normalized','Position',[0.22 0.7 0.15 0.02],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1]);
-% gui.task_list = uicontrol('Style', 'popup','String', tasks,'Units','normalized','Position', [0.39 0.703 0.39 0.019],'Callback', {@choosetask,base}, 'FontUnits','normalized', 'FontSize',1);  
-% set(gui.task_list,'Value',defaultSampleProcessorNumber);
-% % create sampleProcessor object for - per default - selected sampleProcessor 
-% currentSampleProcessorName = strrep(gui.tasks_raw{get(gui.task_list,'Value')},'.m','');
-% eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
-% 
-% gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.14 0.597 0.359 0.038]);
-% gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.143 0.608 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
-% gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','normalized','Position',[0.5 0.597 0.2 0.038],'FontUnits','normalized', 'FontSize',0.4,'Callback', @input_path);
-% 
-% gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.14 0.537 0.359 0.038]);
-% gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.143 0.548 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
-% gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','normalized','Position',[0.5 0.537 0.2 0.038],'FontUnits','normalized', 'FontSize',0.4,'Callback', @results_path);
-% 
-% gui.uni_logo_axes = axes('Units','normalized','Position',[0.57 0.025 0.4 0.4*uni_logo_rel*rel]);
-% gui.uni_logo = imagesc(uni_logo);  axis off;
-% 
-% gui.cancerid_logo_axes = axes('Units','normalized','Position',[0.66 0.83 0.3 0.3*cancerid_logo_rel*rel]); 
-% gui.cancerid_logo = imagesc(cancerid_logo); axis off;
-% 
-% % gui.subtitle_axes = axes('Units','normalized','Position',[0.13 0.77 0.74 0.74*subtitle_rel*rel]);
-% % gui.subtitle = imagesc(subtitle);  axis off;
-% 
-% gui.table_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.34 0.1805 0.32 0.326], 'BackgroundColor', [1 1 1]);
-% gui.table = uitable('Parent', gui.table_frame, 'Data', [],'ColumnName', {'Sample name','Processed'},'ColumnFormat', {'char','logical'},'ColumnEditable', false,'RowName',[],'Units','normalized',...
-%     'Position', [0 0 1 1],'ColumnWidth',{0.32*0.5869*0.5*gui.screensize(3) 0.32*0.3869*0.5*gui.screensize(3)}, 'FontUnits','normalized', 'FontSize',0.05,'CellSelectionCallback',@(src,evnt)set(src,'UserData',evnt.Indices));
-% 
-% handle = gui.fig_main;
-% end
-% 
-% function process(~,~,base)
-% global gui
-% display('Process samples...')
-% selectedCellsInTable = get(gui.table,'UserData');
-% selectedSamples = selectedCellsInTable(:,1);
-% % update the current sampleList: selected samples should be processed
-% base.sampleList.toBeProcessed(selectedSamples) = 1;
-% base.run();
-% end
-% 
-% function update(~,~,base)
-% global gui
-% display('Load samples...')
-% inputPath = get(gui.input_path,'String');
-% resultPath = get(gui.results_path,'String');
-% base.sampleList = base.io.create_sample_list(...
-%                         inputPath,resultPath,base.sampleProcessor);
-% sl = base.sampleList;
-% nbrSamples = size(sl.sampleNames,2);
-% nbrAttributes = 2;
-% dat = cell(nbrSamples,nbrAttributes);
-% for r=1:nbrSamples
-%     dat{r,1} = sl.sampleNames{1,r};
-%     dat{r,2} = sl.isProcessed(1,r);
-% end                    
-% set(gui.table,'data', dat);
-% end
-% 
-% function visualize(~,~,base)
-% global gui
-% display('Visualize samples...')
-% selectedCellsInTable = get(gui.table,'UserData');
-% selectedSamples = selectedCellsInTable(:,1);
-% if numel(selectedSamples) == 1
-%     % load selected sample
-%     currentSample = base.io.load_sample(base.sampleList,selectedSamples);
-%     % run sampleVisGui with loaded sample
-%     gui_sample_visualizer(base,currentSample);
-% else
-%     warning('Too many samples selected for visualization');
-% end
-% end
-% 
-% function input_path(~,~)
-% global gui
-% inputPath = uigetdir(pwd,'Please select an input folder.');
-% set(gui.input_path,'String',inputPath);
-% end
-% 
-% function results_path(~,~)
-% global gui
-% resultPath = uigetdir(pwd,'Please select a results folder.');
-% set(gui.results_path,'String',resultPath);
-% end
-% 
-% function choosetask(source,~,base)
-% global gui
-% val = get(source,'Value');        
-% set(gui.task_list,'Value',val);
-% % create sampleProcessor object for selected sampleProcessor 
-% currentSampleProcessorName = strrep(gui.tasks_raw{val},'.m','');
-% eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
-% end
-% 

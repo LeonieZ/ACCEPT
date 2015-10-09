@@ -8,8 +8,11 @@ function openSpecificImage(handles)
             figure; imagesc(im); colorbar; colormap(gray); axis equal; axis off;
         case 'normal'   
             %left mouse button action
+            %get(gcbo)
+            set(gcbo,'Selected','on');
         case 'extend'
             % shift & left mouse button action
         case 'alt'
             % alt & left mouse button action
+    end
 end
