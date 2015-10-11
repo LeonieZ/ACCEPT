@@ -8,5 +8,5 @@ rem = figure('Units','normalized','Position',[posx posy width height],'Name','Em
             
 text_expl = ['\bf\fontsize{20}\fontname{Arial}Email Reminder:' char(10) '\rm\fontsize{15}Please send the scoring results directly to....'];
 axes('units','normalized', 'position',[0.05 0.1 0.9 .8],'visible','off')
-text(0,1,text_expl)
+text(0,1,text_expl,'FontSize', 1.5)
 end

@@ -4,7 +4,7 @@ screen = get(0,'screensize');
 swidth  = screen(3);
 sheight = screen(4);
 
-im = imread('CTC_image.png');
+im = imread('CTC_image+logo.png');
 iwidth  = size(im,2);
 iheight = size(im,1);
 
