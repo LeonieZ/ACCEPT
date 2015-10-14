@@ -21,6 +21,7 @@ for i = 1:size(input.results.thumbnail_images,2)
     sc_gui.thumbs{i}(:,:,2) = rawImage(:,:,find(~cellfun(@isempty,strfind(input.channelNames,'CK'))));
     sc_gui.thumbs{i}(:,:,3) = rawImage(:,:,find(~cellfun(@isempty,strfind(input.channelNames,'CD45'))));    
 end
+
 % change sc_gui.mini and sc_gui.maxi to min to max of whole sample instead of possible min and max value for this class?!
 if ~isempty(input.histogram)
     [row,~] = find(input.histogram ~= 0);
@@ -75,47 +76,37 @@ sc_gui.framex = 0.2; sc_gui.boundaryx = 0.005; sc_gui.spacex = (1 - 2* sc_gui.bo
 sc_gui.framey = (width * sc_gui.framex * screensize(3))/(height * screensize(4)); sc_gui.boundaryy = 0.2; sc_gui.spacey = (1 - sc_gui.boundaryy - 2 * sc_gui.framey)/3; 
 
 %frames for each image plus axis with initial images
-sc_gui.frame = uipanel('Units','normalized','Title','Overlay','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(sc_gui.spacex+sc_gui.boundaryx) (sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
-sc_gui.im1_ax = axes('Units','normalized','parent',sc_gui.frame,'visible','off','Position',[0,0,1,1]);
-if sc_gui.maxi == 255
-        sc_gui.im1 = imagesc(flip(uint8(sc_gui.thumbs{i}),3)); 
-    else
-        sc_gui.im1 = imagesc(flip((single(sc_gui.thumbs{i})/single(sc_gui.maxi)),3)); 
-end
+sc_gui.frame1 = uipanel('Units','normalized','Title','Overlay','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(sc_gui.spacex+sc_gui.boundaryx) (sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
+sc_gui.im1_ax = create_axis(sc_gui.frame1);
+sc_gui.im1 = plot_image(sc_gui.im1_ax,sc_gui.thumbs{i},sc_gui.maxi,'fullscale_ob');
 
+sc_gui.frame2 = uipanel('Units','normalized','Title','DNA Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(sc_gui.framex+2*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
+sc_gui.im2_ax = create_axis(sc_gui.frame2);
+sc_gui.im2 = plot_image(sc_gui.im2_ax,sc_gui.thumbs{i}(:,:,1),sc_gui.maxi,'fullscale');
 
-sc_gui.frame = uipanel('Units','normalized','Title','DNA Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(sc_gui.framex+2*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
-sc_gui.im2_ax = axes('Units','normalized','parent',sc_gui.frame,'visible','off','Position',[0,0,1,1]);
-sc_gui.im2 = imagesc(cat(3,zeros(size(sc_gui.thumbs{i}(:,:,1))),zeros(size(sc_gui.thumbs{i}(:,:,1))),single(sc_gui.thumbs{i}(:,:,1))/single(sc_gui.maxi))); axis off;%colormap(sc_gui.im2_ax, sc_gui.map_blue); set(sc_gui.im2_ax,'visible','off','CLim',[sc_gui.mini, sc_gui.maxi]); %freezeColors;
+sc_gui.frame3 = uipanel('Units','normalized','Title','Inclusion Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(2*sc_gui.framex+3*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
+sc_gui.im3_ax = create_axis(sc_gui.frame3);
+sc_gui.im3 = plot_image(sc_gui.im3_ax,sc_gui.thumbs{i}(:,:,2),sc_gui.maxi,'fullscale');
 
-sc_gui.frame = uipanel('Units','normalized','Title','Inclusion Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(2*sc_gui.framex+3*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
-sc_gui.im3_ax = axes('Units','normalized','parent',sc_gui.frame,'visible','off','Position',[0,0,1,1]);
-sc_gui.im3 = imagesc(cat(3,zeros(size(sc_gui.thumbs{i}(:,:,2))),single(sc_gui.thumbs{i}(:,:,2))/single(sc_gui.maxi),zeros(size(sc_gui.thumbs{i}(:,:,2))))); axis off;%colormap(sc_gui.im3_ax, sc_gui.map_green); set(sc_gui.im3_ax,'visible','off','CLim',[sc_gui.mini, sc_gui.maxi]); %freezeColors;
+sc_gui.frame4 = uipanel('Units','normalized','Title','WBC Exclusion Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(3*sc_gui.framex+4*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
+sc_gui.im4_ax = create_axis(sc_gui.frame4);
+sc_gui.im4 = plot_image(sc_gui.im4_ax,sc_gui.thumbs{i}(:,:,3),sc_gui.maxi,'fullscale');
 
-sc_gui.frame = uipanel('Units','normalized','Title','WBC Exclusion Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(3*sc_gui.framex+4*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
-sc_gui.im4_ax = axes('Units','normalized','parent',sc_gui.frame,'visible','off','Position',[0,0,1,1]);
-sc_gui.im4 = imagesc(cat(3,single(sc_gui.thumbs{i}(:,:,3))/single(sc_gui.maxi),zeros(size(sc_gui.thumbs{i}(:,:,3))),zeros(size(sc_gui.thumbs{i}(:,:,3))))); axis off;%colormap(sc_gui.im4_ax, sc_gui.map_red); set(sc_gui.im4_ax,'visible','off','CLim',[sc_gui.mini, sc_gui.maxi]); %freezeColors;
-
-sc_gui.frame = uipanel('Units','normalized','Title','Overlay','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
-sc_gui.im5_ax = axes('Units','normalized','parent',sc_gui.frame,'visible','off','Position',[0,0,1,1]);
-if sc_gui.maxi == 255
-    sc_gui.im5 = imagesc(flip(uint8((sc_gui.thumbs{i}-repmat(min(min(sc_gui.thumbs{i})),size(sc_gui.thumbs{i},1),size(sc_gui.thumbs{i},2),1))*255./repmat(max(max(sc_gui.thumbs{i}-repmat(min(min(sc_gui.thumbs{i})),size(sc_gui.thumbs{i},1),size(sc_gui.thumbs{i},2),1))),size(sc_gui.thumbs{i},1),size(sc_gui.thumbs{i},2),1)),3));
-else
-    sc_gui.im5 = imagesc(flip(single(sc_gui.thumbs{i}-repmat(min(min(sc_gui.thumbs{i})),size(sc_gui.thumbs{i},1),size(sc_gui.thumbs{i},2),1))./single(repmat(max(max(sc_gui.thumbs{i}-repmat(min(min(sc_gui.thumbs{i})),size(sc_gui.thumbs{i},1),size(sc_gui.thumbs{i},2),1))),size(sc_gui.thumbs{i},1),size(sc_gui.thumbs{i},2),1)),3));
-end    
-set(sc_gui.im5_ax,'visible','off'); %freezeColors;
+sc_gui.frame5 = uipanel('Units','normalized','Title','Overlay','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
+sc_gui.im5_ax = create_axis(sc_gui.frame5);
+sc_gui.im5 = plot_image(sc_gui.im5_ax,sc_gui.thumbs{i},sc_gui.maxi,'normalized_ob');
  
-sc_gui.frame = uipanel('Units','normalized','Title','DNA Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(sc_gui.framex+2*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
-sc_gui.im6_ax = axes('Units','normalized','parent',sc_gui.frame,'visible','off','Position',[0,0,1,1]);
-sc_gui.im6 = imagesc(cat(3,zeros(size(sc_gui.thumbs{i}(:,:,1))),zeros(size(sc_gui.thumbs{i}(:,:,1))),single(sc_gui.thumbs{i}(:,:,1)-min(min(sc_gui.thumbs{i}(:,:,1))))/single(max(max(sc_gui.thumbs{i}(:,:,1)))))); axis off;%colormap(sc_gui.im6_ax, sc_gui.map_blue); set(sc_gui.im6_ax,'visible','off','CLim',[min(min(sc_gui.thumbs{i}(:,:,1))),max(max(sc_gui.thumbs{i}(:,:,1)))]); %freezeColors;
+sc_gui.frame6 = uipanel('Units','normalized','Title','DNA Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(sc_gui.framex+2*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
+sc_gui.im6_ax = create_axis(sc_gui.frame6);
+sc_gui.im6 = plot_image(sc_gui.im6_ax,sc_gui.thumbs{i}(:,:,1),sc_gui.maxi,'normalized');
  
-sc_gui.frame = uipanel('Units','normalized','Title','Inclusion Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(2*sc_gui.framex+3*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
-sc_gui.im7_ax = axes('Units','normalized','parent',sc_gui.frame,'visible','off','Position',[0,0,1,1]);
-sc_gui.im7 = imagesc(cat(3,zeros(size(sc_gui.thumbs{i}(:,:,2))),single(sc_gui.thumbs{i}(:,:,2)-min(min(sc_gui.thumbs{i}(:,:,2))))/single(max(max(sc_gui.thumbs{i}(:,:,2)))),zeros(size(sc_gui.thumbs{i}(:,:,2))))); axis off; %colormap(sc_gui.im7_ax, sc_gui.map_green); set(sc_gui.im7_ax,'visible','off','CLim',[min(min(sc_gui.thumbs{i}(:,:,2))),max(max(sc_gui.thumbs{i}(:,:,2)))]); %freezeColors;
+sc_gui.frame7 = uipanel('Units','normalized','Title','Inclusion Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(2*sc_gui.framex+3*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
+sc_gui.im7_ax = create_axis(sc_gui.frame7);
+sc_gui.im7 = plot_image(sc_gui.im7_ax,sc_gui.thumbs{i}(:,:,2),sc_gui.maxi,'normalized');
 
-sc_gui.frame = uipanel('Units','normalized','Title','WBC Exclusion Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(3*sc_gui.framex+4*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
-sc_gui.im8_ax = axes('Units','normalized','parent',sc_gui.frame,'visible','off','Position',[0,0,1,1]);
-sc_gui.im8 = imagesc(cat(3,single(sc_gui.thumbs{i}(:,:,3)-min(min(sc_gui.thumbs{i}(:,:,3))))/single(max(max(sc_gui.thumbs{i}(:,:,3)))),zeros(size(sc_gui.thumbs{i}(:,:,3))),zeros(size(sc_gui.thumbs{i}(:,:,3))))); axis off; %colormap(sc_gui.im8_ax, sc_gui.map_red); set(sc_gui.im8_ax,'visible','off','CLim',[min(min(sc_gui.thumbs{i}(:,:,3))),max(max(sc_gui.thumbs{i}(:,:,3)))]); %freezeColors;
+sc_gui.frame8 = uipanel('Units','normalized','Title','WBC Exclusion Marker','FontUnits', 'normalized', 'FontSize',0.05,'Position',[(3*sc_gui.framex+4*sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) sc_gui.framex sc_gui.framey],'BackgroundColor',sc_gui_color);
+sc_gui.im8_ax = create_axis(sc_gui.frame8);
+sc_gui.im8 = plot_image(sc_gui.im8_ax,sc_gui.thumbs{i}(:,:,3),sc_gui.maxi,'normalized');
 
 sc_gui.text_title = uicontrol('Units','normalized','Style','text','Position',[(sc_gui.spacex+sc_gui.boundaryx) (sc_gui.framey+sc_gui.spacey+sc_gui.boundaryy) .2 .8*sc_gui.spacey],'String','Unscaled Image','HorizontalAlignment','left','FontUnits', 'normalized', 'FontSize',0.7,'BackgroundColor',sc_gui_color,'FontWeight','bold');
 sc_gui.text_title = uicontrol('Units','normalized','Style','text','Position',[(sc_gui.spacex+sc_gui.boundaryx) (2*sc_gui.framey+2*sc_gui.spacey+sc_gui.boundaryy) .2 .8*sc_gui.spacey],'String','Scaled Image','HorizontalAlignment','left','FontUnits', 'normalized','FontSize',0.7,'BackgroundColor',sc_gui_color,'FontWeight','bold');
@@ -136,6 +127,7 @@ sc_gui.waitbar = uicontrol('style','edit','Enable','inactive','units','normalize
 set(sc_gui.fig_main, 'Visible','on');
 end
 
+%% callback funtions
 function write_nr(source,~)
 
 global sc_gui score i
@@ -164,5 +156,11 @@ i=round(get(source,'Value'));
 refresh_sc_gui(sc_gui,score,i);
 
 end
+
+%% Utilitiy functions
+function handle = create_axis(parentFrame)
+    handle = axes('Units','normalized','parent',parentFrame,'visible','off','Position',[0,0,1,1]);
+end
+
 
 
