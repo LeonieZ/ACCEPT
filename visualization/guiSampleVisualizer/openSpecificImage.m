@@ -1,11 +1,12 @@
-function openSpecificImage(handles)
+function openSpecificImage(base,currentSample)
     type = get(gcf,'SelectionType');
     switch type
         case 'open' % double-click
             im = get( gcbo,'cdata' );
-            % if you have "imtool" it's nicer to open the image in it...
-%             imtool(im, [min(im(:)) max(im(:))] );
+            get(gcbo,'Parent')
+            gca
             figure; imagesc(im); colorbar; colormap(gray); axis equal; axis off;
+            
         case 'normal'   
             %left mouse button action
             %get(gcbo)
