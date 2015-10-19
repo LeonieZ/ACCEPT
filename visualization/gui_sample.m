@@ -1,4 +1,4 @@
-function handle = gui_sample(base,currentSample)
+function gui_sample_handle = gui_sample(base,currentSample)
 
 % Main figure: create and set properies (relative size, color)
 screensize = get(0,'Screensize');
@@ -273,49 +273,49 @@ popupFeatureSelectBottomIndex2 = uicontrol('Parent',gui_sample_handle.uiPanelSca
 % --- Executes on selection in popupChannel.
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
-    set(gui_sample.imageOverview,'CData',currentSample.overviewImage(:,:,selectedChannel));
+    set(gui_sample_handle.imageOverview,'CData',currentSample.overviewImage(:,:,selectedChannel));
 end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)
 function popupFeatureTopIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample.axesScatterTop,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(gui_sample_handle.axesScatterTop,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in topFeatureIndex2 (y-axis)
 function popupFeatureTopIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample.axesScatterTop,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(gui_sample_handle.axesScatterTop,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in middleFeatureIndex1 (x-axis)
 function popupFeatureMiddleIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample.axesScatterMiddle,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(gui_sample_handle.axesScatterMiddle,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in middleFeatureIndex2 (y-axis)
 function popupFeatureMiddleIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample.axesScatterMiddle,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(gui_sample_handle.axesScatterMiddle,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in bottomFeatureIndex1 (x-axis)
 function popupFeatureBottomIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample.axesScatterBottom,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(gui_sample_handle.axesScatterBottom,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in bottomFeatureIndex2 (y-axis)
 function popupFeatureBottomIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample.axesScatterBottom,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(gui_sample_handle.axesScatterBottom,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on slider movement.
 function slider_callback(hObject,~,~)
     val = get(hObject,'Value');
-    set(gui_sample.uiPanelThumbsInner,'Position',[0 -val*(height-1) width height])
+    set(gui_sample_handle.uiPanelThumbsInner,'Position',[0 -val*(height-1) width height])
 end
 
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
@@ -323,17 +323,14 @@ function plotImInAxis(im,hAx)
     if size(im,3) > 1
         % create overlay image here
         %plot_image(hAx,im,255,'fullscale_rgb');
-        imagesc(sum(im,3),{'ButtonDownFcn'},{'openSpecificImage(base,currentSample)'},'parent',hAx);
+        imagesc(sum(im,3),{'ButtonDownFcn'},{'openSpecificImage'},'parent',hAx);
     else
         %plot_image(hAx,im,255,'fullscale',{'ButtonDownFcn'},{'openSpecificImage(base)'});
-        imagesc(im,{'ButtonDownFcn'},{'openSpecificImage(base,currentSample)'},'parent',hAx);
+        imagesc(im,{'ButtonDownFcn'},{'openSpecificImage'},'parent',hAx);
     end
     axis(hAx,'image');
     axis(hAx,'off');
     colormap(gray);
 end
-
-% return handle 
-handle = gui_sample_handle;
 
 end
