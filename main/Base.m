@@ -10,6 +10,7 @@ classdef Base < handle
         io;
         profiler=false;
         parallelProcessing=false;
+        busy=false;
         log;
         pool;
     end
@@ -17,6 +18,7 @@ classdef Base < handle
     methods
         function this = Base()
             this.io = IO();
+            this.sampleList=this.io.create_sample_list();
             
             % search for available SampleProcessors
             tmp = what('sampleProcessors');
@@ -47,6 +49,7 @@ classdef Base < handle
         
         function run(this)
             % run SampleProcessor with each sample marked as toBeProcessed
+            this.busy=true;
             nbrSamples = size(this.sampleList.toBeProcessed,2);
             for k=1:nbrSamples
                 if this.sampleList.isProcessed(k) == 0 && this.sampleList.toBeProcessed(k) == 1
@@ -58,6 +61,7 @@ classdef Base < handle
                     disp(['Sample ',sample.id ,' is processed.']);
                 end
             end
+            this.busy=false;
         end
 
         function h=show_logo(this)

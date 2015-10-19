@@ -32,7 +32,6 @@ gui.fig_main = figure('Units','normalized','Position',[posx posy width height],'
 
 gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','normalized','Position',[0.22 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@process,base}); 
 gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','normalized','Position',[0.56 0.1 0.22 0.05],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@visualize,base});
-gui.update_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Update sample list','Units','normalized','Position',[0.676 0.561 0.22 0.05],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@update,base});
 
 % gui.titel = uicontrol(gui.fig_main,'Style','text', 'String','ACCEPT','Units','normalized','Position',[0.41 0.83 0.18 0.04],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1],'ForegroundColor',[0.729 0.161 0.208]);
 gui.title_axes = axes('Units','normalized','Position',[0.5 0.83 0.18 0.04]); axis off;
@@ -49,14 +48,15 @@ set(gui.task_list,'Value',defaultSampleProcessorNumber);
 % create sampleProcessor object for - per default - selected sampleProcessor 
 currentSampleProcessorName = strrep(gui.tasks_raw{get(gui.task_list,'Value')},'.m','');
 eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
+base.sampleList.sampleProcessorId=base.sampleProcessor.id();
 
 gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.105 0.597 0.359 0.038]);
 gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.108 0.608 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
-gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','normalized','Position',[0.465 0.597 0.2 0.038],'FontUnits','normalized', 'FontSize',0.5,'Callback', @input_path);
+gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','normalized','Position',[0.465 0.597 0.2 0.038],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@input_path,base});
 
 gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.105 0.537 0.359 0.038]);
 gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.108 0.548 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
-gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','normalized','Position',[0.465 0.537 0.2 0.038],'FontUnits','normalized', 'FontSize',0.5,'Callback', @results_path);
+gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','normalized','Position',[0.465 0.537 0.2 0.038],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@results_path,base});
 
 gui.uni_logo_axes = axes('Units','normalized','Position',[0.57 0.025 0.4 0.4*uni_logo_rel*gui.rel_screen]);
 gui.uni_logo = imagesc(uni_logo);  axis off;
@@ -73,71 +73,95 @@ gui.table = uitable('Parent', gui.table_frame, 'Data', [],'ColumnName', {'Sample
 
 handle = gui.fig_main;
 set(gui.fig_main,'Visible','on');
+update_list(base);
 end
 
 
-function process(~,~,base)
-global gui
-display('Process samples...')
-selectedCellsInTable = get(gui.table,'UserData');
-selectedSamples = selectedCellsInTable(:,1);
-% update the current sampleList: selected samples should be processed
-base.sampleList.toBeProcessed(selectedSamples) = 1;
-base.run();
+function process(handle,~,base)
+    global gui
+    display('Process samples...')
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5],'string','Process samples...');
+    selectedCellsInTable = get(gui.table,'UserData');
+    selectedSamples = selectedCellsInTable(:,1);
+    % update the current sampleList: selected samples should be processed
+    base.sampleList.toBeProcessed(selectedSamples) = 1;
+    base.run();
+    set(handle,'backg',color,'String','Process');
 end
 
-function update(~,~,base)
-global gui
-display('Load samples...')
-inputPath = get(gui.input_path,'String');
-resultPath = get(gui.results_path,'String');
-base.sampleList = base.io.create_sample_list(...
-                        inputPath,resultPath,base.sampleProcessor);
-sl = base.sampleList;
-nbrSamples = size(sl.sampleNames,2);
-nbrAttributes = 2;
-dat = cell(nbrSamples,nbrAttributes);
-for r=1:nbrSamples
-    dat{r,1} = sl.sampleNames{1,r};
-    dat{r,2} = sl.isProcessed(1,r);
-end                    
-set(gui.table,'data', dat);
+function visualize(handle,~,base)
+    global gui
+    display('Visualize samples...')
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5],'string','Starting GUI')
+    selectedCellsInTable = get(gui.table,'UserData');
+    if size(selectedCellsInTable,1) == 0
+        msgbox('No sample selected')
+    elseif size(selectedCellsInTable,1) == 1
+        % load selected sample
+        currentSample = base.io.load_sample(base.sampleList,selectedCellsInTable(1));
+        % run sampleVisGui with loaded sample
+        gui_sample(base,currentSample);
+    else
+        msgbox('Too many samples selected for visualization');
+    end
+    set(handle,'backg',color,'String','Visualize')
 end
 
-function visualize(~,~,base)
-global gui
-display('Visualize samples...')
-selectedCellsInTable = get(gui.table,'UserData');
-selectedSamples = selectedCellsInTable(:,1);
-if numel(selectedSamples) == 1
-    % load selected sample
-    currentSample = base.io.load_sample(base.sampleList,selectedSamples);
-    % run sampleVisGui with loaded sample
-    gui_sample(base,currentSample);
-else
-    warning('Too many samples selected for visualization');
-end
+function input_path(~,~,base)
+    global gui
+    inputPath = uigetdir(pwd,'Please select an input folder.');
+    if inputPath ~= 0
+        set(gui.input_path,'String',inputPath);
+        base.sampleList.inputPath=inputPath;
+        update_list(base);
+    end
 end
 
-function input_path(~,~)
-global gui
-inputPath = uigetdir(pwd,'Please select an input folder.');
-set(gui.input_path,'String',inputPath);
-end
-
-function results_path(~,~)
-global gui
-resultPath = uigetdir(pwd,'Please select a results folder.');
-set(gui.results_path,'String',resultPath);
+function results_path(~,~,base)
+    global gui
+    resultPath = uigetdir(pwd,'Please select a results folder.');
+    if resultPath ~= 0
+        test=strfind(resultPath,gui.input_path.String);
+        if isempty(test)
+            set(gui.results_path,'String',resultPath);
+        else
+            msgbox('The results folder cannot be located inside of the image folder')
+        end
+        base.sampleList.resultPath=resultPath;
+        update_list(base);
+    end
 end
 
 function choosetask(source,~,base)
-global gui
-val = get(source,'Value');        
-set(gui.task_list,'Value',val);
-% create sampleProcessor object for selected sampleProcessor 
-currentSampleProcessorName = strrep(gui.tasks_raw{val},'.m','');
-eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
+    global gui
+    val = get(source,'Value');        
+    set(gui.task_list,'Value',val);
+    % create sampleProcessor object for selected sampleProcessor 
+    currentSampleProcessorName = strrep(gui.tasks_raw{val},'.m','');
+    eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
+    base.sampleList.sampleProcessorId=base.sampleProcessor.id();
+    update_list(base);
+end
+
+function update_list(base)
+    global gui
+    % update inputPath if none is selected. 
+    if or(isempty(base.sampleList.inputPath),isempty(base.sampleList.resultPath))
+        dat{1,1}='please select an';
+        dat{2,1}='input and output folder';        
+    else
+        sl = base.sampleList;
+        nbrSamples = size(sl.sampleNames,2);
+        nbrAttributes = 2;
+        dat = cell(nbrSamples,nbrAttributes);
+        for r=1:nbrSamples
+            dat{r,1} = sl.sampleNames{1,r};
+            dat{r,2} = sl.isProcessed(1,r);
+        end   
+    end
+    set(gui.table,'data', dat);
 end
 
 function doResizeFcn(varargin)

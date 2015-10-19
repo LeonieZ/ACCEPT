@@ -16,10 +16,14 @@ classdef IO < handle
     
     methods
         function outputList = create_sample_list(this,inputPath,resultPath,sampleProcessor)
-            [sampleNames,loaderUsed]=this.available_samples(inputPath);
-            %[isProc,isToBeProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
-            [isProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
-            outputList=SampleList(sampleProcessor.id(),inputPath,resultPath,sampleNames,isProc,loaderUsed);
+            if nargin==4
+                [sampleNames,loaderUsed]=this.available_samples(inputPath);
+                %[isProc,isToBeProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
+                [isProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
+                outputList=SampleList(sampleProcessor.id(),inputPath,resultPath,sampleNames,isProc,loaderUsed);
+            else
+                outputList=SampleList();
+            end
             addlistener(outputList,'updatedProcessorId',@this.updated_sample_processor);
             addlistener(outputList,'updatedInputPath',@this.updated_input_path);
             addlistener(outputList,'updatedResultPath',@this.updated_result_path);
@@ -161,30 +165,45 @@ classdef IO < handle
         end
         
         function updated_sample_processor(this,sampleList,~)
-            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
-                                                sampleList.sampleProcessorId,...
-                                                sampleList.sampleNames);
-            sampleList.isProcessed=isProc;
-            sampleList.isToBeProcessed=isToBeProc;
+            if all([~isempty(sampleList.resultPath),...
+                    ~strcmp(sampleList.sampleProcessorId,'empty'),...
+                    isempty(sampleList.sampleNames)]);
+                this.updated_input(sampleList);
+            end
+            if and(~isempty(sampleList.inputPath),~isempty(sampleList.resultPath))
+                [isProc]=this.processed_samples(sampleList.resultPath,...
+                                                    sampleList.sampleProcessorId,...
+                                                    sampleList.sampleNames);
+                sampleList.isProcessed=isProc;
+            end
         end
         
-        function updated_results_path(this,sampleList,~)
-            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
+        function updated_result_path(this,sampleList,~)
+            if all([~isempty(sampleList.inputPath),...
+                    ~strcmp(sampleList.sampleProcessorId,'empty'),...
+                    isempty(sampleList.sampleNames)]);
+                this.updated_input(sampleList);
+            end
+            if and(~isempty(sampleList.resultPath),...
+                    ~strcmp(sampleList.sampleProcessorId,'empty'));
+                [isProc]=this.processed_samples(sampleList.resultPath,...
                                                 sampleList.sampleProcessorId,...
                                                 sampleList.sampleNames);
-            sampleList.isProcessed=isProc;
-            sampleList.isToBeProcessed=isToBeProc;
+                sampleList.isProcessed=isProc;
+             end
         end
         
         function updated_input_path(this,sampleList,~)
-            [sampleNames,loaderUsed]=this.available_samples(inputPath);
-            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
+            [sampleNames,loaderUsed]=this.available_samples(sampleList.inputPath);
+            sampleList.sampleNames=sampleNames;
+            sampleList.loaderToBeUsed=loaderUsed;
+            if and(~isempty(sampleList.resultPath),...
+                ~strcmp(sampleList.sampleProcessorId,'empty'));
+                [isProc]=this.processed_samples(sampleList.resultPath,...
                                         sampleList.sampleProcessorId,...
                                         sampleNames);
-            sampleList.sampleNames=smpleNames;
-            sampleList.loaderToBeUsed=loaderUsed;
-            sampleList.isProcessed=isProc;
-            sampleList.isToBeProcessed=isToBeProc;
+                sampleList.isProcessed=isProc;
+            end
         end
        
         function loaderHandle=check_sample_type(this,samplePath)
