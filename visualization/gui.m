@@ -82,12 +82,17 @@ function process(handle,~,base)
     display('Process samples...')
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5],'string','Process samples...');
+    drawnow;
     selectedCellsInTable = get(gui.table,'UserData');
-    selectedSamples = selectedCellsInTable(:,1);
+    if size(selectedCellsInTable,1) == 0
+        msgbox('No sample selected')
+    else
     % update the current sampleList: selected samples should be processed
-    base.sampleList.toBeProcessed(selectedSamples) = 1;
-    base.run();
+        base.sampleList.toBeProcessed(selectedCellsInTable(:,1)) = 1;
+        base.run();
+    end
     set(handle,'backg',color,'String','Process');
+    update_list(base);
 end
 
 function visualize(handle,~,base)
@@ -95,6 +100,7 @@ function visualize(handle,~,base)
     display('Visualize samples...')
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5],'string','Starting GUI')
+    drawnow;
     selectedCellsInTable = get(gui.table,'UserData');
     if size(selectedCellsInTable,1) == 0
         msgbox('No sample selected')
