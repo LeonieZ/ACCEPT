@@ -7,5 +7,6 @@ classdef Result < handle
         thumbnails=[];% containing the mapping of the thumbnails. 
         thumbnail_images = cell(0);
         segmentation = cell(0);
+        scoring_results = struct('name',[],'institute',[],'scores',cell(0));
     end
 end
