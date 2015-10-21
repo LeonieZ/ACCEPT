@@ -74,8 +74,6 @@ gui_sample_handle.popupChannel = uicontrol('Style','popup','String',currentSampl
 
                                 
 %% Fill uiPanelGallery
-debug = 0;
-
 gui_sample_color = [1 1 1];
 if strcmp(currentSample.dataTypeOriginalImage,'uint8')
     maxi = 255;
@@ -120,52 +118,37 @@ gui_sample_handle.textCol5 = uicontrol('Style','text','Parent',gui_sample_handle
                                 'String',currentSample.channelNames{4},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
-                            
-% create slider for gallery
-gui_sample_handle.slider = uicontrol('Style','Slider','Parent',gui_sample_handle.uiPanelGallery,...
-                              'Units','normalized','Position',[0.98 0 0.02 0.94],...
-                              'Value',1,'Callback',{@slider_callback});
-
+                       
 % create panel for thumbnails next to slider                          
 gui_sample_handle.uiPanelThumbsOuter = uipanel('Parent',gui_sample_handle.uiPanelGallery,...
                                         'Position',[0 0 0.98 0.94],...
                                         'BackgroundColor',gui_sample_color);
-%-----
-if ~debug
+                                   
+% create slider for gallery
+gui_sample_handle.slider = uicontrol('Style','Slider','Parent',gui_sample_handle.uiPanelGallery,...
+                              'Units','normalized','Position',[0.98 0 0.02 0.94],...
+                              'Callback',{@slider_callback});
+                                    
 % compute relative dimension of the thumbnail grid
-nbrAvailableRows = size(currentSample.priorLocations,1);
+nbrAvailableRows = 5;
 nbrColorChannels = 4; 
 nbrImages        = nbrAvailableRows * (nbrColorChannels+1);
 maxNumCols       = 5; % design decision, % maxNumCols = 1 (overlay) + nbrChannels
-if nbrImages > maxNumCols^2
-    cols  = maxNumCols;
-    rows  = ceil(nbrImages/cols);
-    set(gui_sample_handle.slider,'enable','on','value',1); % enable and upper position
-else % exceptional case
-    cols = ceil( sqrt(nbrImages) );    % number of columns
-    rows = cols - floor( (cols^2 - nbrImages)/cols );
-    set(gui_sample_handle.slider,'enable','off');
-end
+
+cols  = maxNumCols;
+rows  = nbrAvailableRows;
+
 % pitch (box for axis) height and width
 rPitch  = 0.98/rows;
 cPitch  = 0.98/cols;
 % axis height and width
 axHight = 0.9/rows;
 axWidth = 0.9/cols;
-end
-%-----
-if ~debug
+
 height = rows/cols;
-end
-if debug
-height = 3; %3 means 300% size of inner panel containing the image axes
-end
 width  = 1;
-gui_sample_handle.uiPanelThumbsInner = uipanel('Parent',gui_sample_handle.uiPanelThumbsOuter,...
-                                        'Position',[0 1-height width height],...
-                                        'BackgroundColor',gui_sample_color);
+
 %-----
-if ~debug
 hAxes = zeros(nbrImages,1);
 % define common properties and values for all axes
 axesProp = {'dataaspectratio' ,...
@@ -174,40 +157,33 @@ axesProp = {'dataaspectratio' ,...
             'xgrid' ,...
             'ygrid'};
 axesVal = {[1,1,1] , ...
-           gui_sample_handle.uiPanelThumbsInner,...
+           gui_sample_handle.uiPanelThumbsOuter,...
            [1 1 1]...
            'off',...
            'off'};
-       
-% go through all thumbnails (resp. dataframes)
-for thumbInd=1:nbrAvailableRows
+for i=1:rows
     % specify row location for all columns
-    y = 1-thumbInd*rPitch;
-    % obtain dataFrame from io
-    dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
-    segmentedImage = currentSample.results.segmentation{thumbInd};
+    y = 1-i*rPitch;
     % plot overlay image in first column
     x = 0;
-    ind = (thumbInd-1)*nbrColorChannels + nbrColorChannels + 1; % 5,10,15... index for first column element
+    ind = (i-1)*(maxNumCols) + 1; % 5,10,15... index for first column element
     hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
-    plotImInAxis(dataFrame.rawImage,[],hAxes(ind), maxi);
     % plot image for each color channel in column 2 till nbrChannels
     for ch = 1:nbrColorChannels
-        x = 1-(nbrColorChannels-ch+1)*cPitch;
-        ind = (thumbInd-1)*nbrColorChannels + ch; % 1-4,6-9,... index for four color channels
+        x = (ch)*cPitch;
+        ind = ((i-1)*maxNumCols + ch +1); % 1-4,6-9,... index for four color channels
         hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
-        plotImInAxis(dataFrame.rawImage(:,:,ch),segmentedImage(:,:,ch),hAxes(ind), maxi);
     end
 end
+%check if slider is needed     
+if  size(currentSample.priorLocations,1)>5
+    set(gui_sample_handle.slider,'Max',-3,'Min',-size(currentSample.priorLocations,1)+2,...
+        'Value',-3,'SliderStep', [1, 1] / (size(currentSample.priorLocations,1) - 1));
+else
+    set(gui_sample_handle.slider,'enable','off');
 end
-%-----
-if debug
-% TEST: a test axis and image to check scrolling behaviour
-gui_sample_handle.bigTestAxes = axes('Parent',gui_sample_handle.uiPanelThumbsInner,...
-                   'Position',[0 0 1 1],'xgrid','off','ygrid','off');
-imagesc(imread('eight.tif'),'parent',gui_sample_handle.bigTestAxes); axis image;
-end
-%-----
+% go through all thumbnails (resp. dataframes)
+plot_thumbnails(3);
 
 
 %% Fill uiPanelScatter
@@ -325,9 +301,32 @@ function popupFeatureBottomIndex2_Callback(hObject,~,~)
 end
 
 % --- Executes on slider movement.
-function slider_callback(hObject,~,~)
-    val = get(hObject,'Value');
-    set(gui_sample_handle.uiPanelThumbsInner,'Position',[0 -val*(height-1) width height])
+function slider_callback(hObject,~)
+    val = round(get(hObject,'Value'));
+    plot_thumbnails(-val);
+end
+% --- Plot thumbnails around index i
+function plot_thumbnails(val)
+    numberOfThumbs=size(currentSample.priorLocations,1);
+    thumbIndex=[val-2:1:val+2];
+    thumbIndex(thumbIndex<1)=[];
+    thumbIndex(thumbIndex>numberOfThumbs)=[];
+    if ~isempty(thumbIndex)
+        for j=1:numel(thumbIndex)
+            thumbInd=thumbIndex(j);
+            % obtain dataFrame from io
+            dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
+            segmentedImage = currentSample.results.segmentation{thumbInd};
+            k = (j-1)*maxNumCols + 1;
+            % plot overlay image in first column
+            plotImInAxis(dataFrame.rawImage,[],hAxes(k), maxi);
+            % plot image for each color channel in column 2 till nbrChannels
+            for chan = 1:nbrColorChannels
+                l = ((j-1)*maxNumCols + chan + 1); 
+                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l), maxi);
+            end
+        end
+    end
 end
 
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
@@ -346,12 +345,15 @@ function plotImInAxis(im,segm,hAx,maxi)
         %can we define Callback function somewhere else??
         imshow(im/maxi,'parent',hAx,'InitialMagnification','fit');
         if ~isempty(segm)
-            hold on; [~,h] = contour(segm,[0.5 0.5],'r-'); set(h,'LineWidth',2);
+           hold(hAx,'on')
+           [~,h] = contour(segm,[0.5 0.5],'r-','parent',hAx); set(h,'LineWidth',2);
+           hold(hAx,'off')
         end
     end
     axis(hAx,'image');
     axis(hAx,'off');
     colormap(parula(maxi));
+    drawnow;
 end
 
 end
