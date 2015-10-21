@@ -77,6 +77,17 @@ gui_sample_handle.popupChannel = uicontrol('Style','popup','String',currentSampl
 debug = 0;
 
 gui_sample_color = [1 1 1];
+if strcmp(currentSample.dataTypeOriginalImage,'uint8')
+    maxi = 255;
+elseif strcmp(currentSample.dataTypeOriginalImage,'uint12')
+    maxi = 4095;
+else
+    maxi = 65535;
+end
+
+% if sc_gui.maxi == 65535 && max(cellfun(@(x)max(max(max(x))),sc_gui.thumbs(1,:))) <= 4095
+%     sc_gui.maxi = 4095;
+% end
 
 % create column names for gallery
 columnTextSize = 0.55;
@@ -174,17 +185,18 @@ for thumbInd=1:nbrAvailableRows
     y = 1-thumbInd*rPitch;
     % obtain dataFrame from io
     dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
+    segmentedImage = currentSample.results.segmentation{thumbInd};
     % plot overlay image in first column
     x = 0;
     ind = (thumbInd-1)*nbrColorChannels + nbrColorChannels + 1; % 5,10,15... index for first column element
     hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
-    plotImInAxis(dataFrame.rawImage,hAxes(ind));
+    plotImInAxis(dataFrame.rawImage,[],hAxes(ind), maxi);
     % plot image for each color channel in column 2 till nbrChannels
     for ch = 1:nbrColorChannels
         x = 1-(nbrColorChannels-ch+1)*cPitch;
         ind = (thumbInd-1)*nbrColorChannels + ch; % 1-4,6-9,... index for four color channels
         hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
-        plotImInAxis(dataFrame.rawImage(:,:,ch),hAxes(ind));
+        plotImInAxis(dataFrame.rawImage(:,:,ch),segmentedImage(:,:,ch),hAxes(ind), maxi);
     end
 end
 end
@@ -319,18 +331,27 @@ function slider_callback(hObject,~,~)
 end
 
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
-function plotImInAxis(im,hAx)
+function plotImInAxis(im,segm,hAx,maxi)
+    maxi = 4095;
     if size(im,3) > 1
         % create overlay image here
         %plot_image(hAx,im,255,'fullscale_rgb');
-        imagesc(sum(im,3),{'ButtonDownFcn'},{'openSpecificImage'},'parent',hAx);
+        overlay(:,:,1) = im(:,:,2)/maxi; overlay(:,:,3) = im(:,:,2)/maxi; overlay(:,:,2) = im(:,:,3)/maxi;
+        %can we define Callback function somewhere else??
+%         imagesc(overlay,{'ButtonDownFcn'},{'openSpecificImage'},'parent',hAx);
+        imshow(overlay,'parent',hAx,'InitialMagnification','fit'); 
     else
         %plot_image(hAx,im,255,'fullscale',{'ButtonDownFcn'},{'openSpecificImage(base)'});
-        imagesc(im,{'ButtonDownFcn'},{'openSpecificImage'},'parent',hAx);
+%         imagesc(im/maxi,'ButtonDownFcn',{'openSpecificImage'},'parent',hAx);
+        %can we define Callback function somewhere else??
+        imshow(im/maxi,'parent',hAx,'InitialMagnification','fit');
+        if ~isempty(segm)
+            hold on; [~,h] = contour(segm,[0.5 0.5],'r-'); set(h,'LineWidth',2);
+        end
     end
     axis(hAx,'image');
     axis(hAx,'off');
-    colormap(gray);
+    colormap(parula(maxi));
 end
 
 end

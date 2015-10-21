@@ -54,7 +54,6 @@ classdef Base < handle
             for k=1:nbrSamples
                 if this.sampleList.isProcessed(k) == 0 && this.sampleList.toBeProcessed(k) == 1
                     sample = this.io.load_sample(this.sampleList,k);
-%                     sample.priorLocations
                     disp(['Processing sample ',sample.id ,'...']);
                     this.sampleProcessor.run(sample);
                     this.io.save_sample(sample);
