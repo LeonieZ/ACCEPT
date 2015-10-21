@@ -29,6 +29,10 @@ classdef IO < handle
             addlistener(outputList,'updatedResultPath',@this.updated_result_path);
         end
         
+        function update_sample_list(this,sampleList)
+                sampleList.isProcessed=this.processed_samples(sampleList.resultPath,sampleList.sampleProcessorId,sampleList.sampleNames);
+        end
+        
         function outputSample=load_sample(this,sampleList,sampleNr)
             if exist(this.saved_sample_path(sampleList,sampleNr),'file');
                 load(this.saved_sample_path(sampleList,sampleNr));

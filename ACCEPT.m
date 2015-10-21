@@ -23,7 +23,7 @@ function uiHandle=ACCEPT(varargin)
     parser = gen_input_parser(base);
     parse(parser,varargin{:});
     if parser.Results.noGui==false
-        uiHandle = gui(base);
+        uiHandle = gui_main(base);
     end
 end
 
