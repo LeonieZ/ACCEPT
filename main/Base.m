@@ -51,16 +51,26 @@ classdef Base < handle
             % run SampleProcessor with each sample marked as toBeProcessed
             this.busy=true;
             nbrSamples = size(this.sampleList.toBeProcessed,2);
+            
+            wbar = waitbar(0,'Please wait...');
+            nrProcessed = 0;
             for k=1:nbrSamples
-                if this.sampleList.isProcessed(k) == 0 && this.sampleList.toBeProcessed(k) == 1
-                    sample = this.io.load_sample(this.sampleList,k);
-                    disp(['Processing sample ',sample.id ,'...']);
-                    this.sampleProcessor.run(sample);
-                    this.io.save_sample(sample);
-                    disp(['Sample ',sample.id ,' is processed.']);
+                if this.sampleList.toBeProcessed(k) == 1
+                    wbar_fraction = nrProcessed / sum(this.sampleList.toBeProcessed);
+                    waitbar(wbar_fraction,wbar,'Please wait...')
+                    if this.sampleList.isProcessed(k) == 0
+                        sample = this.io.load_sample(this.sampleList,k);
+                        waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is processed.'])
+                        disp(['Processing sample ',sample.id ,'...']);
+                        this.sampleProcessor.run(sample);
+                        this.io.save_sample(sample);
+                        disp(['Sample ',sample.id ,' is processed.']);
+                    end
+                    nrProcessed = nrProcessed + 1;
                 end
             end
             this.busy=false;
+            close(wbar)
         end
 
         function h=show_logo(this)
