@@ -42,25 +42,41 @@ gui_sample_handle.uiPanelScatter = uipanel('Parent',gui_sample_handle.fig_main,.
                                  
 %% Fill uiPanelOverview
 % create table with sample properties as overview
-rnames = properties(currentSample);
-selectedProps = [1,2,3,5,6,8,9,10]; % properties of data sample to be visualized
-rnames = rnames(selectedProps); % row titles
+propnames = properties(currentSample);
+selectedProps = [1,2,5,6,10]; % properties of data sample to be visualized
+propnames = propnames(selectedProps); % row titles
 cnames = {}; % col titles
-dat = cell(numel(rnames),1);
-for i = 1:numel(rnames)
-   dat{i} = eval(['currentSample.',rnames{i}]); %getfield(handles.currentFrame,rnames{i});
+dat = cell(numel(propnames),1);
+rnames = {'Sample ID','Type','Nr of Frames', 'Nr of Channels', 'Pixel Size','Nr of Scored Events'};
+for i = 1:numel(propnames)
+   dat{i} = eval(['currentSample.',propnames{i}]); %getfield(handles.currentFrame,rnames{i});
+   entry{i} = [rnames{i}, ': ',num2str(dat{i})];
 end
-gui_sample_handle.tableDetails = uitable('Parent',gui_sample_handle.uiPanelOverview,...
-                                  'Units','normalized','Position',[0.03 0.07 0.2 0.85],...
-                                  'Data',dat,'ColumnName',cnames,'RowName',rnames);
-% tabExtend = get(tableDetails,'Extent')
-% tabPosition = get(tableDetails,'Position');
-% tabPosition(3:4) = tabExtend(3:4);
-% set(tableDetails,'Position',tabPosition);
+dat{6} = size(currentSample.results.thumbnails,1);
+entry{6} = [rnames{6}, ': ',num2str(dat{6})];
+
+% gui_sample_handle.tableDetails = uitable('Parent',gui_sample_handle.uiPanelOverview,...
+%                                   'Units','normalized','Position',[0.03 0.07 0.2 0.9],...
+%                                   'Data',dat,'ColumnName',cnames,'RowName',rnames,'FontUnits','normalized', 'FontSize',0.1,'ColumnFormat', {'char'});
+
+gui_sample_handle.uiPanelTable = uipanel('Parent',gui_sample_handle.uiPanelOverview,...
+                                     'Position',[0.01 0.2 0.22 0.7],...
+                                     'Title','Sample Information','TitlePosition','CenterTop',...
+                                     'Units','normalized','BackgroundColor',[1 1 1]);
+
+gui_sample_handle.tableDetails = uicontrol('Style','text','Parent',gui_sample_handle.uiPanelTable,...
+                                  'Units','normalized','Position',[0 0 1 1],...
+                                  'String',entry,'FontUnits','normalized', 'FontSize',0.8*(1/size(entry,2)),'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
+                              
+tabExtend = get(gui_sample_handle.tableDetails,'Extent');
+tabPosition = get(gui_sample_handle.uiPanelTable,'Position');
+panelPosition = get(gui_sample_handle.uiPanelOverview,'Position');
+tabPosition(3) = tabExtend(3)./panelPosition(3);
+set(gui_sample_handle.uiPanelTable,'Position',tabPosition);
 
 % create overview image per channel
 gui_sample_handle.axesOverview = axes('Parent',gui_sample_handle.uiPanelOverview,...
-                               'Units','normalized','Position',[0.25 0.07 0.73 0.82]);
+                               'Units','normalized','Position',[tabPosition(1)+tabPosition(3)+0.01 0.07 1-(tabPosition(1)+tabPosition(3)+0.02) 0.82]);
 defCh = 2; % default channel for overview when starting the sample visualizer
 gui_sample_handle.imageOverview = imagesc(currentSample.overviewImage(:,:,defCh));
 axis image; axis off;
@@ -187,9 +203,13 @@ plot_thumbnails(3);
 
 
 %% Fill uiPanelScatter
-% TODO: make font size in choose buttons relativ
 %
+%replace NaN values with zeros
 sampleFeatures = currentSample.results.features;
+sampleFeatures_noNaN = sampleFeatures{:,:};
+sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
+sampleFeatures{:,:} = sampleFeatures_noNaN;
+
 marker_size = 30;
 % create data for scatter plot at the top
 axes('Parent',gui_sample_handle.uiPanelScatter,'Units','normalized','Position',[0.17 0.72 0.75 0.23]); %[left bottom width height]
@@ -347,6 +367,7 @@ end
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
 function plotImInAxis(im,segm,hAx,maxi)
     maxi = 4095;
+    warning('off','MATLAB:contour:ConstantData');
     if size(im,3) > 1
         % create overlay image here
         %plot_image(hAx,im,255,'fullscale_rgb');
