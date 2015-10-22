@@ -126,7 +126,7 @@ classdef IO < handle
         
         function save_thumbnail(this,currentSample,eventNr)
            %to be implemented 
-           currentDataFrame=this.load_thumbnail_frame(currentSample,eventNr,'prior')
+           currentDataFrame=this.load_thumbnail_frame(currentSample,eventNr,'prior');
            currentDataFrame.preProcessedImage=currentDataFrame.rawImage(:,:,3);
            currentDataFrame.preProcessedImage(2:7,2:7)=4095;
             t=Tiff([num2str(eventNr),'_thumb.tif'],'w');
@@ -142,8 +142,12 @@ classdef IO < handle
         end
         
         function save_results_as_xls(this,currentSample)
-            tempTable=horzcat(currentSample.results.classefication,currentSample.results.features);
-            writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.xls'])
+            tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
+            if ispc
+                writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.xls']);
+            else
+                writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.csv']);
+            end
         end
         
         function update_results(this,sampleList)

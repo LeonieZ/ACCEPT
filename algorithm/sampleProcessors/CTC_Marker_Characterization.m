@@ -30,7 +30,7 @@ classdef CTC_Marker_Characterization < SampleProcessor
             if ~isempty(inputSample.results.features)
                 inputSample.results.features(find(inputSample.results.features.ch_3_Area==0),:) = [];
             end
-
+            this.io.save_results_as_xls(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)
