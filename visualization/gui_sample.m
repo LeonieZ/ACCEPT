@@ -1,4 +1,4 @@
-function gui_sample_handle = gui_sample(base,currentSample)
+function GuiSampleHandle = gui_sample(base,currentSample)
 
 % Main figure: create and set properies (relative size, color)
 screensize = get(0,'Screensize');
@@ -8,32 +8,32 @@ posx = 0.2;
 posy = 0.1;
 width = ((16/12)/rel)*maxRelHeight; % use 16/12 window ratio on all computer screens
 height = maxRelHeight;
-gui_sample_handle.fig_main = figure('Units','normalized','Position',[posx posy width height],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
+GuiSampleHandle.fig_main = figure('Units','normalized','Position',[posx posy width height],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off');
 
 
 %% Main title
-gui_sample_handle.title_axes = axes('Units','normalized','Position',[0.5 0.95 0.18 0.04]); axis off;
-gui_sample_handle.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} Sample Visualizer','Units','normalized','FontUnits','normalized','FontSize',0.8,'verticalAlignment','base','horizontalAlignment','center');
+GuiSampleHandle.title_axes = axes('Units','normalized','Position',[0.5 0.95 0.18 0.04]); axis off;
+GuiSampleHandle.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} Sample Visualizer','Units','normalized','FontUnits','normalized','FontSize',0.8,'verticalAlignment','base','horizontalAlignment','center');
 
 
 %% Main panels
 % create panel for overview (top-left)
-gui_sample_handle.uiPanelOverview = uipanel('Parent',gui_sample_handle.fig_main,...
+GuiSampleHandle.uiPanelOverview = uipanel('Parent',GuiSampleHandle.fig_main,...
                                      'Position',[0.023 0.712 0.689 0.222],...
                                      'Title','Overview','TitlePosition','CenterTop',...
                                      'Units','normalized','FontUnits','normalized','FontSize',0.1,...
                                      'BackgroundColor',[1 1 1]);
 
 % create panel for thumbnail gallery (bottom-left)
-gui_sample_handle.uiPanelGallery = uipanel('Parent',gui_sample_handle.fig_main,...
+GuiSampleHandle.uiPanelGallery = uipanel('Parent',GuiSampleHandle.fig_main,...
                                     'Position',[0.023 0.021 0.689 0.669],...
                                      'Title','Cell Gallery','TitlePosition','CenterTop',...
                                      'Units','normalized','FontUnits','normalized','FontSize',0.033,...
                                      'BackgroundColor',[1 1 1]);
 
 % create panel for scatter plots (right)
-gui_sample_handle.uiPanelScatter = uipanel('Parent',gui_sample_handle.fig_main,...
+GuiSampleHandle.uiPanelScatter = uipanel('Parent',GuiSampleHandle.fig_main,...
                                     'Position',[0.731 0.021 0.245 0.913],...
                                      'Title','Marker Characterization','TitlePosition','CenterTop',...
                                      'Units','normalized','FontUnits','normalized','FontSize',0.023,...
@@ -50,7 +50,7 @@ dat = cell(numel(rnames),1);
 for i = 1:numel(rnames)
    dat{i} = eval(['currentSample.',rnames{i}]); %getfield(handles.currentFrame,rnames{i});
 end
-gui_sample_handle.tableDetails = uitable('Parent',gui_sample_handle.uiPanelOverview,...
+GuiSampleHandle.tableDetails = uitable('Parent',GuiSampleHandle.uiPanelOverview,...
                                   'Units','normalized','Position',[0.03 0.07 0.2 0.85],...
                                   'Data',dat,'ColumnName',cnames,'RowName',rnames);
 % tabExtend = get(tableDetails,'Extent')
@@ -59,14 +59,14 @@ gui_sample_handle.tableDetails = uitable('Parent',gui_sample_handle.uiPanelOverv
 % set(tableDetails,'Position',tabPosition);
 
 % create overview image per channel
-gui_sample_handle.axesOverview = axes('Parent',gui_sample_handle.uiPanelOverview,...
+GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
                                'Units','normalized','Position',[0.25 0.07 0.73 0.82]);
 defCh = 2; % default channel for overview when starting the sample visualizer
-gui_sample_handle.imageOverview = imagesc(currentSample.overviewImage(:,:,defCh));
+GuiSampleHandle.imageOverview = imagesc(currentSample.overviewImage(:,:,defCh));
 axis image; axis off;
 
 % create choose button to switch color channel
-gui_sample_handle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
+GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
                                     'Units','normalized','Position',[0.4 -0.09 0.08 0.85],...
                                     'FontUnits','normalized','FontSize',0.02,...
                                     'Value',defCh,...
@@ -89,43 +89,43 @@ end
 
 % create column names for gallery
 columnTextSize = 0.55;
-gui_sample_handle.textCol1 = uicontrol('Style','text','Parent',gui_sample_handle.uiPanelGallery,...
+GuiSampleHandle.textCol1 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
                                 'Units','normalized','Position',[0.04 0.94 0.1 0.05],...
                                 'String','Overlay','HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
                             
-gui_sample_handle.textCol2 = uicontrol('Style','text','Parent',gui_sample_handle.uiPanelGallery,...
+GuiSampleHandle.textCol2 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
                                 'Units','normalized','Position',[0.25 0.94 0.1 0.05],...
                                 'String',currentSample.channelNames{1},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
 
-gui_sample_handle.textCol3 = uicontrol('Style','text','Parent',gui_sample_handle.uiPanelGallery,...
+GuiSampleHandle.textCol3 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
                                 'Units','normalized','Position',[0.45 0.94 0.1 0.05],...
                                 'String',currentSample.channelNames{2},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
 
-gui_sample_handle.textCol4 = uicontrol('Style','text','Parent',gui_sample_handle.uiPanelGallery,...
+GuiSampleHandle.textCol4 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
                                 'Units','normalized','Position',[0.64 0.94 0.1 0.05],...
                                 'String',currentSample.channelNames{3},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
                             
-gui_sample_handle.textCol5 = uicontrol('Style','text','Parent',gui_sample_handle.uiPanelGallery,...
+GuiSampleHandle.textCol5 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
                                 'Units','normalized','Position',[0.83 0.94 0.1 0.05],...
                                 'String',currentSample.channelNames{4},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
                        
 % create panel for thumbnails next to slider                          
-gui_sample_handle.uiPanelThumbsOuter = uipanel('Parent',gui_sample_handle.uiPanelGallery,...
+GuiSampleHandle.uiPanelThumbsOuter = uipanel('Parent',GuiSampleHandle.uiPanelGallery,...
                                         'Position',[0 0 0.98 0.94],...
                                         'BackgroundColor',gui_sample_color);
                                    
 % create slider for gallery
-gui_sample_handle.slider = uicontrol('Style','Slider','Parent',gui_sample_handle.uiPanelGallery,...
+GuiSampleHandle.slider = uicontrol('Style','Slider','Parent',GuiSampleHandle.uiPanelGallery,...
                               'Units','normalized','Position',[0.98 0 0.02 0.94],...
                               'Callback',{@slider_callback});
                                     
@@ -157,7 +157,7 @@ axesProp = {'dataaspectratio' ,...
             'xgrid' ,...
             'ygrid'};
 axesVal = {[1,1,1] , ...
-           gui_sample_handle.uiPanelThumbsOuter,...
+           GuiSampleHandle.uiPanelThumbsOuter,...
            [1 1 1]...
            'off',...
            'off'};
@@ -168,19 +168,25 @@ for i=1:rows
     x = 0;
     ind = (i-1)*(maxNumCols) + 1; % 5,10,15... index for first column element
     hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
+    hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
+    set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
     % plot image for each color channel in column 2 till nbrChannels
     for ch = 1:nbrColorChannels
         x = (ch)*cPitch;
         ind = ((i-1)*maxNumCols + ch +1); % 1-4,6-9,... index for four color channels
         hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
+        hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
+        set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
     end
 end
+
+
 %check if slider is needed     
 if  size(currentSample.priorLocations,1)>5
-    set(gui_sample_handle.slider,'Max',-3,'Min',-size(currentSample.priorLocations,1)+2,...
+    set(GuiSampleHandle.slider,'Max',-3,'Min',-size(currentSample.priorLocations,1)+2,...
         'Value',-3,'SliderStep', [1, 1] / (size(currentSample.priorLocations,1) - 1));
 else
-    set(gui_sample_handle.slider,'enable','off');
+    set(GuiSampleHandle.slider,'enable','off');
 end
 % go through all thumbnails (resp. dataframes)
 plot_thumbnails(3);
@@ -192,9 +198,9 @@ plot_thumbnails(3);
 sampleFeatures = currentSample.results.features;
 marker_size = 30;
 % create data for scatter plot at the top
-axes('Parent',gui_sample_handle.uiPanelScatter,'Units','normalized','Position',[0.17 0.72 0.75 0.23]); %[left bottom width height]
+axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.72 0.75 0.23]); %[left bottom width height]
 topFeatureIndex1 = 1; topFeatureIndex2 = 1;
-gca; gui_sample_handle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+gca; GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                       sampleFeatures.(topFeatureIndex2+1),marker_size,'filled');
 set(gca,'TickDir','out');
 feature_names = cell(size(sampleFeatures.Properties.VariableNames));
@@ -207,7 +213,7 @@ if size(currentSample.channelNames,2) > 4
 end
 
 % create choose button to switch feature index1 (x-axis)
-popupFeatureSelectTopIndex1 = uicontrol('Parent',gui_sample_handle.uiPanelScatter,'Style','popup','Units','normalized',...
+popupFeatureSelectTopIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[0.39 0.675 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -215,7 +221,7 @@ popupFeatureSelectTopIndex1 = uicontrol('Parent',gui_sample_handle.uiPanelScatte
             'Value',topFeatureIndex1,...
             'Callback',{@popupFeatureTopIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-popupFeatureSelectTopIndex2 = uicontrol('Parent',gui_sample_handle.uiPanelScatter,'Style','popup','Units','normalized',...
+popupFeatureSelectTopIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[-0.01 0.975 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -224,13 +230,13 @@ popupFeatureSelectTopIndex2 = uicontrol('Parent',gui_sample_handle.uiPanelScatte
             'Callback',{@popupFeatureTopIndex2_Callback});
 %----
 % create data for scatter plot in the middle
-axes('Parent',gui_sample_handle.uiPanelScatter,'Units','normalized','Position',[0.17 0.39 0.75 0.23]); %[left bottom width height]
+axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.39 0.75 0.23]); %[left bottom width height]
 middleFeatureIndex1 = 2; middleFeatureIndex2 = 2;
-gca; gui_sample_handle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+gca; GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                          sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled');
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
-popupFeatureSelectMiddleIndex1 = uicontrol('Parent',gui_sample_handle.uiPanelScatter,'Style','popup','Units','normalized',...
+popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[0.39 0.345 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -238,7 +244,7 @@ popupFeatureSelectMiddleIndex1 = uicontrol('Parent',gui_sample_handle.uiPanelSca
             'Value',middleFeatureIndex1,...
             'Callback',{@popupFeatureMiddleIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-popupFeatureSelectMiddleIndex2 = uicontrol('Parent',gui_sample_handle.uiPanelScatter,'Style','popup','Units','normalized',...
+popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[-0.01 0.645 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -247,13 +253,13 @@ popupFeatureSelectMiddleIndex2 = uicontrol('Parent',gui_sample_handle.uiPanelSca
             'Callback',{@popupFeatureMiddleIndex2_Callback});
 %----
 % create scatter plot at the bottom
-axes('Parent',gui_sample_handle.uiPanelScatter,'Units','normalized','Position',[0.17 0.06 0.75 0.23]); %[left bottom width height]
+axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.06 0.75 0.23]); %[left bottom width height]
 bottomFeatureIndex1 = 3; bottomFeatureIndex2 = 3;
-gca; gui_sample_handle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+gca; GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                          sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled');
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
-popupFeatureSelectBottomIndex1 = uicontrol('Parent',gui_sample_handle.uiPanelScatter,'Style','popup','Units','normalized',...
+popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[0.39 0.015 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -261,7 +267,7 @@ popupFeatureSelectBottomIndex1 = uicontrol('Parent',gui_sample_handle.uiPanelSca
             'Value',bottomFeatureIndex1,...
             'Callback',{@popupFeatureBottomIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-popupFeatureSelectBottomIndex2 = uicontrol('Parent',gui_sample_handle.uiPanelScatter,'Style','popup','Units','normalized',...
+popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[-0.01 0.315 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -276,43 +282,43 @@ popupFeatureSelectBottomIndex2 = uicontrol('Parent',gui_sample_handle.uiPanelSca
 % --- Executes on selection in popupChannel.
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
-    set(gui_sample_handle.imageOverview,'CData',currentSample.overviewImage(:,:,selectedChannel));
+    set(GuiSampleHandle.imageOverview,'CData',currentSample.overviewImage(:,:,selectedChannel));
 end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)
 function popupFeatureTopIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample_handle.axesScatterTop,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(GuiSampleHandle.axesScatterTop,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in topFeatureIndex2 (y-axis)
 function popupFeatureTopIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample_handle.axesScatterTop,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(GuiSampleHandle.axesScatterTop,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in middleFeatureIndex1 (x-axis)
 function popupFeatureMiddleIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample_handle.axesScatterMiddle,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(GuiSampleHandle.axesScatterMiddle,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in middleFeatureIndex2 (y-axis)
 function popupFeatureMiddleIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample_handle.axesScatterMiddle,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(GuiSampleHandle.axesScatterMiddle,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in bottomFeatureIndex1 (x-axis)
 function popupFeatureBottomIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample_handle.axesScatterBottom,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(GuiSampleHandle.axesScatterBottom,'XData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on selection in bottomFeatureIndex2 (y-axis)
 function popupFeatureBottomIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
-    set(gui_sample_handle.axesScatterBottom,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    set(GuiSampleHandle.axesScatterBottom,'YData',currentSample.results.features.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
 end
 
 % --- Executes on slider movement.
@@ -320,6 +326,7 @@ function slider_callback(hObject,~)
     val = round(get(hObject,'Value'));
     plot_thumbnails(-val);
 end
+
 % --- Plot thumbnails around index i
 function plot_thumbnails(val)
     numberOfThumbs=size(currentSample.priorLocations,1);
@@ -334,18 +341,18 @@ function plot_thumbnails(val)
             segmentedImage = currentSample.results.segmentation{thumbInd};
             k = (j-1)*maxNumCols + 1;
             % plot overlay image in first column
-            plotImInAxis(dataFrame.rawImage,[],hAxes(k), maxi);
+            plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k), maxi);
             % plot image for each color channel in column 2 till nbrChannels
             for chan = 1:nbrColorChannels
                 l = ((j-1)*maxNumCols + chan + 1); 
-                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l), maxi);
+                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l),maxi);
             end
         end
     end
 end
 
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
-function plotImInAxis(im,segm,hAx,maxi)
+function plotImInAxis(im,segm,hAx,hIm,maxi)
     maxi = 4095;
     if size(im,3) > 1
         % create overlay image here
@@ -353,22 +360,45 @@ function plotImInAxis(im,segm,hAx,maxi)
         overlay(:,:,1) = im(:,:,2)/maxi; overlay(:,:,3) = im(:,:,2)/maxi; overlay(:,:,2) = im(:,:,3)/maxi;
         %can we define Callback function somewhere else??
 %         imagesc(overlay,{'ButtonDownFcn'},{'openSpecificImage'},'parent',hAx);
-        imshow(overlay,'parent',hAx,'InitialMagnification','fit'); 
+        %imshow(overlay,'parent',hAx,'InitialMagnification','fit'); 
+        set(hIm,'CData',overlay);
     else
         %plot_image(hAx,im,255,'fullscale',{'ButtonDownFcn'},{'openSpecificImage(base)'});
 %         imagesc(im/maxi,'ButtonDownFcn',{'openSpecificImage'},'parent',hAx);
         %can we define Callback function somewhere else??
-        imshow(im/maxi,'parent',hAx,'InitialMagnification','fit');
-        if ~isempty(segm)
-           hold(hAx,'on')
-           [~,h] = contour(segm,[0.5 0.5],'r-','parent',hAx); set(h,'LineWidth',2);
-           hold(hAx,'off')
-        end
+        %imshow(im/maxi,'parent',hAx,'InitialMagnification','fit');
+        set(hIm,'CData',im/maxi);
+        % TODO GUUS
+        %if ~isempty(segm)
+        %   hold(hAx,'on')
+        %   [~,h] = contour(segm,[0.5 0.5],'r-','parent',hAx); set(h,'LineWidth',2);
+        %   hold(hAx,'off')
+        %end
     end
     axis(hAx,'image');
-    axis(hAx,'off');
+    % TODO GUUS
     colormap(parula(maxi));
-    drawnow;
+end
+
+function openSpecificImage(handle,event,row)
+    type = get(gcf,'SelectionType');
+    switch type
+        case 'open' % double-click
+            im = get( gcbo,'cdata' );
+            %get(gcbo,'Parent')
+            gca
+            figure; imagesc(im); colorbar; colormap(gray); axis equal; axis off;
+        case 'normal'   
+            %left mouse button action
+            %get(gcbo)
+            set(gcbo,'Selected','on');
+            pos = -round(get(GuiSampleHandle.slider,'Value'))-3+row;
+            disp(['Scatter plot should be updated with row ' num2str(pos) ' here'])
+        case 'extend'
+            % shift & left mouse button action
+        case 'alt'
+            % alt & left mouse button action
+    end
 end
 
 end
