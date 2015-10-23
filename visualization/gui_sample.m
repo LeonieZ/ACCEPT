@@ -65,26 +65,27 @@ GuiSampleHandle.tableDetails = uicontrol('Style','text','Parent',GuiSampleHandle
                                   'Units','normalized','Position',[0 0 1 1],...
                                   'String',entry,'FontUnits','normalized', 'FontSize',0.8*(1/size(entry,1)),'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
                               
-tabExtend = get(GuiSampleHandle.tableDetails,'Extent');
-tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
-panelPosition = get(GuiSampleHandle.uiPanelOverview,'Position');
-tabPosition(3) = tabExtend(3)./panelPosition(3);
-set(GuiSampleHandle.uiPanelTable,'Position',tabPosition);
-
-% create overview image per channel
-GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
-                               'Units','normalized','Position',[tabPosition(1)+tabPosition(3)+0.01 0.07 1-(tabPosition(1)+tabPosition(3)+0.02) 0.82]);
-                           
-defCh = 2; % default channel for overview when starting the sample visualizer
-GuiSampleHandle.imageOverview = imagesc(currentSample.overviewImage(:,:,defCh));
-axis image; axis off;
-
-% create choose button to switch color channel
-GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
-                                    'Units','normalized','Position',[0.4 -0.09 0.08 0.85],...
-                                    'FontUnits','normalized','FontSize',0.02,...
-                                    'Value',defCh,...
-                                    'Callback',{@popupChannel_callback});
+% tabExtend = get(GuiSampleHandle.tableDetails,'Extent');
+% tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
+% panelPosition = get(GuiSampleHandle.uiPanelOverview,'Position');
+% tabPosition(3) = tabExtend(3)./panelPosition(3);
+% set(GuiSampleHandle.uiPanelTable,'Position',tabPosition);
+% 
+% keyboard
+% % create overview image per channel
+% GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
+%                                'Units','normalized','Position',[tabPosition(1)+tabPosition(3)+0.01 0.07 1-(tabPosition(1)+tabPosition(3)+0.02) 0.82]);
+%                            
+% defCh = 2; % default channel for overview when starting the sample visualizer
+% GuiSampleHandle.imageOverview = imagesc(currentSample.overviewImage(:,:,defCh));
+% axis image; axis off;
+% 
+% % create choose button to switch color channel
+% GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
+%                                     'Units','normalized','Position',[0.4 -0.09 0.08 0.85],...
+%                                     'FontUnits','normalized','FontSize',0.02,...
+%                                     'Value',defCh,...
+%                                     'Callback',{@popupChannel_callback});
 
                                 
 %% Fill uiPanelGallery
@@ -96,7 +97,8 @@ elseif strcmp(currentSample.dataTypeOriginalImage,'uint12')
 else
     maxi = 65535;
 end
-
+% Set maxi to 4095 until uint12 is implemented
+maxi = 4095;
 % if sc_gui.maxi == 65535 && max(cellfun(@(x)max(max(max(x))),sc_gui.thumbs(1,:))) <= 4095
 %     sc_gui.maxi = 4095;
 % end
@@ -173,6 +175,11 @@ axesVal = {[1,1,1] , ...
            [1 1 1]...
            'off',...
            'off'};
+% define color pam and include color for contour
+map = colormap(parula(maxi));
+% add color for contour
+map(end+1,:) = [1,0,0];
+
 for i=1:rows
     % specify row location for all columns
     y = 1-i*rPitch;
@@ -189,6 +196,7 @@ for i=1:rows
         hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
         hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
         set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
+        colormap(hAxes(ind),map);
     end
 end
 % check if slider is needed     
@@ -360,7 +368,7 @@ function plot_thumbnails(val)
             segmentedImage = currentSample.results.segmentation{thumbInd};
             k = (j-1)*maxNumCols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
-            plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k), maxi);
+            plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
             
             % update visual selection dependent on selectedFrames array
             if GuiSampleHandle.selectedFrames(thumbInd) == 1
@@ -371,16 +379,14 @@ function plot_thumbnails(val)
             % plot image for each color channel in column 2 till nbrChannels
             for chan = 1:nbrColorChannels
                 l = ((j-1)*maxNumCols + chan + 1); 
-                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l),maxi);
+                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
             end
         end
     end
 end
 
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
-function plotImInAxis(im,segm,hAx,hIm,maxi)
-    maxi = 4095;
-    warning('off','MATLAB:contour:ConstantData');
+function plotImInAxis(im,segm,hAx,hIm)
     if size(im,3) > 1
         % create overlay image here
         %plot_image(hAx,im,255,'fullscale_rgb');
@@ -394,17 +400,13 @@ function plotImInAxis(im,segm,hAx,hIm,maxi)
 %         imagesc(im/maxi,'ButtonDownFcn',{'openSpecificImage'},'parent',hAx);
         %can we define Callback function somewhere else??
         %imshow(im/maxi,'parent',hAx,'InitialMagnification','fit');
-        set(hIm,'CData',im/maxi);
-        % TODO GUUS
-        %if ~isempty(segm)
-        %   hold(hAx,'on')
-        %   [~,h] = contour(segm,[0.5 0.5],'r-','parent',hAx); set(h,'LineWidth',2);
-        %   hold(hAx,'off')
-        %end
+        if ~isempty(segm)
+            cont = bwperim(segm,4);
+            im(cont) = (maxi+1);
+        end
+        set(hIm,'CData',im/(maxi+1));
     end
     axis(hAx,'image');
-    % TODO GUUS
-    colormap(parula(maxi));
 end
 
 % --- Helper function used in thumbnail gallery to react on user clicks
