@@ -194,7 +194,7 @@ end
 % check if slider is needed     
 if  size(currentSample.priorLocations,1)>5
     set(GuiSampleHandle.slider,'Max',-3,'Min',-size(currentSample.priorLocations,1)+2,...
-        'Value',-3,'SliderStep', [1, 1] / (size(currentSample.priorLocations,1) - 1));
+        'Value',-3,'SliderStep', [1, 1] / (size(currentSample.priorLocations,1) - 5));
 else
     set(GuiSampleHandle.slider,'enable','off');
 end
