@@ -159,11 +159,9 @@ cPitch  = 0.98/cols;
 axHight = 0.9/rows;
 axWidth = 0.9/cols;
 
-height = rows/cols;
-width  = 1;
-
 %-----
-hAxes = zeros(nbrImages,1);
+hAxes   = zeros(nbrImages,1);
+hImages = zeros(nbrImages,1);
 % define common properties and values for all axes
 axesProp = {'dataaspectratio' ,...
             'Parent',...
@@ -193,15 +191,18 @@ for i=1:rows
         set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
     end
 end
-
-
-%check if slider is needed     
+% check if slider is needed     
 if  size(currentSample.priorLocations,1)>5
     set(GuiSampleHandle.slider,'Max',-3,'Min',-size(currentSample.priorLocations,1)+2,...
         'Value',-3,'SliderStep', [1, 1] / (size(currentSample.priorLocations,1) - 1));
 else
     set(GuiSampleHandle.slider,'enable','off');
 end
+% only first overlay image per thumbnail can be selected
+% hence total number of selectable resp. table rows is 
+numberOfThumbs = size(currentSample.priorLocations,1);
+GuiSampleHandle.selectedFrames = zeros(numberOfThumbs,1);
+
 % go through all thumbnails (resp. dataframes)
 plot_thumbnails(3);
 
@@ -231,7 +232,7 @@ if size(currentSample.channelNames,2) > 4
 end
 
 % create choose button to switch feature index1 (x-axis)
-popupFeatureSelectTopIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectTopIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[0.39 0.675 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -239,7 +240,7 @@ popupFeatureSelectTopIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,
             'Value',topFeatureIndex1,...
             'Callback',{@popupFeatureTopIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-popupFeatureSelectTopIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectTopIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[-0.01 0.975 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -254,7 +255,7 @@ gca; GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIn
                                          sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled');
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
-popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[0.39 0.345 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -262,7 +263,7 @@ popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatt
             'Value',middleFeatureIndex1,...
             'Callback',{@popupFeatureMiddleIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[-0.01 0.645 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -277,7 +278,7 @@ gca; GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIn
                                          sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled');
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
-popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[0.39 0.015 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -285,7 +286,7 @@ popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatt
             'Value',bottomFeatureIndex1,...
             'Callback',{@popupFeatureBottomIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
             'String',feature_names(2:end),...
             'Position',[-0.01 0.315 0.6 0.015],...
             'FontUnits', 'normalized',...
@@ -357,9 +358,16 @@ function plot_thumbnails(val)
             % obtain dataFrame from io
             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
             segmentedImage = currentSample.results.segmentation{thumbInd};
-            k = (j-1)*maxNumCols + 1;
+            k = (j-1)*maxNumCols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
             plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k), maxi);
+            
+            % update visual selection dependent on selectedFrames array
+            if GuiSampleHandle.selectedFrames(thumbInd) == 1
+                set(hImages(k),'Selected','on');
+            else
+                set(hImages(k),'Selected','off');
+            end
             % plot image for each color channel in column 2 till nbrChannels
             for chan = 1:nbrColorChannels
                 l = ((j-1)*maxNumCols + chan + 1); 
@@ -399,24 +407,24 @@ function plotImInAxis(im,segm,hAx,hIm,maxi)
     colormap(parula(maxi));
 end
 
+% --- Helper function used in thumbnail gallery to react on user clicks
 function openSpecificImage(handle,event,row)
     type = get(gcf,'SelectionType');
     switch type
         case 'open' % double-click
-            im = get( gcbo,'cdata' );
-            %get(gcbo,'Parent')
-            gca
+            im = get(gcbo,'cdata');
             figure; imagesc(im); colorbar; colormap(gray); axis equal; axis off;
-        case 'normal'   
-            %left mouse button action
-            %get(gcbo)
-            set(gcbo,'Selected','on');
-            pos = -round(get(GuiSampleHandle.slider,'Value'))-3+row;
-            disp(['Scatter plot should be updated with row ' num2str(pos) ' here'])
-        case 'extend'
-            % shift & left mouse button action
-        case 'alt'
-            % alt & left mouse button action
+        case 'normal' %left mouse button action
+            if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
+                set(gcbo,'Selected','on');
+                pos = -round(get(GuiSampleHandle.slider,'Value'))-3+row;
+                GuiSampleHandle.selectedFrames(pos) = 1;
+                %GuiSampleHandle.selectedFrames
+                % TODO CHRISTOPH
+                disp(['Scatter plot should be marked with row/thumb ' num2str(pos) ' here'])
+            end
+        case 'extend' % shift & left mouse button action
+        case 'alt' % alt & left mouse button action
     end
 end
 
