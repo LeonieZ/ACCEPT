@@ -176,7 +176,7 @@ axesVal = {[1,1,1] , ...
            'off',...
            'off'};
 % define color pam and include color for contour
-map = colormap(parula(maxi));
+map = colormap(parula(maxi+1));
 % add color for contour
 map(end+1,:) = [1,0,0];
 
@@ -400,8 +400,10 @@ function plotImInAxis(im,segm,hAx,hIm)
 %         imagesc(im/maxi,'ButtonDownFcn',{'openSpecificImage'},'parent',hAx);
         %can we define Callback function somewhere else??
         %imshow(im/maxi,'parent',hAx,'InitialMagnification','fit');
+
         if ~isempty(segm)
             cont = bwperim(segm,4);
+            im(im>maxi)= maxi;
             im(cont) = (maxi+1);
         end
         set(hIm,'CData',im/(maxi+1));
@@ -415,7 +417,7 @@ function openSpecificImage(handle,event,row)
     switch type
         case 'open' % double-click
             im = get(gcbo,'cdata');
-            figure; imagesc(im); colorbar; colormap(gray); axis equal; axis off;
+            figure; imagesc(im,[0,max(max(im(im<1)))]); colorbar; colormap(gray); axis equal; axis off;
         case 'normal' %left mouse button action
             if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
                 set(gcbo,'Selected','on');
