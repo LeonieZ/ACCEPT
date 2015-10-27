@@ -112,25 +112,25 @@ GuiSampleHandle.textCol1 = uicontrol('Style','text','Parent',GuiSampleHandle.uiP
                                 'BackgroundColor',gui_sample_color);
                             
 GuiSampleHandle.textCol2 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.25 0.94 0.1 0.05],...
+                                'Units','normalized','Position',[0.23 0.94 0.1 0.05],...
                                 'String',currentSample.channelNames{1},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
 
 GuiSampleHandle.textCol3 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.45 0.94 0.1 0.05],...
+                                'Units','normalized','Position',[0.43 0.94 0.1 0.05],...
                                 'String',currentSample.channelNames{2},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
 
 GuiSampleHandle.textCol4 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.64 0.94 0.1 0.05],...
+                                'Units','normalized','Position',[0.62 0.94 0.1 0.05],...
                                 'String',currentSample.channelNames{3},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
                             
 GuiSampleHandle.textCol5 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.83 0.94 0.1 0.05],...
+                                'Units','normalized','Position',[0.81 0.94 0.1 0.05],...
                                 'String',currentSample.channelNames{4},'HorizontalAlignment','center',...
                                 'FontUnits', 'normalized','FontSize',columnTextSize,...
                                 'BackgroundColor',gui_sample_color);
@@ -209,6 +209,7 @@ end
 % only first overlay image per thumbnail can be selected
 % hence total number of selectable resp. table rows is 
 numberOfThumbs = size(currentSample.priorLocations,1);
+% note: one thumbnail can have several cells to be measured
 GuiSampleHandle.selectedFrames = zeros(numberOfThumbs,1);
 
 % go through all thumbnails (resp. dataframes)
@@ -226,9 +227,17 @@ sampleFeatures{:,:} = sampleFeatures_noNaN;
 marker_size = 30;
 % create data for scatter plot at the top
 axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.72 0.75 0.23]); %[left bottom width height]
-topFeatureIndex1 = 1; topFeatureIndex2 = 1;
+topFeatureIndex1 = 9; topFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                       sampleFeatures.(topFeatureIndex2+1),marker_size,'filled');
+% add callback to single scatter points
+%points=get(GuiSampleHandle.axesScatterTop,'Children');
+%set(points,'HitTest','on','ButtonDownFcn',{@clickScatterPoint});
+                                  
+% initialize cell counter (scatter elements) in title
+set(GuiSampleHandle.uiPanelScatter,'Title',...
+    [get(GuiSampleHandle.uiPanelScatter,'Title'),' ',num2str(0),'/',num2str(size(get(GuiSampleHandle.axesScatterTop,'XData'),2))]);
+
 set(gca,'TickDir','out');
 feature_names = cell(size(sampleFeatures.Properties.VariableNames));
 feature_names(2:end) = strrep(strrep(strrep(strrep(sampleFeatures.Properties.VariableNames(2:end),'_',' '),'ch 1',currentSample.channelNames(1)),'ch 2',currentSample.channelNames(2)),'ch 3',currentSample.channelNames(3));
@@ -258,7 +267,7 @@ GuiSampleHandle.popupFeatureSelectTopIndex2 = uicontrol('Parent',GuiSampleHandle
 %----
 % create data for scatter plot in the middle
 axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.39 0.75 0.23]); %[left bottom width height]
-middleFeatureIndex1 = 2; middleFeatureIndex2 = 2;
+middleFeatureIndex1 = 9; middleFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                          sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled');
 set(gca,'TickDir','out');
@@ -281,7 +290,7 @@ GuiSampleHandle.popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHan
 %----
 % create scatter plot at the bottom
 axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.06 0.75 0.23]); %[left bottom width height]
-bottomFeatureIndex1 = 3; bottomFeatureIndex2 = 3;
+bottomFeatureIndex1 = 9; bottomFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                          sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled');
 set(gca,'TickDir','out');
@@ -417,19 +426,53 @@ function openSpecificImage(handle,event,row)
     switch type
         case 'open' % double-click
             im = get(gcbo,'cdata');
-            figure; imagesc(im,[0,max(max(im(im<1)))]); colorbar; colormap(gray); axis equal; axis off;
+            figure; imagesc(im,[0,max(max(im(im<1)))]); axis equal; axis off;
         case 'normal' %left mouse button action
             if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
-                set(gcbo,'Selected','on');
-                pos = -round(get(GuiSampleHandle.slider,'Value'))-3+row;
-                GuiSampleHandle.selectedFrames(pos) = 1;
-                %GuiSampleHandle.selectedFrames
-                % TODO CHRISTOPH
-                disp(['Scatter plot should be marked with row/thumb ' num2str(pos) ' here'])
+                if strcmp(get(gcbo,'Selected'),'off')
+                    set(gcbo,'Selected','on');
+                    pos = -round(get(GuiSampleHandle.slider,'Value'))-3+row;
+                    updateScatterPlots(pos,1);
+                else
+                    set(gcbo,'Selected','off');
+                    pos = -round(get(GuiSampleHandle.slider,'Value'))-3+row;
+                    updateScatterPlots(pos,0);
+                end
             end
         case 'extend' % shift & left mouse button action
         case 'alt' % alt & left mouse button action
     end
 end
+
+% --- Helper function to update scatter plots
+function updateScatterPlots(pos,booleanOnOff)
+    GuiSampleHandle.selectedFrames(pos) = booleanOnOff;
+    %disp(['Scatter plot should be marked resp. unmarked with row/thumb ' num2str(pos) ' here']);
+    % create RGB triple for scatter plots, assumption: two clusters red/blue
+    numberScatterPoints = size(get(GuiSampleHandle.axesScatterTop,'XData'),2);
+    rgbTriple = repmat([0 0 1],[numberScatterPoints,1]);
+    selectedThumbIndices = find(GuiSampleHandle.selectedFrames);
+    counterSelectedCells = 0;
+    for t = 1:numel(selectedThumbIndices)
+        selThumb = selectedThumbIndices(t);
+        selectedCells = (sampleFeatures.ThumbNr == selThumb);
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0;
+        rgbTriple(selectedCells,3) = 0;
+        counterSelectedCells = counterSelectedCells + sum(selectedCells);
+    end
+    % update all scatter plots with new manual clustering
+    set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+    set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+    set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
+    % update title for scatter panel showing clustering summary
+    set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
+        num2str(counterSelectedCells) '/' num2str(numberScatterPoints-counterSelectedCells)]);
+end
+
+% --- Helper function used in thumbnail gallery to react on user clicks
+% function clickScatterPoint(handle,event)
+%     disp(['Selected scatter point ',num2str(pointIndex)])
+% end
 
 end
