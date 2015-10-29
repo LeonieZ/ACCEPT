@@ -19,8 +19,10 @@ classdef CTC_Marker_Characterization < SampleProcessor
         
         function run(this,inputSample)
             this.pipeline{1}.run(inputSample);
-            lambda = 0.5*sum(inputSample.histogram(:,:).*repmat((1:size(inputSample.histogram,1))',[1 size(inputSample.histogram,2)]),1)./sum(inputSample.histogram(:,:),1);
-            ac = ActiveContourSegmentation(lambda, 100, 1,{'triangle','global', inputSample.histogram});
+%             lambda = 0.1*sum(inputSample.histogram(:,:).*repmat((1:size(inputSample.histogram,1))',[1 size(inputSample.histogram,2)]),1)./sum(inputSample.histogram(:,:),1);
+            lambda = [0.1 0.05 0.05 0.1];
+            ac = ActiveContourSegmentation(lambda, 500, 1,{'triangle','global', inputSample.histogram});
+%             ac = ActiveContourSegmentation(lambda, 500, 1);
             this.dataframeProcessor.pipeline{1} = ac;
  
             for i = 2:numel(this.pipeline)
