@@ -11,6 +11,19 @@ height = maxRelHeight;
 GuiSampleHandle.fig_main = figure('Units','normalized','Position',[posx posy width height],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off');
 
+%% Set maximum instensiy
+if strcmp(currentSample.dataTypeOriginalImage,'uint8')
+    maxi = 255;
+elseif strcmp(currentSample.dataTypeOriginalImage,'uint12')
+    maxi = 4095;
+else
+    maxi = 65535;
+end
+% Set maxi to 4095 until uint12 is implemented
+maxi = 4095;
+% if sc_gui.maxi == 65535 && max(cellfun(@(x)max(max(max(x))),sc_gui.thumbs(1,:))) <= 4095
+%     sc_gui.maxi = 4095;
+% end
 
 %% Main title
 GuiSampleHandle.title_axes = axes('Units','normalized','Position',[0.5 0.95 0.18 0.04]); axis off;
@@ -57,51 +70,44 @@ dat{6} = size(currentSample.results.thumbnails,1);
 entry{6} = [rnames{6}, ': ',num2str(dat{6})];
 
 GuiSampleHandle.uiPanelTable = uipanel('Parent',GuiSampleHandle.uiPanelOverview,...
-                                     'Position',[0.01 0.2 0.22 0.7],...
+                                     'Position',[0.01 0.1 0.25 0.9],...
                                      'Title','Sample Information','TitlePosition','CenterTop',...
                                      'Units','normalized','BackgroundColor',[1 1 1]);
 
 GuiSampleHandle.tableDetails = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelTable,...
                                   'Units','normalized','Position',[0 0 1 1],...
-                                  'String',entry,'FontUnits','normalized', 'FontSize',0.8*(1/size(entry,1)),'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
-                              
-% tabExtend = get(GuiSampleHandle.tableDetails,'Extent');
-% tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
-% panelPosition = get(GuiSampleHandle.uiPanelOverview,'Position');
-% tabPosition(3) = tabExtend(3)./panelPosition(3);
-% set(GuiSampleHandle.uiPanelTable,'Position',tabPosition);
-% 
-% keyboard
+                                  'String',entry,'FontUnits','normalized', 'FontSize',0.6*(1/size(entry,1)),'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
+
+tabExtend = get(GuiSampleHandle.tableDetails,'Extent');
+tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
+%panelPosition = get(GuiSampleHandle.uiPanelOverview,'Position');
+%tabPosition(4) = tabExtend(4).*tabPosition(4);
+%tabPosition(3) = tabExtend(3).*tabPosition(3);
+%set(GuiSampleHandle.uiPanelTable,'Position',tabPosition);
+
+ 
 % % create overview image per channel
-% GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
-%                                'Units','normalized','Position',[tabPosition(1)+tabPosition(3)+0.01 0.07 1-(tabPosition(1)+tabPosition(3)+0.02) 0.82]);
+ GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
+                                'Units','normalized','Position',[tabPosition(1)+tabPosition(3)+0.01 0.07 1-(tabPosition(1)+tabPosition(3)+0.02) 0.82]);
 %                            
-% defCh = 2; % default channel for overview when starting the sample visualizer
-% GuiSampleHandle.imageOverview = imagesc(currentSample.overviewImage(:,:,defCh));
-% axis image; axis off;
-% 
+ defCh = 2; % default channel for overview when starting the sample visualizer
+ blank=zeros(size(currentSample.overviewImage(:,:,defCh)));
+ GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
+ colormap(GuiSampleHandle.axesOverview,parula(4096));
+ high=prctile(reshape(currentSample.overviewImage(:,:,defCh),[1,size(currentSample.overviewImage,1)*size(currentSample.overviewImage,2)]),99);
+ plotImInAxis(currentSample.overviewImage(:,:,defCh).*(4095/high),[],GuiSampleHandle.imageOverview);
+  
 % % create choose button to switch color channel
-% GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
-%                                     'Units','normalized','Position',[0.4 -0.09 0.08 0.85],...
-%                                     'FontUnits','normalized','FontSize',0.02,...
-%                                     'Value',defCh,...
-%                                     'Callback',{@popupChannel_callback});
+ GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
+                                     'Units','normalized','Position',[0.4 -0.09 0.08 0.85],...
+                                     'FontUnits','normalized','FontSize',0.02,...
+                                     'Value',defCh,...
+                                     'Callback',{@popupChannel_callback});
 
                                 
 %% Fill uiPanelGallery
 gui_sample_color = [1 1 1];
-if strcmp(currentSample.dataTypeOriginalImage,'uint8')
-    maxi = 255;
-elseif strcmp(currentSample.dataTypeOriginalImage,'uint12')
-    maxi = 4095;
-else
-    maxi = 65535;
-end
-% Set maxi to 4095 until uint12 is implemented
-maxi = 4095;
-% if sc_gui.maxi == 65535 && max(cellfun(@(x)max(max(max(x))),sc_gui.thumbs(1,:))) <= 4095
-%     sc_gui.maxi = 4095;
-% end
+
 
 % create column names for gallery
 columnTextSize = 0.55;
@@ -318,7 +324,8 @@ GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHan
 % --- Executes on selection in popupChannel.
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
-    set(GuiSampleHandle.imageOverview,'CData',currentSample.overviewImage(:,:,selectedChannel));
+    high=prctile(reshape(currentSample.overviewImage(:,:,selectedChannel),[1,size(currentSample.overviewImage,1)*size(currentSample.overviewImage,2)]),99);
+    plotImInAxis(currentSample.overviewImage(:,:,selectedChannel).*(4095/high),[],GuiSampleHandle.imageOverview);
 end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)
@@ -377,7 +384,7 @@ function plot_thumbnails(val)
             segmentedImage = currentSample.results.segmentation{thumbInd};
             k = (j-1)*maxNumCols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
-            plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
+            plotImInAxis(dataFrame.rawImage,[],hImages(k));
             
             % update visual selection dependent on selectedFrames array
             if GuiSampleHandle.selectedFrames(thumbInd) == 1
@@ -388,14 +395,14 @@ function plot_thumbnails(val)
             % plot image for each color channel in column 2 till nbrChannels
             for chan = 1:nbrColorChannels
                 l = ((j-1)*maxNumCols + chan + 1); 
-                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
+                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hImages(l));
             end
         end
     end
 end
 
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
-function plotImInAxis(im,segm,hAx,hIm)
+function plotImInAxis(im,segm,hIm)
     if size(im,3) > 1
         % create overlay image here
         %plot_image(hAx,im,255,'fullscale_rgb');
@@ -417,7 +424,6 @@ function plotImInAxis(im,segm,hAx,hIm)
         end
         set(hIm,'CData',im/(maxi+1));
     end
-    axis(hAx,'image');
 end
 
 % --- Helper function used in thumbnail gallery to react on user clicks
