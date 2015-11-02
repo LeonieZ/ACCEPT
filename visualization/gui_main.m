@@ -11,7 +11,7 @@ if ~isempty(gui.tasks_raw)
     tasks = strrep(strrep(gui.tasks_raw,'_',' '),'.m','');
 end
 % select DEFAULT sampleProcessor number (in alphabetical order) for visualization
-defaultSampleProcessorNumber = 2;
+defaultSampleProcessorNumber = 1;
 
 uni_logo = imread('logoUT.png'); [uni_logo_x, uni_logo_y, ~] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y;
 cancerid_logo = imread('logoCancerID.png'); [cancerid_logo_x, cancerid_logo_y, ~] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y;
