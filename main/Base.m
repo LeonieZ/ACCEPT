@@ -55,7 +55,7 @@ classdef Base < handle
                     waitbar(wbar_fraction,wbar,'Please wait...')
                     if this.sampleList.isProcessed(k) == 0
                         sample = this.io.load_sample(this.sampleList,k);
-                        waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is processed.'])
+                        waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
                         disp(['Processing sample ',sample.id ,'...']);
                         this.sampleProcessor.run(sample);
                         this.io.save_sample(sample);
