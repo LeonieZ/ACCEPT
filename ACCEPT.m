@@ -20,13 +20,10 @@ function uiHandle=ACCEPT(varargin)
     
     %% Check the number of arguments in and launch the appropriate script.
     base = Base();
-    if nargin > 0
-        % batch mode script of our program
-        % TODO: batchmode script and base argument missing here
-        uiHandle = batchmode(varargin{:});
-    else
-        % graphical user interface script guiding our program
-        uiHandle = gui(base);
+    parser = gen_input_parser(base);
+    parse(parser,varargin{:});
+    if parser.Results.noGui==false
+        uiHandle = gui_main(base);
     end
 end
 
@@ -59,4 +56,16 @@ function p = genpath_exclude(d)
 		  p = [p genpath_exclude(fullfile(d,dirname))]; % recursive calling of this function.
 		end
 	end
+end
+
+function parser = gen_input_parser(base)
+    parser=inputParser;
+    parser.FunctionName='batchmode input parser';
+    parser.addOptional('noGui',false,@(x)islogical(x));
+    %Additional options can be added here
+    %parser.addOptional('sampleProcessor',@(a) any(validatestring(a,base.availableSampleProcessors)));
+    %Optional: io atributes, defaults set to io defaults.
+    %parser.addOptional('inputFolder','',@(x) isdir(x));
+    %parser.addOptional('outputFolder','',@(x) isdir(x));
+    %parser.addOptional('overwriteResults',this.io.overwriteResults,@(x)islogical(x))
 end

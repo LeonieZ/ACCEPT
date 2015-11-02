@@ -10,6 +10,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         mu_update = [];
         single_channel = [];
         init = [];
+        adaptive_reg = 0;
     end
     
     properties (Constant)
@@ -32,7 +33,14 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 this.maskForChannels = varargin{2};
             end
             
-            this.lambda = lambda; 
+            
+            if isa(lambda,'numeric')
+                this.lambda = lambda;
+            elseif strcmp(lambda,'adaptive')
+                this.lambda = 0.05;
+                this.adaptive_reg = 1;
+            end
+
             this.breg_it = breg_it;
  
             this.inner_it = inner_it;
@@ -87,6 +95,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 else
                     cvInit = [];
                 end
+               
 
                 for i = 1:inputFrame.nrChannels
                     if any(this.maskForChannels == i)
@@ -95,9 +104,8 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                         returnFrame.segmentedImage(:,:,i) = tmp;
                     end
                 end
-%                   icy_im3show(returnFrame.rawImage);icy_im3show(returnFrame.segmentedImage);
 
-                if isempty(this.single_channel)
+                if isempty(this.single_channel) && isa(inputFrame,'Dataframe')
                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 end
 
@@ -166,19 +174,22 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         elseif isa(dataFrame,'double')
             f = dataFrame;
         end
+        
 
         % dimensions
         [nx, ny] = size(f);
         dim = ndims(f);
-
+        
+        %scale data f    
+        f = f-min(f(:)); f = f/max(f(:));
+        
+        
         % initialize dual variable
         p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
         b = zeros(nx,ny); % dims: nx x ny , bregman variable
         
         if isempty(init)
-            f_scale = f - min(f(:));
-            f_scale = f_scale/max(f_scale(:));
-            init(:,:,k) = f_scale;
+            init(:,:,k) = f;
             % initialize primal variables
             u = zeros(nx,ny);
             u_bar = u; % dims: nx x ny
@@ -203,63 +214,104 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             f(dataFrame.mask) = mu0;
         end %note: in case you are using the AC function on a double image using a mask is not possible
 
-
+        tol = 1e-9;
+        
         i = 1; j = 1;
-        while i <= this.breg_it(k)
-            while j <= this.inner_it
-
-                %%% step 1 : update p according to 
-                %%% p_(n+1) = (I+delta F*)^(-1)(p_n + sigma K u_bar_n)
-                % update dual p
-                arg1 = p + this.sigma * grad(u_bar,'lr');
-                p = arg1 ./ max(1,repmat(sqrt(sum(arg1.^2,3)),[1 1 dim])); %different for aniso TV
-
-
-                %%% step 2: update u according to
-                %%% u_(n+1) = (I+tau G)^(-1)(u_n - tau K* p_(n+1))
-                u_old = u;
-                arg2 =  (u + this.tau * div(p,'lr')) - this.tau/this.lambda(k) * ((f - mu1).^2 - (f - mu0).^2 - this.lambda(k) * b);
-                u = max(0, min(1,arg2));
+        for l = 1:20
+            while i <= this.breg_it(k)
+                stat_u = []; 
+                while j <= this.inner_it && (isempty(stat_u) || ~isempty(stat_u) && stat_u(end) >= tol) 
+                    %%% step 1 : update p according to 
+                    %%% p_(n+1) = (I+delta F*)^(-1)(p_n + sigma K u_bar_n)
+                    % update dual p
+                    arg1 = p + this.sigma * grad(u_bar,'shift');
+                    p = arg1 ./ max(1,repmat(sqrt(sum(arg1.^2,3)),[1 1 dim])); %different for aniso TV
 
 
-                %%% step 3: update u_bar according to
-                %%% u_bar_(n+1) = u_(n+1)+ theta * (u_(n+1) - u_n)
-                u_bar = u + this.theta * (u - u_old);
+                    %%% step 2: update u according to
+                    %%% u_(n+1) = (I+tau G)^(-1)(u_n - tau K* p_(n+1))
+                    u_old = u;
+                    arg2 =  (u + this.tau * div(p,'shift')) - this.tau/this.lambda(k) * ((f - mu1).^2 - (f - mu0).^2 - this.lambda(k) * b);
+                    u = max(0, min(1,arg2));
+                    stat_u(j) = (nx*ny)^(-1) * sum(sum(sum((u - u_old).^2)));         
 
 
-                % update mean values (mu 0 and mu1)
-                if (mod(j,this.mu_update) == 0) % && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
-                    if max(max((init(:,:,k)<0.5))) == 1 && max(max((init(:,:,k)>=0.5))) == 1
-                        mu0 = max(mean(mean(f(init(:,:,k)<0.5))),0); % mean value outside object
-                        mu1 = max(mean(mean(f(init(:,:,k)>=0.5))),0); % mean value inside object
-                    elseif max(max((init(:,:,k)<0.5))) == 0
-                        mu0 = min(f(:));
-                        mu1 = mean(mean(f(init(:,:,k)>=0.5)));
-                    elseif max(max((init(:,:,k)>=0.5))) == 0
-                        mu0 = mean(mean(f(init(:,:,k)<0.5)));
-                        mu1 = max(f(:));
+
+                    %%% step 3: update u_bar according to
+                    %%% u_bar_(n+1) = u_(n+1)+ theta * (u_(n+1) - u_n)
+                    u_bar = u + this.theta * (u - u_old);
+
+
+                    % update mean values (mu 0 and mu1)
+                    if (mod(j,this.mu_update) == 0) % && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
+                        if max(max((init(:,:,k)<0.5))) == 1 && max(max((init(:,:,k)>=0.5))) == 1
+                            mu0 = max(mean(mean(f(init(:,:,k)<0.5))),0); % mean value outside object
+                            mu1 = max(mean(mean(f(init(:,:,k)>=0.5))),0); % mean value inside object
+                        elseif max(max((init(:,:,k)<0.5))) == 0
+                            mu0 = min(f(:));
+                            mu1 = mean(mean(f(init(:,:,k)>=0.5)));
+                        elseif max(max((init(:,:,k)>=0.5))) == 0
+                            mu0 = mean(mean(f(init(:,:,k)<0.5)));
+                            mu1 = max(f(:));
+                        end
+                        if isa(dataFrame,'Dataframe')&& dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
+                            f(dataFrame.mask) = mu0;
+                        end
                     end
-                    if isa(dataFrame,'Dataframe')&& dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
-                        f(dataFrame.mask) = mu0;
-                    end
+
+                    % update inner index
+                    j = j + 1;
+
                 end
 
-                % update inner index
-                j = j + 1;
+                % update b (outer bregman update)
+                b = b + 1/this.lambda(k) * ((f - mu0).^2 - (f - mu1).^2);
 
-                %plotte energiefunktional oder fehler (fehlt)
+                % update outer index
+                i = i + 1; j = 1;
             end
+         
+            bin = u >= 0.5;
+            
+            bin = imclearborder(bin);
+            
+            if this.adaptive_reg == 1
+                stats = regionprops(bin,'Solidity','Eccentricity','PixelIdxList');
+                go_on = 0;
 
-            % update b (outer bregman update)
-            b = b + 1/this.lambda(k) * ((f - mu0).^2 - (f - mu1).^2);
+                for s = 1:size(stats,1)
+                    if size(stats(s).PixelIdxList,1) < 10 || stats(s).Eccentricity > 0.95
+                        bin(stats(s).PixelIdxList) = 0;
+                    end
+                    if stats(s).Solidity < 0.9
+                        go_on = 1;
+                    end
+                end            
 
+                if go_on == 1
+                    i = 1; j = 1;
+                    this.lambda(k) = this.lambda(k) + 0.05;
+                    p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
+                    b = zeros(nx,ny); % dims: nx x ny , bregman variable
 
-            % update outer index
-            i = i + 1; j = 1;
+                    if isempty(init)
+                        init(:,:,k) = f;
+        %                initialize primal variables
+                        u = zeros(nx,ny);
+                        u_bar = u; % dims: nx x ny
+                    else
+        %                initialize primal variables
+                        u = init(:,:,k);
+                        u_bar = u; % dims: nx x ny
+                    end
+                else
+                    break
+                end   
+            else
+                break
+            end
         end
-        bin = u >= 0.5;
-        end
-    
+        end   
     end
     
 end

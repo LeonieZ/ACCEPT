@@ -16,13 +16,21 @@ classdef IO < handle
     
     methods
         function outputList = create_sample_list(this,inputPath,resultPath,sampleProcessor)
-            [sampleNames,loaderUsed]=this.available_samples(inputPath);
-            %[isProc,isToBeProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
-            [isProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
-            outputList=SampleList(sampleProcessor.id(),inputPath,resultPath,sampleNames,isProc,loaderUsed);
+            if nargin==4
+                [sampleNames,loaderUsed]=this.available_samples(inputPath);
+                %[isProc,isToBeProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
+                [isProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
+                outputList=SampleList(sampleProcessor.id(),inputPath,resultPath,sampleNames,isProc,loaderUsed);
+            else
+                outputList=SampleList();
+            end
             addlistener(outputList,'updatedProcessorId',@this.updated_sample_processor);
             addlistener(outputList,'updatedInputPath',@this.updated_input_path);
             addlistener(outputList,'updatedResultPath',@this.updated_result_path);
+        end
+        
+        function update_sample_list(this,sampleList)
+                sampleList.isProcessed=this.processed_samples(sampleList.resultPath,sampleList.sampleProcessorId,sampleList.sampleNames);
         end
         
         function outputSample=load_sample(this,sampleList,sampleNr)
@@ -118,7 +126,7 @@ classdef IO < handle
         
         function save_thumbnail(this,currentSample,eventNr)
            %to be implemented 
-           currentDataFrame=this.load_thumbnail_frame(currentSample,eventNr,'prior')
+           currentDataFrame=this.load_thumbnail_frame(currentSample,eventNr,'prior');
            currentDataFrame.preProcessedImage=currentDataFrame.rawImage(:,:,3);
            currentDataFrame.preProcessedImage(2:7,2:7)=4095;
             t=Tiff([num2str(eventNr),'_thumb.tif'],'w');
@@ -134,8 +142,12 @@ classdef IO < handle
         end
         
         function save_results_as_xls(this,currentSample)
-            tempTable=horzcat(currentSample.results.classefication,currentSample.results.features);
-            writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.xls'])
+            tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
+            if ispc
+                writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.xls']);
+            else
+                writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.csv']);
+            end
         end
         
         function update_results(this,sampleList)
@@ -161,30 +173,45 @@ classdef IO < handle
         end
         
         function updated_sample_processor(this,sampleList,~)
-            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
-                                                sampleList.sampleProcessorId,...
-                                                sampleList.sampleNames);
-            sampleList.isProcessed=isProc;
-            sampleList.isToBeProcessed=isToBeProc;
+            if all([~isempty(sampleList.resultPath),...
+                    ~strcmp(sampleList.sampleProcessorId,'empty'),...
+                    isempty(sampleList.sampleNames)]);
+                this.updated_input(sampleList);
+            end
+            if and(~isempty(sampleList.inputPath),~isempty(sampleList.resultPath))
+                [isProc]=this.processed_samples(sampleList.resultPath,...
+                                                    sampleList.sampleProcessorId,...
+                                                    sampleList.sampleNames);
+                sampleList.isProcessed=isProc;
+            end
         end
         
-        function updated_results_path(this,sampleList,~)
-            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
+        function updated_result_path(this,sampleList,~)
+            if all([~isempty(sampleList.inputPath),...
+                    ~strcmp(sampleList.sampleProcessorId,'empty'),...
+                    isempty(sampleList.sampleNames)]);
+                this.updated_input(sampleList);
+            end
+            if and(~isempty(sampleList.resultPath),...
+                    ~strcmp(sampleList.sampleProcessorId,'empty'));
+                [isProc]=this.processed_samples(sampleList.resultPath,...
                                                 sampleList.sampleProcessorId,...
                                                 sampleList.sampleNames);
-            sampleList.isProcessed=isProc;
-            sampleList.isToBeProcessed=isToBeProc;
+                sampleList.isProcessed=isProc;
+             end
         end
         
         function updated_input_path(this,sampleList,~)
-            [sampleNames,loaderUsed]=this.available_samples(inputPath);
-            [isProc,isToBeProc]=this.processed_samples(sampleList.resultPath,...
+            [sampleNames,loaderUsed]=this.available_samples(sampleList.inputPath);
+            sampleList.sampleNames=sampleNames;
+            sampleList.loaderToBeUsed=loaderUsed;
+            if and(~isempty(sampleList.resultPath),...
+                ~strcmp(sampleList.sampleProcessorId,'empty'));
+                [isProc]=this.processed_samples(sampleList.resultPath,...
                                         sampleList.sampleProcessorId,...
                                         sampleNames);
-            sampleList.sampleNames=smpleNames;
-            sampleList.loaderToBeUsed=loaderUsed;
-            sampleList.isProcessed=isProc;
-            sampleList.isToBeProcessed=isToBeProc;
+                sampleList.isProcessed=isProc;
+            end
         end
        
         function loaderHandle=check_sample_type(this,samplePath)
