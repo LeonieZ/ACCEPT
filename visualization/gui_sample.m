@@ -95,7 +95,7 @@ tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
  GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
  colormap(GuiSampleHandle.axesOverview,parula(4096));
  high=prctile(reshape(currentSample.overviewImage(:,:,defCh),[1,size(currentSample.overviewImage,1)*size(currentSample.overviewImage,2)]),99);
- plotImInAxis(currentSample.overviewImage(:,:,defCh).*(4095/high),[],GuiSampleHandle.imageOverview);
+ plotImInAxis(currentSample.overviewImage(:,:,defCh).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
   
 % % create choose button to switch color channel
  GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
@@ -325,7 +325,7 @@ GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHan
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
     high=prctile(reshape(currentSample.overviewImage(:,:,selectedChannel),[1,size(currentSample.overviewImage,1)*size(currentSample.overviewImage,2)]),99);
-    plotImInAxis(currentSample.overviewImage(:,:,selectedChannel).*(4095/high),[],GuiSampleHandle.imageOverview);
+    plotImInAxis(currentSample.overviewImage(:,:,selectedChannel).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
 end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)
@@ -384,7 +384,7 @@ function plot_thumbnails(val)
             segmentedImage = currentSample.results.segmentation{thumbInd};
             k = (j-1)*maxNumCols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
-            plotImInAxis(dataFrame.rawImage,[],hImages(k));
+            plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
             
             % update visual selection dependent on selectedFrames array
             if GuiSampleHandle.selectedFrames(thumbInd) == 1
@@ -395,14 +395,14 @@ function plot_thumbnails(val)
             % plot image for each color channel in column 2 till nbrChannels
             for chan = 1:nbrColorChannels
                 l = ((j-1)*maxNumCols + chan + 1); 
-                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hImages(l));
+                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
             end
         end
     end
 end
 
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
-function plotImInAxis(im,segm,hIm)
+function plotImInAxis(im,segm,hAx,hIm)
     if size(im,3) > 1
         % create overlay image here
         %plot_image(hAx,im,255,'fullscale_rgb');
@@ -424,6 +424,7 @@ function plotImInAxis(im,segm,hIm)
         end
         set(hIm,'CData',im/(maxi+1));
     end
+    axis(hAx,'image');
 end
 
 % --- Helper function used in thumbnail gallery to react on user clicks
