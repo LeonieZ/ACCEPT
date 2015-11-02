@@ -108,18 +108,22 @@ function visualize(handle,~,base)
     drawnow;
     selectedCellsInTable = get(gui.table,'UserData');
     if size(selectedCellsInTable,1) == 0
-        msgbox('No sample selected')
+        msgbox('No sample selected.')
     elseif size(selectedCellsInTable,1) == 1
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
-        % load selected sample
-        currentSample = base.io.load_sample(base.sampleList,selectedCellsInTable(1));
-        % run sampleVisGui with loaded sample
-        gui_sample(base,currentSample);
+            % load selected sample
+            currentSample = base.io.load_sample(base.sampleList,selectedCellsInTable(1));
+            if size(currentSample.results.thumbnails,1)<1
+               msgbox('Empty Sample.')
+            else
+               % run sampleVisGui with loaded sample
+               gui_sample(base,currentSample);
+            end  
         else
-            msgbox('no dirs selected')
+            msgbox('No directories selected.')
         end
     else
-        msgbox('Too many samples selected for visualization');
+        msgbox('Too many samples selected for visualization.');
     end
     set(handle,'backg',color,'String','Visualize')
 end
