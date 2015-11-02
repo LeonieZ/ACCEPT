@@ -13,8 +13,8 @@ end
 % select DEFAULT sampleProcessor number (in alphabetical order) for visualization
 defaultSampleProcessorNumber = 2;
 
-uni_logo = imread('logo3.png'); [uni_logo_x, uni_logo_y, ~] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y;
-cancerid_logo = imread('logo.png'); [cancerid_logo_x, cancerid_logo_y, ~] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y;
+uni_logo = imread('logoUT.png'); [uni_logo_x, uni_logo_y, ~] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y;
+cancerid_logo = imread('logoCancerID.png'); [cancerid_logo_x, cancerid_logo_y, ~] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y;
 % subtitle = imread('title2.tif'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
 
 %Menu

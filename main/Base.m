@@ -3,7 +3,7 @@ classdef Base < handle
     %or parralel processing
     
     properties
-        programVersion= 'v0.1';
+        programVersion= '1.0.0-beta';
         sampleList;
         sampleProcessor;
         availableSampleProcessors;
@@ -32,11 +32,6 @@ classdef Base < handle
               
             %adding log listeners
             %addlistener(this.workflow,'logMessage',@this.log.entry);
-            
-            %show splash logo
-            h=this.show_logo();
-            %pause(1);
-            %close(h);
             
             if this.profiler
                 profile -memory on;
@@ -73,12 +68,12 @@ classdef Base < handle
             close(wbar)
         end
 
-        function h=show_logo(this)
+        function h=save_splash(this)
             screen = get(0,'screensize');
             screenWidth  = screen(3);
             screenHeight = screen(4);
 
-            im = imread('logo2.tif');
+            im = imread('splashSource.tif');
             imageWidth  = size(im,2);
             imageHeight = size(im,1);
 
@@ -91,6 +86,8 @@ classdef Base < handle
 
             text(40,135, ['ACCEPT algorithm ',this.programVersion],'units','pixel','horizontalalignment','left','fontsize',18,'color',[.1 .1 .1]);
             text(40,105, 'Code by Leonie Zeune, Guus van Dalum & Christoph Brune','units','pixel','horizontalalignment','left','fontsize',12,'color',[.1 .1 .1]);
+            set(h,'PaperPositionMode','auto')
+            print -dtiff -r300 splash;
         end
 
         function delete(this)
