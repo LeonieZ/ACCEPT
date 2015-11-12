@@ -176,6 +176,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         end
         
 
+        
+        % set lambda
+        lambda_reg = this.lambda(k);
+        
         % dimensions
         [nx, ny] = size(f);
         dim = ndims(f);
@@ -231,7 +235,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     %%% step 2: update u according to
                     %%% u_(n+1) = (I+tau G)^(-1)(u_n - tau K* p_(n+1))
                     u_old = u;
-                    arg2 =  (u + this.tau * div(p,'shift')) - this.tau/this.lambda(k) * ((f - mu1).^2 - (f - mu0).^2 - this.lambda(k) * b);
+                    arg2 =  (u + this.tau * div(p,'shift')) - this.tau/lambda_reg * ((f - mu1).^2 - (f - mu0).^2 - lambda_reg * b);
                     u = max(0, min(1,arg2));
                     stat_u(j) = (nx*ny)^(-1) * sum(sum(sum((u - u_old).^2)));         
 
@@ -265,7 +269,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 end
 
                 % update b (outer bregman update)
-                b = b + 1/this.lambda(k) * ((f - mu0).^2 - (f - mu1).^2);
+                b = b + 1/lambda_reg * ((f - mu0).^2 - (f - mu1).^2);
 
                 % update outer index
                 i = i + 1; j = 1;
@@ -290,7 +294,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                 if go_on == 1
                     i = 1; j = 1;
-                    this.lambda(k) = this.lambda(k) + 0.05;
+                    lambda_reg = lambda_reg + 0.05;
                     p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
                     b = zeros(nx,ny); % dims: nx x ny , bregman variable
 
