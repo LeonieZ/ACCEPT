@@ -242,7 +242,7 @@ gca; GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1
                                   
 % initialize cell counter (scatter elements) in title
 set(GuiSampleHandle.uiPanelScatter,'Title',...
-    [get(GuiSampleHandle.uiPanelScatter,'Title'),' ',num2str(0),'/',num2str(size(get(GuiSampleHandle.axesScatterTop,'XData'),2))]);
+    [get(GuiSampleHandle.uiPanelScatter,'Title'),' ',num2str(0),'/',num2str(size(currentSample.results.thumbnails,1))]);
 
 set(gca,'TickDir','out');
 feature_names = cell(size(sampleFeatures.Properties.VariableNames));
@@ -474,7 +474,7 @@ function updateScatterPlots(pos,booleanOnOff)
     set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     % update title for scatter panel showing clustering summary
     set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-        num2str(counterSelectedCells) '/' num2str(numberScatterPoints-counterSelectedCells)]);
+        num2str(counterSelectedCells) '/' num2str(size(currentSample.results.thumbnails,1))]);
 end
 
 % --- Helper function used in thumbnail gallery to react on user clicks

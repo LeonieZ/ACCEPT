@@ -88,6 +88,8 @@ function process(handle,~,base)
         msgbox('No sample selected')
     else
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
+            % clear current sampleList:
+            base.sampleList.toBeProcessed = zeros(size(base.sampleList.toBeProcessed));
             % update the current sampleList: selected samples should be processed
             base.sampleList.toBeProcessed(selectedCellsInTable(:,1)) = 1;
             base.run();
