@@ -37,7 +37,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             if isa(lambda,'numeric')
                 this.lambda = lambda;
             elseif strcmp(lambda,'adaptive')
-                this.lambda = 0.05;
+                this.lambda = 0.01;
                 this.adaptive_reg = 1;
             end
 
@@ -277,7 +277,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
          
             bin = u >= 0.5;
             
-            bin = imclearborder(bin);
+%             bin = imclearborder(bin);
             
             if this.adaptive_reg == 1
                 stats = regionprops(bin,'Solidity','Eccentricity','PixelIdxList');
@@ -287,10 +287,32 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     if size(stats(s).PixelIdxList,1) < 10 || stats(s).Eccentricity > 0.95
                         bin(stats(s).PixelIdxList) = 0;
                     end
-                    if stats(s).Solidity < 0.9
+                    if stats(s).Solidity < 0.95
                         go_on = 1;
                     end
-                end            
+                end
+                
+                if go_on == 1
+                    D = bwdist(~bin);
+                    D = -D;
+                    D(~bin) = -Inf;
+                    L = watershed(D);
+
+                    bin(L <= 1) = 0;
+                    bin(L > 1) = 1;
+                    stats = regionprops(bin,'Solidity','Eccentricity','PixelIdxList');
+                    go_on = 0;
+
+                    for s = 1:size(stats,1)
+                        if size(stats(s).PixelIdxList,1) < 10 || stats(s).Eccentricity > 0.95
+                            bin(stats(s).PixelIdxList) = 0;
+                        end
+                        if stats(s).Solidity < 0.95
+                            go_on = 1;
+                        end
+                    end
+                end
+                    
 
                 if go_on == 1
                     i = 1; j = 1;
@@ -315,6 +337,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 break
             end
         end
+        bin = imclearborder(bin);
         end   
     end
     
