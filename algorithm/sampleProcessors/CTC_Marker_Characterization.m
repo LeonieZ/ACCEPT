@@ -18,6 +18,7 @@ classdef CTC_Marker_Characterization < SampleProcessor
         function run(this,inputSample)
             this.pipeline{1}.run(inputSample);
             ac = ActiveContourSegmentation('adaptive', 500, 1,{'triangle','global', inputSample.histogram});
+            ac.clear_border = 1;
             this.dataframeProcessor.pipeline{1} = ac;
  
             for i = 2:numel(this.pipeline)

@@ -24,7 +24,7 @@ classdef DetermineMask < DataframeProcessorObject
                 end
                 
                 openImg = imopen(inputFrame.rawImage(:,:,this.channelEdgeRemoval),se);
-                ac = ActiveContourSegmentation(10000, 50, 1);
+                ac = ActiveContourSegmentation(1, 50, 1);
                 binImg = ac.run(openImg);
                 [r,c] = find(binImg == 1);
 
@@ -40,7 +40,7 @@ classdef DetermineMask < DataframeProcessorObject
                 end
                 
                 openImg = imopen(inputFrame(:,:,this.channelEdgeRemoval),se);
-                ac = ActiveContourSegmentation(10000, 50, 1);
+                ac = ActiveContourSegmentation(1, 50, 1);
                 binImg = ac.run(openImg);
                 [r,c] = find(binImg == 1);
 

@@ -68,25 +68,25 @@ classdef IO < handle
                     outputFrame=loader.load_data_frame(frameNr,boundingBox);
                 end
             else
-                if isempty(this.sample.results.thumbnails)
+                if isempty(sample.results.thumbnails)
                     error('This sample contains no thumbnail locations')
                 end
-                frameNr = this.sample.results.thumbnails.frameNr(thumbNr);
-                boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
-                    [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
-                if exist(this.saved_frame_path(sample,frameNr),'file');
-                    load(this.saved_frame_path(sample,frameNr));
-                    outputFrame=DataFrame(frameNr,currentDataFrame.frameHasEdge,...
-                        currentDataFrame.channelEdgeRemoval,...
-                        currentDataFrame.rawImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:));
-                    outputFrame.adjacentFrames=currentDataFrame.adjacentFrames(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
-                    outputFrame.preProcessedImage=currentDataFrame.preProcessedImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
-                    outputFrame.segmentedImage=currentDataFrame.segmentedImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
-                    outputFrame.mask=currentDataFrame.mask(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
-                else
+                frameNr = sample.results.thumbnails.frameNr(thumbNr);
+                boundingBox = {[sample.results.thumbnails.yBottomLeft(thumbNr) sample.results.thumbnails.yTopRight(thumbNr)],...
+                    [sample.results.thumbnails.xBottomLeft(thumbNr) sample.results.thumbnails.xTopRight(thumbNr)]};
+%                 if exist(this.saved_frame_path(sample,frameNr),'file');
+%                     load(this.saved_frame_path(sample,frameNr));
+%                     outputFrame=DataFrame(frameNr,currentDataFrame.frameHasEdge,...
+%                         currentDataFrame.channelEdgeRemoval,...
+%                         currentDataFrame.rawImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:));
+%                     outputFrame.adjacentFrames=currentDataFrame.adjacentFrames(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
+%                     outputFrame.preProcessedImage=currentDataFrame.preProcessedImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
+%                     outputFrame.segmentedImage=currentDataFrame.segmentedImage(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
+%                     outputFrame.mask=currentDataFrame.mask(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
+%                 else
                     outputFrame=loader.load_data_frame(frameNr,boundingBox);
                     
-                end
+%                 end
             end
         end
         

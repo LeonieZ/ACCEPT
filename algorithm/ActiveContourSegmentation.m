@@ -13,6 +13,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         adaptive_reg = 0;
     end
     
+    properties
+        clear_border = 0;
+    end
+    
     properties (Constant)
         sigma = 0.1; 
         tau = 0.1;
@@ -337,7 +341,9 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 break
             end
         end
-        bin = imclearborder(bin);
+        if this.clear_border
+            bin = imclearborder(bin);
+        end
         end   
     end
     

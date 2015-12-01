@@ -27,8 +27,11 @@ classdef Sample < handle
         channelEdgeRemoval=4;
         dataTypeOriginalImage='uint16';
         pixelSize=1;
-        priorLocations=[];
-        results=Result();    
+        priorLocations=[];   
+    end
+    
+    properties (SetAccess={?Loader,?IO,?Base})
+        results=Result();
     end
     
     properties (SetAccess={?Loader,?IO,?SampleOverviewLoading})

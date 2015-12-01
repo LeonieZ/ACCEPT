@@ -78,13 +78,17 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                 end
                 
                 for i = 1:inputFrame.nrChannels
-                    tmp = inputFrame.rawImage(:,:,i) > this.thresholds(i);
-                    if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
-                        tmp(inputFrame.mask) = false;
+                    if any(this.maskForChannels == i)
+                        tmp = inputFrame.rawImage(:,:,this.maskForChannels(i)) > this.thresholds(i);
+                        if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
+                            tmp(inputFrame.mask) = false;
+                        end
+                        tmp = bwareaopen(tmp, 10);
+                        returnFrame.segmentedImage(:,:,i) = tmp;  
                     end
-                    tmp = bwareaopen(tmp, 10);
-                    returnFrame.segmentedImage(:,:,i) = tmp;    
                 end
+                returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
+
             elseif isa(inputFrame,'double') || isa(inputFrame,'single') || isa(inputFrame,'uint8') || isa(inputFrame,'uint16')
                 % note: 1. in case you are using the TS function on a double/single/... image using a mask is not possible
                 % 2. not for images scaled from 0 to 1.

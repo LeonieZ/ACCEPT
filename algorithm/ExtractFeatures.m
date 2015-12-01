@@ -17,7 +17,7 @@ classdef ExtractFeatures < DataframeProcessorObject
                     for ch = 1:inputFrame.nrChannels
                         imTemp = inputFrame.rawImage(:,:,ch);
                         MsrTemp = regionprops(inputFrame.labelImage(:,:,ch), imTemp - median(imTemp(inputFrame.labelImage(:,:,ch) == 0)),...
-                                'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
+                                'BoundingBox', 'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
 
                         %fill structure so tables can be concatenated.
                         MsrTemp=fillStruct(this, MsrTemp);
@@ -29,7 +29,13 @@ classdef ExtractFeatures < DataframeProcessorObject
                         MsrTemp=rmfield(MsrTemp,'PixelValues');
 
                         names = strcat('ch_',num2str(ch),'_',fieldnames(MsrTemp));
-                        tmpTable = struct2table(MsrTemp);
+                        if size(MsrTemp,1) == 1 && isempty(MsrTemp.BoundingBox)
+                            MsrTemp = rmfield(MsrTemp,'BoundingBox');
+                            tmpTable = struct2table(MsrTemp);
+                            tmpTable = [tmpTable(:,1) table({[]},'VariableNames',{'BoundingBox'}) tmpTable(:,2:end)];
+                        else
+                            tmpTable = struct2table(MsrTemp);
+                        end
                         tmpTable.Properties.VariableNames = names;
                         tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat('ch_',num2str(ch),'_StandardDeviation')});
                         tmpMass = array2table(Mass,'VariableNames',{strcat('ch_',num2str(ch),'_Mass')});
@@ -51,7 +57,7 @@ classdef ExtractFeatures < DataframeProcessorObject
                 % transform to labeled image
                 sumImage = sum(segImage,3); 
                 labels = repmat(bwlabel(sumImage,4),1,1,size(segImage,3));
-                labelImage = labels.*segImage; icy_imshow(labelImage);
+                labelImage = labels.*segImage;
             
                 returnFrame = table();
                 this.nrObjects = max(labelImage(:));
@@ -60,7 +66,7 @@ classdef ExtractFeatures < DataframeProcessorObject
                     for ch = 1:size(segImage,3)
                         imTemp = rawImage(:,:,ch);
                         MsrTemp = regionprops(labelImage(:,:,ch), imTemp - median(imTemp(labelImage(:,:,ch) == 0)),...
-                                'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
+                                'BoundingBox','MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
 
                         %fill structure so tables can be concatenated.
                         MsrTemp=fillStruct(this, MsrTemp);
@@ -91,15 +97,15 @@ classdef ExtractFeatures < DataframeProcessorObject
 
             if numMsr ~= numObjects
                 if numMsr == 0;
-                    MsrTemp(1:numObjects,1)=struct('Area',0,'Eccentricity', 0 ,'Perimeter',0,...
+                    MsrTemp(1:numObjects,1)=struct('Area',0,'BoundingBox',[],'Eccentricity', 0 ,'Perimeter',0,...
                         'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
                 else
-                    MsrTemp(numMsr+1:numObjects,1)=struct('Area',0 ,'Eccentricity', 0,...
+                    MsrTemp(numMsr+1:numObjects,1)=struct('Area',0,'BoundingBox',[],'Eccentricity', 0,...
                         'Perimeter',0, 'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
                 end
             end
             idx=arrayfun(@(x) isempty(x.MaxIntensity),MsrTemp);
-            MsrTemp(idx)=struct('Area',0 ,'Eccentricity',0,'Perimeter',0,...
+            MsrTemp(idx)=struct('Area',0,'BoundingBox',[],'Eccentricity',0,'Perimeter',0,...
             'PixelValues',[],'MeanIntensity',NaN ,'MaxIntensity',NaN );
         end
        

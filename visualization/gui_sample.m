@@ -372,7 +372,8 @@ end
 
 % --- Plot thumbnails around index i
 function plot_thumbnails(val)
-    numberOfThumbs=size(currentSample.priorLocations,1);
+    %numberOfThumbs=size(currentSample.priorLocations,1);
+    numberOfThumbs=size(currentSample.results.thumbnails,1);
     thumbIndex=[val-2:1:val+2];
     thumbIndex(thumbIndex<1)=[];
     thumbIndex(thumbIndex>numberOfThumbs)=[];
@@ -380,7 +381,8 @@ function plot_thumbnails(val)
         for j=1:numel(thumbIndex)
             thumbInd=thumbIndex(j);
             % obtain dataFrame from io
-            dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
+%             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
+            dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd);
             segmentedImage = currentSample.results.segmentation{thumbInd};
             k = (j-1)*maxNumCols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
