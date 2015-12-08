@@ -12,7 +12,7 @@ classdef FeatureCollection < SampleProcessorObject
         function this = FeatureCollection(inputDataframeProcessor,io,varargin)
             this.dataProcessor = inputDataframeProcessor;
             this.io = io;
-            if nargin > 1
+            if nargin > 2
                 this.use_thumbs = varargin{1};
             end
         end

@@ -60,6 +60,21 @@ classdef Base < handle
                         this.sampleProcessor.run(sample);
                         this.io.save_sample(sample);
                         disp(['Sample ',sample.id ,' is processed.']);
+                    else
+                        choice = questdlg(strcat('Sample ', this.sampleList.sampleNames(k) ,' is already processed. Do you want to process it again?'), ...
+                                'Processed Sample', 'Yes','No','No');
+                            % Handle response
+                            switch choice
+                                case 'Yes'
+                                    sample = this.io.load_sample(this.sampleList,k);
+                                    waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
+                                    disp(['Processing sample ',sample.id ,'...']);
+                                    this.sampleProcessor.run(sample);
+                                    this.io.save_sample(sample);
+                                    disp(['Sample ',sample.id ,' is processed.']);  
+                                case 'No'
+                                    break
+                            end   
                     end
                     nrProcessed = nrProcessed + 1;
                 end
