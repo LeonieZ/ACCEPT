@@ -8,8 +8,9 @@ classdef (Abstract) Loader < handle
         name
         hasEdges
         pixelSize
-        sample
-        
+        channelNames
+        channelEdgeRemoval
+        sample 
     end
     
     events
@@ -20,12 +21,10 @@ classdef (Abstract) Loader < handle
     methods(Abstract)
         new_sample_path(this,samplePath)
         dataFrame = load_data_frame(this,frameNr)
+        dataFrame = load_thumb_frame(this,frameNr,option)
+        frameOrder = calculate_frame_nr_order(this)
     end
      
-    methods
-          
-    end
-    
     methods(Static)
         function bool = can_load_this_folder(path)
             %function that must be present in all loader types to test

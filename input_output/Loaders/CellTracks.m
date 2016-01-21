@@ -15,6 +15,10 @@ classdef CellTracks < Loader
         sample=Sample();
     end
     
+    events
+        logMessage
+    end
+    
     methods
         function this = CellTracks(input) %pass either a sample or a path to the constructor
             if nargin == 1
