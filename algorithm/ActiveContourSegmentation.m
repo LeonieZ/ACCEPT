@@ -241,7 +241,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     u_old = u;
                     arg2 =  (u + this.tau * div(p,'shift')) - this.tau/lambda_reg * ((f - mu1).^2 - (f - mu0).^2 - lambda_reg * b);
                     u = max(0, min(1,arg2));
-                    stat_u(j) = (nx*ny)^(-1) * sum(sum(sum((u - u_old).^2)));         
+                    stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2));         
 
 
 
