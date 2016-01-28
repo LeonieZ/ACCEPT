@@ -50,13 +50,13 @@ currentSampleProcessorName = strrep(gui.tasks_raw{get(gui.task_list,'Value')},'.
 eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
 base.sampleList.sampleProcessorId=base.sampleProcessor.id();
 
-gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.22 0.597 0.359 0.038]);
-gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.223 0.608 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
-gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','normalized','Position',[0.58 0.597 0.2 0.038],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@input_path,base});
+gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','normalized','Position',[0.22 0.597 0.2 0.038],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@input_path,base});
+gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.421 0.597 0.359 0.038]);
+gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.424 0.608 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
 
-gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.22 0.537 0.359 0.038]);
-gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.223 0.548 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
-gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','normalized','Position',[0.58 0.537 0.2 0.038],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@results_path,base});
+gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','normalized','Position',[0.22 0.537 0.2 0.038],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@results_path,base});
+gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.421 0.537 0.359 0.038]);
+gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String','','Units','normalized','Position',[0.424 0.548 0.353 0.016],'FontUnits','normalized', 'FontSize',1);
 
 gui.uni_logo_axes = axes('Units','normalized','Position',[0.57 0.025 0.4 0.4*uni_logo_rel*gui.rel_screen]);
 gui.uni_logo = imagesc(uni_logo);  axis off;
