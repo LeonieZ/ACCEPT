@@ -144,9 +144,9 @@ classdef IO < handle
         function save_results_as_xls(this,currentSample)
             tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
             if ispc
-                writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.xls']);
+                writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xls']);
             else
-                writetable(tempTable,[currentSample.savePath,filesep,'output',filesep,currentSample.id,'.csv']);
+                writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.csv']);
             end
         end
         
@@ -276,11 +276,11 @@ classdef IO < handle
     
     methods (Static, Access = private)
         function location=saved_sample_path(sampleList,sampleNr)
-            location=[sampleList.save_path(),filesep,'output',filesep,sampleList.sampleNames{sampleNr},'.mat'];
+            location=[sampleList.save_path(),'output',filesep,sampleList.sampleNames{sampleNr},'.mat'];
         end
     
         function location=saved_data_frame_path(sample,frameNr)
-            location=[sample.savePath,filesep,'frames',filesep,sample.id,filesep,num2str(frameNr),'.mat'];
+            location=[sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr),'.mat'];
         end
                       
     end

@@ -68,8 +68,8 @@ gui.cancerid_logo = imagesc(cancerid_logo); axis off;
 % gui.subtitle = imagesc(subtitle);  axis off;
 
 gui.table_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.34 0.1805 0.32 0.326], 'BackgroundColor', [1 1 1]);
-gui.table = uitable('Parent', gui.table_frame, 'Data', [],'ColumnName', {'Sample name','Processed'},'ColumnFormat', {'char','logical'},'ColumnEditable', false,'RowName',[],'Units','normalized',...
-    'Position', [0 0 1 1],'ColumnWidth',{0.32*0.59*0.5*gui.screensize(3) 0.32*0.39*0.5*gui.screensize(3)}, 'FontUnits','normalized', 'FontSize',0.05,'CellSelectionCallback',@(src,evnt)set(src,'UserData',evnt.Indices));
+gui.table = uitable('Parent', gui.table_frame, 'Data', [],'ColumnName', {'Sample name','Process'},'ColumnFormat', {'char','logical'},'ColumnEditable', [false,true],'RowName',[],'Units','normalized',...
+    'Position', [0 0 1 1],'ColumnWidth',{0.32*0.59*0.5*gui.screensize(3) 0.32*0.39*0.5*gui.screensize(3)}, 'FontUnits','normalized', 'FontSize',0.05,'CellSelectionCallback',@(src,evnt)EditTable(src,evnt));
 
 handle = gui.fig_main;
 set(gui.fig_main,'Visible','on');
@@ -83,9 +83,26 @@ function process(handle,~,base)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5],'string','Process samples...');
     drawnow;
-    selectedCellsInTable = get(gui.table,'UserData');
+    %     selectedCellsInTable = get(gui.table,'UserData');
+    cellsInTable = get(gui.table,'Data');
+    selectedCellsInTable = find([cellsInTable{:,2}] == 1)';
     if size(selectedCellsInTable,1) == 0
-        msgbox('No sample selected')
+        if sum(~base.sampleList.isProcessed) > 0
+            if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
+    %             msgbox('No sample selected')
+                base.sampleList.toBeProcessed = ~base.sampleList.isProcessed;
+                dat = get(gui.table,'data');
+                for r=1:size(dat,1)
+                    dat{r,2} = base.sampleList.toBeProcessed(r);     
+                end 
+                set(gui.table,'data',dat);
+                base.run();
+            else
+                msgbox('no dirs selected');
+            end
+        else
+            msgbox('All samples are processed. No sample selected for reprocessing.')
+        end
     else
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
             % clear current sampleList:
@@ -166,6 +183,15 @@ function choosetask(source,~,base)
     update_list(base);
 end
 
+function EditTable(source, eventdata)
+data=get(source,'Data'); % get the data cell array of the table
+cols=get(source,'ColumnFormat'); % get the column formats
+if ~isempty(eventdata.Indices) && strcmp(cols(eventdata.Indices(2)),'logical') % if the column of the edited cell is logical
+    data{eventdata.Indices(1),eventdata.Indices(2)}=true; % set the data value to true 
+end
+set(source,'Data',data);
+end
+
 function update_list(base)
 %     global gui
     % update inputPath if none is selected. 
@@ -180,7 +206,13 @@ function update_list(base)
         dat = cell(nbrSamples,nbrAttributes);
         for r=1:nbrSamples
             dat{r,1} = sl.sampleNames{1,r};
-            dat{r,2} = sl.isProcessed(1,r);
+            if sl.isProcessed(1,r) == 0
+                dat(r,1) = cellfun(@(x) ['<html><table border=0 width=400 bgcolor=#FF9999><TR><TD>' x '</TD></TR> </table></html>'], dat(r,1), 'UniformOutput', false);
+            else 
+                dat(r,1) = cellfun(@(x) ['<html><table border=0 width=400 bgcolor=#99FF99><TR><TD>' x '</TD></TR> </table></html>'], dat(r,1), 'UniformOutput', false);
+            end
+%             dat{r,2} = sl.isProcessed(1,r);
+        dat{r,2} = false;
         end   
     end
     set(gui.table,'data', dat);

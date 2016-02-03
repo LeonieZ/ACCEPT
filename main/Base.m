@@ -74,7 +74,7 @@ classdef Base < handle
                                     this.io.save_sample(sample);
                                     disp(['Sample ',sample.id ,' is processed.']);  
                                 case 'No'
-                                    break
+                                   % break
                             end   
                     end
                     nrProcessed = nrProcessed + 1;
