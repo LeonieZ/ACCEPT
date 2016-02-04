@@ -125,7 +125,8 @@ function visualize(handle,~,base)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5],'string','Starting GUI')
     drawnow;
-    selectedCellsInTable = get(gui.table,'UserData');
+    cellsInTable = get(gui.table,'Data');
+    selectedCellsInTable = find([cellsInTable{:,2}] == 1)';
     if size(selectedCellsInTable,1) == 0
         msgbox('No sample selected.')
     elseif size(selectedCellsInTable,1) == 1
