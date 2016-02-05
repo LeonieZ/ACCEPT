@@ -145,6 +145,12 @@ function visualize(handle,~,base)
     else
         msgbox('Too many samples selected for visualization.');
     end
+    base.sampleList.toBeProcessed = ~base.sampleList.isProcessed;
+    dat = get(gui.table,'data');
+    for r=1:size(dat,1)
+        dat{r,2} = 0;     
+    end
+    set(gui.table,'data',dat);
     set(handle,'backg',color,'String','Visualize')
 end
 
