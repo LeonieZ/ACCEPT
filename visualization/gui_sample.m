@@ -240,7 +240,7 @@ marker_size = 30;
 GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.72 0.75 0.23]); %[left bottom width height]
 topFeatureIndex1 = 9; topFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
-                                      sampleFeatures.(topFeatureIndex2+1),marker_size,'filled','CData',rgbTriple,'ButtonDownFcn',@click_point);
+                                      sampleFeatures.(topFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
 % GuiSampleHandle.pointsTop=get(GuiSampleHandle.axesScatterTop,'Children');
 % for i=1:numel(GuiSampleHandle.pointsTop)
 % set(GuiSampleHandle.pointsTop(i),'HitTest','on','ButtonDownFcn',@(handle,event,pointNr)click_point(handle,event,i));
@@ -281,13 +281,16 @@ GuiSampleHandle.popupFeatureSelectTopIndex2 = uicontrol('Parent',GuiSampleHandle
             'Callback',{@popupFeatureTopIndex2_Callback});
         % Create push button
 GuiSampleHandle.gateScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.67 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,1)); 
-GuiSampleHandle.clearScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Clear Selection','Position', [0.2 0.67 0.15 0.03],'Callback', @clear_selection); 
+GuiSampleHandle.clearScatter = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Clear Selection','Position', [0.67 0.965 0.3 0.03],'Callback', @clear_selection); 
+GuiSampleHandle.selectSingleScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.17 0.67 0.23 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,1));         
+
+
 %----
 % create data for scatter plot in the middle
 GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.39 0.75 0.23]); %[left bottom width height]
 middleFeatureIndex1 = 9; middleFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
-                                         sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled','CData',rgbTriple,'ButtonDownFcn',@click_point);
+                                         sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
 GuiSampleHandle.popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
@@ -307,12 +310,14 @@ GuiSampleHandle.popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHan
             'Callback',{@popupFeatureMiddleIndex2_Callback});
 % create push button
 GuiSampleHandle.gateScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.34 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,2)); 
+GuiSampleHandle.selectSingleScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.17 0.34 0.23 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,2));         
+
 %----
 % create scatter plot at the bottom
 GuiSampleHandle.axesBottom = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.06 0.75 0.23]); %[left bottom width height]
 bottomFeatureIndex1 = 9; bottomFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
-                                         sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled','CData',rgbTriple,'ButtonDownFcn',@click_point);
+                                         sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
 GuiSampleHandle.popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
@@ -332,7 +337,7 @@ GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHan
             'Callback',{@popupFeatureBottomIndex2_Callback});
 % create push button
 GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.01 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,3)); 
-        
+GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.17 0.01 0.23 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
         
 
 
@@ -455,19 +460,19 @@ function plotImInAxis(im,segm,hAx,hIm)
 end
 
 % --- Helper function used in thumbnail gallery to react on user clicks
-function openSpecificImage(handle,event,row)
+function openSpecificImage(handle,~,row)
     type = get(gcf,'SelectionType');
     switch type
         case 'open' % double-click
-            im = get(gcbo,'cdata');
-            figure; imagesc(im,[0,max(max(im(im<1)))]); axis equal; axis off;
+%             im = get(gcbo,'cdata');
+%             figure; imagesc(im,[0,max(max(im(im<1)))]); axis equal; axis off;
         case 'normal' %left mouse button action
             if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
                 if strcmp(get( get(gcbo,'Parent'),'Visible'),'off')
 %                     set(gcbo,'Selected','on');
                     surroundingAx = get(gcbo,'Parent');
-                    set(surroundingAx,'XTickLabel','');
-                    set(surroundingAx,'yTickLabel','');
+                    set(surroundingAx,'XTick',[]);
+                    set(surroundingAx,'YTick',[]);
                     set(surroundingAx,'XColor',[1.0 0.5 0]);
                     set(surroundingAx,'YColor',[1.0 0.5 0]);
                     set(surroundingAx,'LineWidth',3);
@@ -484,6 +489,8 @@ function openSpecificImage(handle,event,row)
             end
         case 'extend' % shift & left mouse button action
         case 'alt' % alt & left mouse button action
+            im = get(gcbo,'cdata');
+            figure; imagesc(im,[0,max(max(im(im<1)))]); axis equal; axis off;
     end
 end
 
@@ -584,13 +591,26 @@ function clear_selection(~,~)
     plot_thumbnails(-val);
 end
 
-function click_point(handle,~)
-    parentAx = get(handle,'Parent');
-    h = impoint(parentAx);
+function select_event(~,~,plotnr)
+    if plotnr == 1
+        h = impoint(GuiSampleHandle.axesTop);
+        xtest = get(GuiSampleHandle.axesScatterTop,'XData');
+        ytest = get(GuiSampleHandle.axesScatterTop,'YData');
+    elseif plotnr == 2
+        h = impoint(GuiSampleHandle.axesMiddle);
+        xtest = get(GuiSampleHandle.axesScatterMiddle,'XData');
+        ytest = get(GuiSampleHandle.axesScatterMiddle,'YData');
+    else
+        h = impoint(GuiSampleHandle.axesBottom);
+        xtest = get(GuiSampleHandle.axesScatterBottom,'XData');
+        ytest = get(GuiSampleHandle.axesScatterBottom,'YData');
+    end
+%     parentAx = get(handle,'Parent');
+%     h = impoint(parentAx);
     pos = getPosition(h);
     pos_extended = [0.95*pos(1), 0.95*pos(2); 0.95*pos(1), 1.05*pos(2); 1.05*pos(1), 1.05*pos(2); 1.05*pos(1), 0.95*pos(2)];
-    xtest = get(handle,'XData');
-    ytest = get(handle,'YData');
+%     xtest = get(handle,'XData');
+%     ytest = get(handle,'YData');
     [in,~] = inpolygon(xtest,ytest,pos_extended(:,1),pos_extended(:,2));
     if sum(in) > 1
         indices = find(in);
