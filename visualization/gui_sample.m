@@ -280,9 +280,9 @@ GuiSampleHandle.popupFeatureSelectTopIndex2 = uicontrol('Parent',GuiSampleHandle
             'Value',topFeatureIndex2,...
             'Callback',{@popupFeatureTopIndex2_Callback});
         % Create push button
-GuiSampleHandle.gateScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.67 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,1)); 
-GuiSampleHandle.clearScatter = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Clear Selection','Position', [0.67 0.965 0.3 0.03],'Callback', @clear_selection); 
-GuiSampleHandle.selectSingleScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.17 0.67 0.23 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,1));         
+% GuiSampleHandle.gateScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.67 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,1)); 
+GuiSampleHandle.clearScatter = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Clear Selection','Position', [0.67 0.9635 0.3 0.03],'Callback', @clear_selection); 
+GuiSampleHandle.selectSingleScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.665 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,1));         
 
 
 %----
@@ -309,8 +309,8 @@ GuiSampleHandle.popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHan
             'Value',middleFeatureIndex2,...
             'Callback',{@popupFeatureMiddleIndex2_Callback});
 % create push button
-GuiSampleHandle.gateScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.34 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,2)); 
-GuiSampleHandle.selectSingleScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.17 0.34 0.23 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,2));         
+% GuiSampleHandle.gateScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.34 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,2)); 
+GuiSampleHandle.selectSingleScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.335 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,2));         
 
 %----
 % create scatter plot at the bottom
@@ -336,8 +336,8 @@ GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHan
             'Value',bottomFeatureIndex2,...
             'Callback',{@popupFeatureBottomIndex2_Callback});
 % create push button
-GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.01 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,3)); 
-GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.17 0.01 0.23 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
+% GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.01 0.01 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,3)); 
+GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.005 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
         
 
 
@@ -414,8 +414,8 @@ function plot_thumbnails(val)
             % update visual selection dependent on selectedFrames array
             if GuiSampleHandle.selectedFrames(thumbInd) == 1
 %                 set(hImages(k),'Selected','on');
-                set(hAxes(k),'XTickLabel','');
-                set(hAxes(k),'yTickLabel','');
+                set(hAxes(k),'XTick',[]);
+                set(hAxes(k),'yTick',[]);
                 set(hAxes(k),'XColor',[1.0 0.5 0]);
                 set(hAxes(k),'YColor',[1.0 0.5 0]);
                 set(hAxes(k),'LineWidth',3);
@@ -535,46 +535,46 @@ end
 % end
 
 
-function gate_scatter(~,~,plotnr)
-    if plotnr == 1
-        h = impoly(GuiSampleHandle.axesTop);
-        xtest = get(GuiSampleHandle.axesScatterTop,'XData');
-        ytest = get(GuiSampleHandle.axesScatterTop,'YData');
-    elseif plotnr == 2
-        h = impoly(GuiSampleHandle.axesMiddle);
-        xtest = get(GuiSampleHandle.axesScatterMiddle,'XData');
-        ytest = get(GuiSampleHandle.axesScatterMiddle,'YData');
-    else
-        h = impoly(GuiSampleHandle.axesBottom);
-        xtest = get(GuiSampleHandle.axesScatterBottom,'XData');
-        ytest = get(GuiSampleHandle.axesScatterBottom,'YData');
-    end
-         
-    pos = getPosition(h);
-    [in,~] = inpolygon(xtest,ytest,pos(:,1),pos(:,2));
-    GuiSampleHandle.selectedCells(in) = 1;
-    GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(in)) = 1; 
-    rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-    rgbTriple(GuiSampleHandle.selectedCells,2) = 0;
-    rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
-    % update all scatter plots with new manual clustering
-    set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
-    set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
-    set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
-    delete(h);
-    set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
-    % update view to selected thumbnail closest to current view
-    val = round(get(GuiSampleHandle.slider, 'Value'));
-    [~, index] = min(abs((-find(GuiSampleHandle.selectedFrames))-val));
-    selectedFrames = find(GuiSampleHandle.selectedFrames);
-    closestValue = selectedFrames(index(1)); 
-    plot_thumbnails(closestValue);
-    set(GuiSampleHandle.slider, 'Value',-closestValue);
-end
+% function gate_scatter(~,~,plotnr)
+%     if plotnr == 1
+%         h = impoly(GuiSampleHandle.axesTop);
+%         xtest = get(GuiSampleHandle.axesScatterTop,'XData');
+%         ytest = get(GuiSampleHandle.axesScatterTop,'YData');
+%     elseif plotnr == 2
+%         h = impoly(GuiSampleHandle.axesMiddle);
+%         xtest = get(GuiSampleHandle.axesScatterMiddle,'XData');
+%         ytest = get(GuiSampleHandle.axesScatterMiddle,'YData');
+%     else
+%         h = impoly(GuiSampleHandle.axesBottom);
+%         xtest = get(GuiSampleHandle.axesScatterBottom,'XData');
+%         ytest = get(GuiSampleHandle.axesScatterBottom,'YData');
+%     end
+%          
+%     pos = getPosition(h);
+%     [in,~] = inpolygon(xtest,ytest,pos(:,1),pos(:,2));
+%     GuiSampleHandle.selectedCells(in) = 1;
+%     GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(in)) = 1; 
+%     rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
+%     rgbTriple(GuiSampleHandle.selectedCells,2) = 0;
+%     rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
+%     rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
+%     rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
+%     rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+%     % update all scatter plots with new manual clustering
+%     set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+%     set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+%     set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
+%     delete(h);
+%     set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
+%         num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+%     % update view to selected thumbnail closest to current view
+%     val = round(get(GuiSampleHandle.slider, 'Value'));
+%     [~, index] = min(abs((-find(GuiSampleHandle.selectedFrames))-val));
+%     selectedFrames = find(GuiSampleHandle.selectedFrames);
+%     closestValue = selectedFrames(index(1)); 
+%     plot_thumbnails(closestValue);
+%     set(GuiSampleHandle.slider, 'Value',-closestValue);
+% end
 
 function clear_selection(~,~)
     GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));

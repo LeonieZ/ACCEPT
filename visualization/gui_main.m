@@ -68,7 +68,7 @@ gui.cancerid_logo = imagesc(cancerid_logo); axis off;
 % gui.subtitle = imagesc(subtitle);  axis off;
 
 gui.table_frame = uipanel('Parent',gui.fig_main, 'Units','normalized','Position',[0.34 0.1805 0.32 0.326], 'BackgroundColor', [1 1 1]);
-gui.table = uitable('Parent', gui.table_frame, 'Data', [],'ColumnName', {'Sample name','Process'},'ColumnFormat', {'char','logical'},'ColumnEditable', [false,true],'RowName',[],'Units','normalized',...
+gui.table = uitable('Parent', gui.table_frame, 'Data', [],'ColumnName', {'Sample name','Select'},'ColumnFormat', {'char','logical'},'ColumnEditable', [false,true],'RowName',[],'Units','normalized',...
     'Position', [0 0 1 1],'ColumnWidth',{0.32*0.59*0.5*gui.screensize(3) 0.32*0.39*0.5*gui.screensize(3)}, 'FontUnits','normalized', 'FontSize',0.05,'CellSelectionCallback',@(src,evnt)EditTable(src,evnt));
 
 handle = gui.fig_main;
@@ -196,7 +196,16 @@ cols=get(source,'ColumnFormat'); % get the column formats
 if ~isempty(eventdata.Indices) && strcmp(cols(eventdata.Indices(2)),'logical') % if the column of the edited cell is logical
     data{eventdata.Indices(1),eventdata.Indices(2)}=true; % set the data value to true 
 end
-set(source,'Data',data);
+% jTable = findjobj(gui.table); % hTable is the handle to the uitable object
+% jScrollPane = jTable.getComponent(0);
+% javaObjectEDT(jScrollPane); % honestly not sure if this line matters at all
+% currentViewPos = jScrollPane.getViewPosition; % save current position
+set(source,'data',data); % resets the vertical scroll to the top of the table
+% drawnow; % without this drawnow the following line appeared to do nothing
+% jScrollPane.setViewPosition(currentViewPos);% reset the scroll bar to original position
+
+
+% set(source,'Data',data);
 end
 
 function update_list(base)
