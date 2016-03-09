@@ -39,6 +39,10 @@ classdef Sample < handle
         histogram = [];
     end 
     
+    properties (SetAccess={?Loader,?IO,?MaskDetermination})
+        mask=[];
+    end
+    
     properties (Access={?IO,?Loader,?SampleOverviewLoading})
         loader
         savePath

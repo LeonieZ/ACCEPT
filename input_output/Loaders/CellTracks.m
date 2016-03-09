@@ -59,6 +59,14 @@ classdef CellTracks < Loader
             this.does_frame_have_edge(frameNr),...
             this.channelEdgeRemoval,...
             this.read_im_and_scale(frameNr,varargin{:}));
+            if ~isempty(this.sample.mask)
+                [row, col] = this.frameNr_to_row_col(frameNr);
+                [size_x_mask, size_y_mask] = size(this.sample.mask);
+                size_x_small = size_x_mask / this.sample.rows;
+                size_y_small = size_y_mask / this.sample.columns;
+                mask_extract = this.sample.mask((row - 1)*size_x_small + 1 : row * size_x_small, (col - 1)*size_y_small + 1 : col * size_y_small);
+                dataFrame.mask = imresize(mask_extract,[size(dataFrame.rawImage,1),size(dataFrame.rawImage,2)]);
+            end
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
         
@@ -69,8 +77,10 @@ classdef CellTracks < Loader
                         error('This sample contains no prior locations')
                     end
                     frameNr = this.sample.priorLocations.frameNr(thumbNr);
-                    boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
-                        [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+%                     boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
+%                         [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+                    boundingBox = {[this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)],...
+                        [this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)]};
                     dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im_and_scale(frameNr,boundingBox));
                 end
             else
@@ -78,8 +88,10 @@ classdef CellTracks < Loader
                     error('This sample contains no thumbnail locations')
                 end
                 frameNr = this.sample.results.thumbnails.frameNr(thumbNr);
-                boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
-                    [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
+%                 boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
+%                     [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
+                boundingBox = {[this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)],...
+                    [this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)]};
                 dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im_and_scale(frameNr,boundingBox));
                 %some function is needed to load any possible saved
                 %dataframes/segmentation.
@@ -180,13 +192,13 @@ classdef CellTracks < Loader
                 boundingBox={[1 this.sample.imageSize(1)],[1 this.sample.imageSize(2)]};
             else
                 %limit boundingBox to frame
-                x = boundingBox{2};
-                y = boundingBox{1};
-                x = min(x,this.sample.imageSize(2));
-                x = max(x,1);
-                y = min(y,this.sample.imageSize(1));
-                y = max(y,1);
-                boundingBox = {y,x};
+%                 x = boundingBox{1};
+%                 y = boundingBox{2};
+%                 x = min(x,this.sample.imageSize(2));
+%                 x = max(x,1);
+%                 y = min(y,this.sample.imageSize(1));
+%                 y = max(y,1);
+                boundingBox = {boundingBox{2},boundingBox{1}};
                 sizex = boundingBox{2}(2)-boundingBox{2}(1)+1;
                 sizey = boundingBox{1}(2)-boundingBox{1}(1)+1;
                 rawImage = zeros(sizey,sizex,this.sample.imageSize(3));
@@ -208,6 +220,9 @@ classdef CellTracks < Loader
 
                     % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
                     imagetemp = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
+                    if max(imagetemp) > 32767
+                        imagetemp = imagetemp - 32768;
+                    end
                     rawImage(:,:,this.channelRemapping(1,i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
                 else
                     if max(imagetemp) > 32767
@@ -361,7 +376,7 @@ classdef CellTracks < Loader
             cols = this.sample.columns;
             switch row
                 case {1,3,5} 
-                    col=(cols-(imgNr-rowthis.sample.columns));
+                    col=(cols-(imgNr-row*this.sample.columns));
                     coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
                     coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row;  
                 otherwise
@@ -386,6 +401,19 @@ classdef CellTracks < Loader
             xTopRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
             yTopRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;
             locations=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
+        end
+        
+        function [row, col]=frameNr_to_row_col(this,imgNr)
+            row = ceil(imgNr/this.sample.columns);
+            cols = this.sample.columns;
+            switch row
+                case {1,3,5} 
+                    col=imgNr-(row-1)*cols;
+%                     col=(cols-(imgNr-row*this.sample.columns));  
+                otherwise
+%                     col=imgNr-1-(row-1)*cols;
+                    col=(cols-(imgNr-1-(row-1)*this.sample.columns));
+            end
         end
         
     end

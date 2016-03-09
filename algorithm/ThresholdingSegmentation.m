@@ -88,6 +88,10 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     end
                 end
                 returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
+                sumImage = sum(returnFrame.segmentedImage,3); 
+                labels = repmat(bwlabel(sumImage,8),1,1,returnFrame.nrChannels);
+                returnFrame.labelImage = labels.*returnFrame.segmentedImage; 
+
 
             elseif isa(inputFrame,'double') || isa(inputFrame,'single') || isa(inputFrame,'uint8') || isa(inputFrame,'uint16')
                 % note: 1. in case you are using the TS function on a double/single/... image using a mask is not possible

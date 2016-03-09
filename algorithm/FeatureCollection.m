@@ -24,8 +24,39 @@ classdef FeatureCollection < SampleProcessorObject
                 for i = 1:inputSample.nrOfFrames
                     dataFrame = this.io.load_data_frame(inputSample,i);
                     this.dataProcessor.run(dataFrame);
-                    inputSample.results.features=vertcat(inputSample.results.features, dataFrame.features);
-                    %thumbnails,frameNr,coordinates,... missing
+                    objectsfoundearlier = size(inputSample.results.features,1);
+                    objectsfound = size(dataFrame.features,1);
+                    if objectsfound > 0
+                        thumbNr = array2table(linspace(objectsfoundearlier+1,objectsfoundearlier+size(dataFrame.features,1),...
+                            size(dataFrame.features,1))','VariableNames',{'ThumbNr'});
+                        dataFrame.features = [thumbNr dataFrame.features];
+                        inputSample.results.features=vertcat(inputSample.results.features, dataFrame.features);
+                        bb = struct2cell(regionprops(dataFrame.labelImage,'BoundingBox'));
+%                         xBottomLeft = cellfun(@(x) max(floor(x(2)) - round(0.2*x(5)),1),bb);
+%                         yBottomLeft = cellfun(@(x) max(floor(x(1)) - round(0.2*x(4)),1),bb);
+%                         xTopRight = cellfun(@(x) min(floor(x(2)) + round(1.2*x(5)),size(dataFrame.rawImage,1)),bb);
+%                         yTopRight = cellfun(@(x) min(floor(x(1)) + round(1.2*x(4)),size(dataFrame.rawImage,2)),bb);
+                        yBottomLeft = cellfun(@(x) max(floor(x(2)) - round(0.2*x(5)),1),bb);
+                        xBottomLeft = cellfun(@(x) max(floor(x(1)) - round(0.2*x(4)),1),bb);
+                        yTopRight = cellfun(@(x) min(floor(x(2)) + round(1.2*x(5)),size(dataFrame.rawImage,1)),bb);
+                        xTopRight = cellfun(@(x) min(floor(x(1)) + round(1.2*x(4)),size(dataFrame.rawImage,2)),bb);
+                        returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(dataFrame.frameNr * ones(size(dataFrame.features,1),1),xBottomLeft',...
+                            yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
+                        thumbnail_images = cell(1,size(dataFrame.features,1));
+                        segmentation = cell(1,size(dataFrame.features,1));
+                        for n = 1:size(dataFrame.features,1)
+%                             thumbnail_images{n} = dataFrame.rawImage(xBottomLeft(n):xTopRight(n),...
+%                                 yBottomLeft(n):yTopRight(n),:);
+%                             segmentation{n} = dataFrame.segmentedImage(xBottomLeft(n):xTopRight(n),...
+%                                 yBottomLeft(n):yTopRight(n),:);
+                            thumbnail_images{n} = dataFrame.rawImage(yBottomLeft(n):yTopRight(n),...
+                                xBottomLeft(n):xTopRight(n),:);
+                            segmentation{n} = dataFrame.segmentedImage(yBottomLeft(n):yTopRight(n),...
+                                xBottomLeft(n):xTopRight(n),:);
+                        end
+                        returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbnail_images);
+                        returnSample.results.segmentation = horzcat(returnSample.results.segmentation, segmentation);
+                    end
                 end
             elseif this.use_thumbs == 1
                 for i = 1:size(inputSample.priorLocations,1)

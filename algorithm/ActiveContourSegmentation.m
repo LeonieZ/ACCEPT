@@ -112,6 +112,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if isempty(this.single_channel) && isa(inputFrame,'Dataframe')
                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 end
+                
+                sumImage = sum(returnFrame.segmentedImage,3); 
+                labels = repmat(bwlabel(sumImage,8),1,1,returnFrame.nrChannels);
+                returnFrame.labelImage = labels.*returnFrame.segmentedImage; 
 
             elseif isa(inputFrame,'double')
                 returnFrame = false(size(inputFrame));

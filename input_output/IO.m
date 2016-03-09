@@ -63,8 +63,10 @@ classdef IO < handle
                         error('This sample contains no prior locations')
                     end
                     frameNr = sample.priorLocations.frameNr(thumbNr);
-                    boundingBox = {[sample.priorLocations.yBottomLeft(thumbNr) sample.priorLocations.yTopRight(thumbNr)],...
-                        [sample.priorLocations.xBottomLeft(thumbNr) sample.priorLocations.xTopRight(thumbNr)]};
+%                     boundingBox = {[sample.priorLocations.yBottomLeft(thumbNr) sample.priorLocations.yTopRight(thumbNr)],...
+%                         [sample.priorLocations.xBottomLeft(thumbNr) sample.priorLocations.xTopRight(thumbNr)]};
+                    boundingBox = {[sample.priorLocations.xBottomLeft(thumbNr) sample.priorLocations.xTopRight(thumbNr)],...
+                        [sample.priorLocations.yBottomLeft(thumbNr) sample.priorLocations.yTopRight(thumbNr)]};
                     outputFrame=loader.load_data_frame(frameNr,boundingBox);
                 end
             else
@@ -72,8 +74,10 @@ classdef IO < handle
                     error('This sample contains no thumbnail locations')
                 end
                 frameNr = sample.results.thumbnails.frameNr(thumbNr);
-                boundingBox = {[sample.results.thumbnails.yBottomLeft(thumbNr) sample.results.thumbnails.yTopRight(thumbNr)],...
-                    [sample.results.thumbnails.xBottomLeft(thumbNr) sample.results.thumbnails.xTopRight(thumbNr)]};
+%                 boundingBox = {[sample.results.thumbnails.yBottomLeft(thumbNr) sample.results.thumbnails.yTopRight(thumbNr)],...
+%                     [sample.results.thumbnails.xBottomLeft(thumbNr) sample.results.thumbnails.xTopRight(thumbNr)]};
+                boundingBox = {[sample.results.thumbnails.xBottomLeft(thumbNr) sample.results.thumbnails.xTopRight(thumbNr)],...
+                    [sample.results.thumbnails.yBottomLeft(thumbNr) sample.results.thumbnails.yTopRight(thumbNr)]};
 %                 if exist(this.saved_frame_path(sample,frameNr),'file');
 %                     load(this.saved_frame_path(sample,frameNr));
 %                     outputFrame=DataFrame(frameNr,currentDataFrame.frameHasEdge,...
@@ -91,11 +95,11 @@ classdef IO < handle
         end
         
         function save_sample_processor(this,smplLst,processor)
-            save([smplLst.save_path(),'processed.mat'],'processor','-append');
+            save([smplLst.save_path(),'processed.mat'],'processor','-append','-v7.3');
         end
         
         function save_sample(this,currentSample)
-            save([currentSample.savePath,filesep,'output',filesep,currentSample.id,'.mat'],'currentSample');
+            save([currentSample.savePath,filesep,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
             load([currentSample.savePath,filesep,'processed.mat'],'samplesProcessed');
             samplesProcessed=union(samplesProcessed,{currentSample.id});
             save([currentSample.savePath,filesep,'processed.mat'],'samplesProcessed','-append');
@@ -105,7 +109,7 @@ classdef IO < handle
             if ~exist([currentSample.savePath,filesep,'frames',filesep,currentSample.id],'dir')
                 mkdir([currentSample.savePath,filesep,'frames',filesep,currentSample.id]);
             end
-            save([currentSample.savePath,filesep,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame');            
+            save([currentSample.savePath,filesep,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame','-v7.3');            
         end
         
         function save_data_frame_segmentation(this,currentSample,currentDataFrame)
@@ -251,7 +255,7 @@ classdef IO < handle
                 mkdir([savepath,filesep,'output']);
                 mkdir([savepath,filesep,'frames']);
                 samplesProcessed={};
-                save([savepath filesep 'processed.mat'],'samplesProcessed');
+                save([savepath filesep 'processed.mat'],'samplesProcessed','-v7.3');
                 isProc=false(1,numel(sampleNames));
                 %isToBeProc=true(1,numel(sampleNames));
             else
