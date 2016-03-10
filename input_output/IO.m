@@ -11,7 +11,7 @@ classdef IO < handle
     end
     
     events
-        logMessage
+        LogMessage
     end
     
     methods
