@@ -405,11 +405,13 @@ function plot_thumbnails(val)
             thumbInd=thumbIndex(j);
             % obtain dataFrame from io
 %             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
-            dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd);
+%             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd);
+            rawImage = currentSample.results.thumbnail_images{thumbInd};
             segmentedImage = currentSample.results.segmentation{thumbInd};
             k = (j-1)*maxNumCols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
-            plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
+%             plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
+            plotImInAxis(rawImage,[],hAxes(k),hImages(k));
             
             % update visual selection dependent on selectedFrames array
             if GuiSampleHandle.selectedFrames(thumbInd) == 1
@@ -427,7 +429,8 @@ function plot_thumbnails(val)
             % plot image for each color channel in column 2 till nbrChannels
             for chan = 1:nbrColorChannels
                 l = ((j-1)*maxNumCols + chan + 1); 
-                plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
+%                 plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
+                plotImInAxis(rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
             end
         end
     end

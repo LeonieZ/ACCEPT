@@ -60,6 +60,8 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
 
                 if isempty(this.maskForChannels)
                     this.maskForChannels = 1:1:inputFrame.nrChannels;
+                elseif size(this.maskForChannels,2) == 1
+                    this.maskForChannels = this.maskForChannels(1) * ones(1,inputFrame.nrChannels);
                 end
                 
                 if isempty(this.histogram)
@@ -239,7 +241,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     end
                 end
             end  
-            thresh = thresh(this.maskForChannels);
+            thresh(find(this.maskForChannels ~=0)) = thresh(find(this.maskForChannels ~=0));
         end
         
     end

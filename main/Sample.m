@@ -27,10 +27,14 @@ classdef Sample < handle
         channelEdgeRemoval=4;
         dataTypeOriginalImage='uint16';
         pixelSize=1;
+%         priorLocations=[];   
+    end
+    
+    properties (SetAccess={?Loader,?IO,?TMP_Detection2}) %TMP wieder rausnehmen
         priorLocations=[];   
     end
     
-    properties (SetAccess={?Loader,?IO,?Base})
+    properties (SetAccess={?Loader,?IO,?Base,?TMP_Detection2})%TMP wieder rausnehmen
         results=Result();
     end
     

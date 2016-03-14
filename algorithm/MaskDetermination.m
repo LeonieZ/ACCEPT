@@ -4,12 +4,16 @@ classdef MaskDetermination < SampleProcessorObject
     
     properties
         channelEdgeRemoval = []
+        maxDist = 0.1;
     end
     
     methods
-        function this = DetermineMask(varargin)
-            if nargin > 0
+        function this = MaskDetermination(varargin)
+            if nargin > 0 && ~isempty(varargin{1})
                 this.channelEdgeRemoval = varargin{1};
+            end
+            if nargin > 1
+                this.maxDist = varargin{2};
             end
         end
         
@@ -23,9 +27,8 @@ classdef MaskDetermination < SampleProcessorObject
                 end
                 
                 openImg = imopen(inputSample.overviewImage(:,:,this.channelEdgeRemoval),se);
-                mask_small = regiongrowing(double(openImg)/max(double(openImg(:))), 0.1, [round(size(openImg,1)/2),round(size(openImg,2)/2)]);
-                returnSample.mask = bwmorph(~mask_small,'open');
-                
+                mask_small = regiongrowing(double(openImg)/max(double(openImg(:))), this.maxDist, [round(size(openImg,1)/2),round(size(openImg,2)/2)]);
+                returnSample.mask = bwmorph(~mask_small,'open');                
         end
     end
     

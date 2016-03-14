@@ -68,6 +68,8 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 elseif ~isempty(this.single_channel)
                     this.maskForChannels = zeros(1,inputFrame.nrChannels);
                     this.maskForChannels(this.single_channel) = this.single_channel;
+                elseif size(this.maskForChannels,2) == 1
+                    this.maskForChannels = this.maskForChannels(1) * ones(1,inputFrame.nrChannels);
                 end
 
                 if size(this.lambda,2) == 1
@@ -114,7 +116,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 end
                 
                 sumImage = sum(returnFrame.segmentedImage,3); 
-                labels = repmat(bwlabel(sumImage,8),1,1,returnFrame.nrChannels);
+                labels = repmat(bwlabel(sumImage,8),1,1,size(returnFrame.segmentedImage,3));
                 returnFrame.labelImage = labels.*returnFrame.segmentedImage; 
 
             elseif isa(inputFrame,'double')

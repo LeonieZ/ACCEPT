@@ -192,13 +192,13 @@ classdef CellTracks < Loader
                 boundingBox={[1 this.sample.imageSize(1)],[1 this.sample.imageSize(2)]};
             else
                 %limit boundingBox to frame
-%                 x = boundingBox{1};
-%                 y = boundingBox{2};
-%                 x = min(x,this.sample.imageSize(2));
-%                 x = max(x,1);
-%                 y = min(y,this.sample.imageSize(1));
-%                 y = max(y,1);
-                boundingBox = {boundingBox{2},boundingBox{1}};
+                x = boundingBox{1};
+                y = boundingBox{2};
+                x = min(x,this.sample.imageSize(2));
+                x = max(x,1);
+                y = min(y,this.sample.imageSize(1));
+                y = max(y,1);
+                boundingBox = {y,x};
                 sizex = boundingBox{2}(2)-boundingBox{2}(1)+1;
                 sizey = boundingBox{1}(2)-boundingBox{1}(1)+1;
                 rawImage = zeros(sizey,sizex,this.sample.imageSize(3));
