@@ -38,8 +38,10 @@ classdef FeatureCollection < SampleProcessorObject
 %                         yTopRight = cellfun(@(x) min(floor(x(1)) + round(1.2*x(4)),size(dataFrame.rawImage,2)),bb);
                         yBottomLeft = cellfun(@(x) min(max(floor(x(2)) - round(0.2*x(5)),1),size(dataFrame.rawImage,1)),bb);
                         xBottomLeft = cellfun(@(x) min(max(floor(x(1)) - round(0.2*x(4)),1),size(dataFrame.rawImage,2)),bb);
-                        yTopRight = cellfun(@(x) max(min(floor(x(2)) + round(1.2*x(5)),size(dataFrame.rawImage,1)),yBottomLeft+2),bb);
-                        xTopRight = cellfun(@(x) max(min(floor(x(1)) + round(1.2*x(4)),size(dataFrame.rawImage,2)),xBottomLeft+2),bb);
+                        yTopRight = cellfun(@(x) min(floor(x(2)) + round(1.2*x(5)),size(dataFrame.rawImage,1)),bb);
+                        yTopRight = max(yTopRight,yBottomLeft+2);
+                        xTopRight = cellfun(@(x) min(floor(x(1)) + round(1.2*x(4)),size(dataFrame.rawImage,2)),bb);
+                        xTopRight = max(xTopRight,xBottomLeft+2);
                         returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(dataFrame.frameNr * ones(size(dataFrame.features,1),1),xBottomLeft',...
                             yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
                         thumbnail_images = cell(1,size(dataFrame.features,1));
@@ -61,7 +63,6 @@ classdef FeatureCollection < SampleProcessorObject
             elseif this.use_thumbs == 1
                 size(inputSample.priorLocations,1)
                 for i = 1:size(inputSample.priorLocations,1)
-                    i
                     thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
                     this.dataProcessor.run(thumbFrame);
                     thumbsfoundearlier = size(returnSample.results.thumbnails,1);

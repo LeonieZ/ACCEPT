@@ -56,6 +56,8 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
 
                 if isempty(this.offset)
                     this.offset = zeros(1,inputFrame.nrChannels);
+                elseif size(this.offset,2) == 1
+                    this.offset = this.offset(1) * ones(1,inputFrame.nrChannels);
                 end
 
                 if isempty(this.maskForChannels)

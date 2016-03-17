@@ -62,8 +62,8 @@ classdef CellTracks < Loader
             if ~isempty(this.sample.mask)
                 [row, col] = this.frameNr_to_row_col(frameNr);
                 [size_x_mask, size_y_mask] = size(this.sample.mask);
-                size_x_small = size_x_mask / this.sample.rows;
-                size_y_small = size_y_mask / this.sample.columns;
+                size_x_small = round(size_x_mask / this.sample.rows);
+                size_y_small = round(size_y_mask / this.sample.columns);
                 mask_extract = this.sample.mask((row - 1)*size_x_small + 1 : row * size_x_small, (col - 1)*size_y_small + 1 : col * size_y_small);
                 dataFrame.mask = imresize(mask_extract,[size(dataFrame.rawImage,1),size(dataFrame.rawImage,2)]);
             end
@@ -117,51 +117,51 @@ classdef CellTracks < Loader
             
     end
     methods(Access=private)
-        function Dir_out = find_dir(this,Dir_in,fileExtension,numberOfFiles)
-            % function to verify in which directory the tiff files are located. There
-            % are a few combinations present in the immc databases:
-            % immc38: dirs with e.g. .1.2 have a dir "processed" in cartridge dir, dirs
-            % without "." too "171651.1.2\processed\"
-            % immc26: dirs with name of cartridge, nothing else: "172182\mic06122006e7\"
-            % imcc26: dirs with e.g. .1.2: "173765.1.1\173765.1.1\processed\"
-           
-
-            CurrentDir = Dir_in;
-
-            % count iterations, if more than 10, return with error.
-            it = 0;
-
-            % if nothing is found, return error -1
-            Dir_out = 'No dir found';
-
-            while it < 10
-                it = it + 1;
-                if numel(dir([CurrentDir filesep '*.' fileExtension])) >= numberOfFiles
-                    Dir_out = CurrentDir;
-                    break
-                else
-                    FilesDirs = dir(CurrentDir);
-                    if size(FilesDirs,1)> 2
-                        DirCount = 0;
-                        for ii = 1:size(FilesDirs,1)
-                            if FilesDirs(ii).isdir && ~strcmp(FilesDirs(ii).name, '.') && ~strcmp(FilesDirs(ii).name, '..') && ~strcmp(FilesDirs(ii).name, '.DS_Store')
-                                DirCount = DirCount + 1;
-                                NewDir = FilesDirs(ii).name;
-                            end
-                        end
-                        if DirCount == 1
-                            CurrentDir = [CurrentDir filesep NewDir];
-                        elseif DirCount == 0
-                            break
-                        else
-                            % if more than 1 directory is found, end search with error
-                            Dir_out = 'More than one dir found';
-                            break
-                        end
-                    end
-                end
-            end
-        end
+%         function Dir_out = find_dir(this,Dir_in,fileExtension,numberOfFiles)
+%             % function to verify in which directory the tiff files are located. There
+%             % are a few combinations present in the immc databases:
+%             % immc38: dirs with e.g. .1.2 have a dir "processed" in cartridge dir, dirs
+%             % without "." too "171651.1.2\processed\"
+%             % immc26: dirs with name of cartridge, nothing else: "172182\mic06122006e7\"
+%             % imcc26: dirs with e.g. .1.2: "173765.1.1\173765.1.1\processed\"
+%            
+% 
+%             CurrentDir = Dir_in;
+% 
+%             % count iterations, if more than 10, return with error.
+%             it = 0;
+% 
+%             % if nothing is found, return error -1
+%             Dir_out = 'No dir found';
+% 
+%             while it < 10
+%                 it = it + 1;
+%                 if numel(dir([CurrentDir filesep '*.' fileExtension])) >= numberOfFiles
+%                     Dir_out = CurrentDir;
+%                     break
+%                 else
+%                     FilesDirs = dir(CurrentDir);
+%                     if size(FilesDirs,1)> 2
+%                         DirCount = 0;
+%                         for ii = 1:size(FilesDirs,1)
+%                             if FilesDirs(ii).isdir && ~strcmp(FilesDirs(ii).name, '.') && ~strcmp(FilesDirs(ii).name, '..') && ~strcmp(FilesDirs(ii).name, '.DS_Store')
+%                                 DirCount = DirCount + 1;
+%                                 NewDir = FilesDirs(ii).name;
+%                             end
+%                         end
+%                         if DirCount == 1
+%                             CurrentDir = [CurrentDir filesep NewDir];
+%                         elseif DirCount == 0
+%                             break
+%                         else
+%                             % if more than 1 directory is found, end search with error
+%                             Dir_out = 'More than one dir found';
+%                             break
+%                         end
+%                     end
+%                 end
+%             end
+%         end
         
         function preload_tiff_headers(this)
             tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
@@ -255,7 +255,7 @@ classdef CellTracks < Loader
                 this.processXML();
             end
             %index=[1:this.xmlData.num_events];
-            index=find(this.xmlData.score==1);
+            index=find(this.xmlData.score==1|this.xmlData.score==2);
             if isempty(index)
                 locations=[];
             else
@@ -396,10 +396,10 @@ classdef CellTracks < Loader
                 otherwise
                     col=frameNr-1-row*this.sample.columns;
             end
-            xBottomLeft=this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col;
-            yBottomLeft=this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row;
-            xTopRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
-            yTopRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;
+            xBottomLeft=max(this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col-10,1);
+            yBottomLeft=max(this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row-10,1);
+            xTopRight=min(this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col+10,this.xmlData.camXSize);
+            yTopRight=min(this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row+10,this.xmlData.camYSize);
             locations=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
         end
         
