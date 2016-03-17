@@ -49,6 +49,7 @@ classdef Base < handle
             
             wbar = waitbar(0,'Please wait...');
             nrProcessed = 0;
+            profile on
             for k=1:nbrSamples
                 if this.sampleList.toBeProcessed(k) == 1
                     wbar_fraction = nrProcessed / sum(this.sampleList.toBeProcessed);
@@ -67,18 +68,20 @@ classdef Base < handle
                             switch choice
                                 case 'Yes'
                                     sample = this.io.load_sample(this.sampleList,k);
+                                    sample.results=Result(); 
                                     waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
                                     disp(['Processing sample ',sample.id ,'...']);
                                     this.sampleProcessor.run(sample);
                                     this.io.save_sample(sample);
                                     disp(['Sample ',sample.id ,' is processed.']);  
                                 case 'No'
-                                    break
+                                   % break
                             end   
                     end
                     nrProcessed = nrProcessed + 1;
                 end
             end
+            profile viewer
             this.busy=false;
             close(wbar)
         end

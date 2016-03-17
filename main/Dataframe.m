@@ -33,6 +33,7 @@ classdef Dataframe < handle
         adjacentFrames = [];
         preProcessedImage = [];
         segmentedImage = [];
+        labelImage = [];
         features = table();
         classificationResults = table();
         thumbnails=[];
@@ -40,9 +41,9 @@ classdef Dataframe < handle
         mask = [];
     end
     
-    properties(Dependent)
-        labelImage = [];
-    end
+%     properties(Dependent)
+%         labelImage = [];
+%     end
     
     events
         loadNeigbouringFrames
@@ -59,11 +60,11 @@ classdef Dataframe < handle
                 this.nrChannels = size(this.rawImage,3);
         end
         
-        function value = get.labelImage(this)
-            %remove doubles at boarder
-            sumImage = sum(this.segmentedImage,3); 
-            labels = repmat(bwlabel(sumImage,8),1,1,this.nrChannels);
-            value = labels.*this.segmentedImage; 
-        end
+%         function value = get.labelImage(this)
+%             %remove doubles at boarder
+%             sumImage = sum(this.segmentedImage,3); 
+%             labels = repmat(bwlabel(sumImage,8),1,1,this.nrChannels);
+%             value = labels.*this.segmentedImage; 
+%         end
     end
 end

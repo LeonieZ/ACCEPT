@@ -13,6 +13,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         adaptive_reg = 0;
     end
     
+    properties
+        clear_border = 0;
+    end
+    
     properties (Constant)
         sigma = 0.1; 
         tau = 0.1;
@@ -64,6 +68,8 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 elseif ~isempty(this.single_channel)
                     this.maskForChannels = zeros(1,inputFrame.nrChannels);
                     this.maskForChannels(this.single_channel) = this.single_channel;
+                elseif size(this.maskForChannels,2) == 1
+                    this.maskForChannels = this.maskForChannels(1) * ones(1,inputFrame.nrChannels);
                 end
 
                 if size(this.lambda,2) == 1
@@ -108,6 +114,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if isempty(this.single_channel) && isa(inputFrame,'Dataframe')
                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 end
+                
+                sumImage = sum(returnFrame.segmentedImage,3); 
+                labels = repmat(bwlabel(sumImage,8),1,1,size(returnFrame.segmentedImage,3));
+                returnFrame.labelImage = labels.*returnFrame.segmentedImage; 
 
             elseif isa(inputFrame,'double')
                 returnFrame = false(size(inputFrame));
@@ -237,7 +247,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     u_old = u;
                     arg2 =  (u + this.tau * div(p,'shift')) - this.tau/lambda_reg * ((f - mu1).^2 - (f - mu0).^2 - lambda_reg * b);
                     u = max(0, min(1,arg2));
-                    stat_u(j) = (nx*ny)^(-1) * sum(sum(sum((u - u_old).^2)));         
+                    stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2));         
 
 
 
@@ -337,7 +347,9 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 break
             end
         end
-        bin = imclearborder(bin);
+        if this.clear_border
+            bin = imclearborder(bin);
+        end
         end   
     end
     

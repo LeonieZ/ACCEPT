@@ -15,10 +15,6 @@ classdef CellTracks < Loader
         sample=Sample();
     end
     
-    events
-
-    end
-    
     methods
         function this = CellTracks(input) %pass either a sample or a path to the constructor
             if nargin == 1
@@ -63,6 +59,14 @@ classdef CellTracks < Loader
             this.does_frame_have_edge(frameNr),...
             this.channelEdgeRemoval,...
             this.read_im_and_scale(frameNr,varargin{:}));
+            if ~isempty(this.sample.mask)
+                [row, col] = this.frameNr_to_row_col(frameNr);
+                [size_x_mask, size_y_mask] = size(this.sample.mask);
+                size_x_small = round(size_x_mask / this.sample.rows);
+                size_y_small = round(size_y_mask / this.sample.columns);
+                mask_extract = this.sample.mask((row - 1)*size_x_small + 1 : row * size_x_small, (col - 1)*size_y_small + 1 : col * size_y_small);
+                dataFrame.mask = imresize(mask_extract,[size(dataFrame.rawImage,1),size(dataFrame.rawImage,2)]);
+            end
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
         
@@ -73,8 +77,10 @@ classdef CellTracks < Loader
                         error('This sample contains no prior locations')
                     end
                     frameNr = this.sample.priorLocations.frameNr(thumbNr);
-                    boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
-                        [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+%                     boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
+%                         [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+                    boundingBox = {[this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)],...
+                        [this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)]};
                     dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im_and_scale(frameNr,boundingBox));
                 end
             else
@@ -82,8 +88,10 @@ classdef CellTracks < Loader
                     error('This sample contains no thumbnail locations')
                 end
                 frameNr = this.sample.results.thumbnails.frameNr(thumbNr);
-                boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
-                    [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
+%                 boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
+%                     [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
+                boundingBox = {[this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)],...
+                    [this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)]};
                 dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im_and_scale(frameNr,boundingBox));
                 %some function is needed to load any possible saved
                 %dataframes/segmentation.
@@ -109,7 +117,52 @@ classdef CellTracks < Loader
             
     end
     methods(Access=private)
-      
+%         function Dir_out = find_dir(this,Dir_in,fileExtension,numberOfFiles)
+%             % function to verify in which directory the tiff files are located. There
+%             % are a few combinations present in the immc databases:
+%             % immc38: dirs with e.g. .1.2 have a dir "processed" in cartridge dir, dirs
+%             % without "." too "171651.1.2\processed\"
+%             % immc26: dirs with name of cartridge, nothing else: "172182\mic06122006e7\"
+%             % imcc26: dirs with e.g. .1.2: "173765.1.1\173765.1.1\processed\"
+%            
+% 
+%             CurrentDir = Dir_in;
+% 
+%             % count iterations, if more than 10, return with error.
+%             it = 0;
+% 
+%             % if nothing is found, return error -1
+%             Dir_out = 'No dir found';
+% 
+%             while it < 10
+%                 it = it + 1;
+%                 if numel(dir([CurrentDir filesep '*.' fileExtension])) >= numberOfFiles
+%                     Dir_out = CurrentDir;
+%                     break
+%                 else
+%                     FilesDirs = dir(CurrentDir);
+%                     if size(FilesDirs,1)> 2
+%                         DirCount = 0;
+%                         for ii = 1:size(FilesDirs,1)
+%                             if FilesDirs(ii).isdir && ~strcmp(FilesDirs(ii).name, '.') && ~strcmp(FilesDirs(ii).name, '..') && ~strcmp(FilesDirs(ii).name, '.DS_Store')
+%                                 DirCount = DirCount + 1;
+%                                 NewDir = FilesDirs(ii).name;
+%                             end
+%                         end
+%                         if DirCount == 1
+%                             CurrentDir = [CurrentDir filesep NewDir];
+%                         elseif DirCount == 0
+%                             break
+%                         else
+%                             % if more than 1 directory is found, end search with error
+%                             Dir_out = 'More than one dir found';
+%                             break
+%                         end
+%                     end
+%                 end
+%             end
+%         end
+        
         function preload_tiff_headers(this)
             tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
             for i=1:numel(tempImageFileNames)
@@ -139,8 +192,8 @@ classdef CellTracks < Loader
                 boundingBox={[1 this.sample.imageSize(1)],[1 this.sample.imageSize(2)]};
             else
                 %limit boundingBox to frame
-                x = boundingBox{2};
-                y = boundingBox{1};
+                x = boundingBox{1};
+                y = boundingBox{2};
                 x = min(x,this.sample.imageSize(2));
                 x = max(x,1);
                 y = min(y,this.sample.imageSize(1));
@@ -167,6 +220,9 @@ classdef CellTracks < Loader
 
                     % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
                     imagetemp = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
+                    if max(imagetemp) > 32767
+                        imagetemp = imagetemp - 32768;
+                    end
                     rawImage(:,:,this.channelRemapping(1,i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
                 else
                     if max(imagetemp) > 32767
@@ -320,7 +376,7 @@ classdef CellTracks < Loader
             cols = this.sample.columns;
             switch row
                 case {1,3,5} 
-                    col=(cols-(imgNr-rowthis.sample.columns));
+                    col=(cols-(imgNr-row*this.sample.columns));
                     coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
                     coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row;  
                 otherwise
@@ -340,11 +396,24 @@ classdef CellTracks < Loader
                 otherwise
                     col=frameNr-1-row*this.sample.columns;
             end
-            xBottomLeft=this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col;
-            yBottomLeft=this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row;
-            xTopRight=this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col;
-            yTopRight=this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row;
+            xBottomLeft=max(this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col-10,1);
+            yBottomLeft=max(this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row-10,1);
+            xTopRight=min(this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col+10,this.xmlData.camXSize);
+            yTopRight=min(this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row+10,this.xmlData.camYSize);
             locations=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
+        end
+        
+        function [row, col]=frameNr_to_row_col(this,imgNr)
+            row = ceil(imgNr/this.sample.columns);
+            cols = this.sample.columns;
+            switch row
+                case {1,3,5} 
+                    col=imgNr-(row-1)*cols;
+%                     col=(cols-(imgNr-row*this.sample.columns));  
+                otherwise
+%                     col=imgNr-1-(row-1)*cols;
+                    col=(cols-(imgNr-1-(row-1)*this.sample.columns));
+            end
         end
         
     end

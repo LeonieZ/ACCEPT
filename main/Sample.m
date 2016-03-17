@@ -27,14 +27,29 @@ classdef Sample < handle
         channelEdgeRemoval=4;
         dataTypeOriginalImage='uint16';
         pixelSize=1;
-        priorLocations=[];
-        results=Result();    
+%         priorLocations=[];   
+    end
+    
+    properties (SetAccess={?Loader,?IO,?TMP_Detection2}) %TMP wieder rausnehmen
+        priorLocations=[];   
+    end
+    
+    properties (SetAccess={?Loader,?IO,?Base,?TMP_Detection2})%TMP wieder rausnehmen
+        results=Result();
     end
     
     properties (SetAccess={?Loader,?IO,?SampleOverviewLoading})
         overviewImage=[];
         histogram = [];
     end 
+    
+    properties (SetAccess={?Loader,?IO,?SampleOverviewLoading,?MaskDetermination})
+        histogram_down = [];
+    end
+    
+    properties (SetAccess={?Loader,?IO,?MaskDetermination})
+        mask=[];
+    end
     
     properties (Access={?IO,?Loader,?SampleOverviewLoading})
         loader

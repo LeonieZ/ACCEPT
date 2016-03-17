@@ -4,9 +4,9 @@ classdef Result < handle
     properties
         features=table();
         classification=table();
-        thumbnails=[];% containing the mapping of the thumbnails. 
+        thumbnails=table();% containing the mapping of the thumbnails. 
         thumbnail_images = cell(0);
         segmentation = cell(0);
-        scoring_results = struct('name',[],'institute',[],'scores',cell(0));
+        scoring_results = struct('name',[],'institute',[],'scores',cell(0),'quality_scores',cell(0));
     end
 end

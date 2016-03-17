@@ -1,4 +1,4 @@
-classdef CTC_Marker_Characterization < SampleProcessor
+classdef Marker_Characterization < SampleProcessor
     %CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
     % Acts on preselected thumbnails, does segmentation (otsu thresholding)
     % an extracts features for every cell. No classification!
@@ -7,8 +7,8 @@ classdef CTC_Marker_Characterization < SampleProcessor
     end
     
     methods 
-        function this = CTC_Marker_Characterization()
-            this.name = 'CTC Marker Characterization';
+        function this = Marker_Characterization()
+            this.name = 'Marker Characterization';
             this.version = '0.1';
             this.io = IO();  
             this.dataframeProcessor = DataframeProcessor('Thumbnail_Analysis', this.make_dataframe_pipeline(),'0.1');
@@ -18,6 +18,7 @@ classdef CTC_Marker_Characterization < SampleProcessor
         function run(this,inputSample)
             this.pipeline{1}.run(inputSample);
             ac = ActiveContourSegmentation('adaptive', 500, 1,{'triangle','global', inputSample.histogram});
+            ac.clear_border = 1;
             this.dataframeProcessor.pipeline{1} = ac;
  
             for i = 2:numel(this.pipeline)

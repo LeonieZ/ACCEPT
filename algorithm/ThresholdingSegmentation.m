@@ -56,10 +56,14 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
 
                 if isempty(this.offset)
                     this.offset = zeros(1,inputFrame.nrChannels);
+                elseif size(this.offset,2) == 1
+                    this.offset = this.offset(1) * ones(1,inputFrame.nrChannels);
                 end
 
                 if isempty(this.maskForChannels)
                     this.maskForChannels = 1:1:inputFrame.nrChannels;
+                elseif size(this.maskForChannels,2) == 1
+                    this.maskForChannels = this.maskForChannels(1) * ones(1,inputFrame.nrChannels);
                 end
                 
                 if isempty(this.histogram)
@@ -78,13 +82,21 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                 end
                 
                 for i = 1:inputFrame.nrChannels
-                    tmp = inputFrame.rawImage(:,:,i) > this.thresholds(i);
-                    if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
-                        tmp(inputFrame.mask) = false;
+                    if any(this.maskForChannels == i)
+                        tmp = inputFrame.rawImage(:,:,this.maskForChannels(i)) > this.thresholds(i);
+                        if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
+                            tmp(inputFrame.mask) = false;
+                        end
+                        tmp = bwareaopen(tmp, 10);
+                        returnFrame.segmentedImage(:,:,i) = tmp;  
                     end
-                    tmp = bwareaopen(tmp, 10);
-                    returnFrame.segmentedImage(:,:,i) = tmp;    
                 end
+                returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
+                sumImage = sum(returnFrame.segmentedImage,3); 
+                labels = repmat(bwlabel(sumImage,8),1,1,returnFrame.nrChannels);
+                returnFrame.labelImage = labels.*returnFrame.segmentedImage; 
+
+
             elseif isa(inputFrame,'double') || isa(inputFrame,'single') || isa(inputFrame,'uint8') || isa(inputFrame,'uint16')
                 % note: 1. in case you are using the TS function on a double/single/... image using a mask is not possible
                 % 2. not for images scaled from 0 to 1.
@@ -231,7 +243,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     end
                 end
             end  
-            thresh = thresh(this.maskForChannels);
+            thresh(find(this.maskForChannels ~=0)) = thresh(find(this.maskForChannels ~=0));
         end
         
     end
