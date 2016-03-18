@@ -35,7 +35,7 @@ classdef TMP_Detection2 < SampleProcessor
                 inputSample.results.thumbnail_images(inputSample.results.features.ThumbNr(find(inputSample.results.features.ch_3_Area==0))) = [];
                 inputSample.results.thumbnails(inputSample.results.features.ThumbNr(find(inputSample.results.features.ch_3_Area==0)),:) = [];
                 inputSample.results.segmentation(inputSample.results.features.ThumbNr(find(inputSample.results.features.ch_3_Area==0))) = [];
-                inputSample.results.features(find(inputSample.results.features.ch_3_Area==0),:) = [];
+                inputSample.results.features(inputSample.results.features.ThumbNr(find(inputSample.results.features.ch_3_Area==0))) = [];
             end
             this.io.save_results_as_xls(inputSample);
         end

@@ -63,6 +63,7 @@ classdef FeatureCollection < SampleProcessorObject
             elseif this.use_thumbs == 1
                 size(inputSample.priorLocations,1)
                 for i = 1:size(inputSample.priorLocations,1)
+                    i
                     thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
                     this.dataProcessor.run(thumbFrame);
                     thumbsfoundearlier = size(returnSample.results.thumbnails,1);
@@ -72,11 +73,11 @@ classdef FeatureCollection < SampleProcessorObject
 %                       thumbNr = array2table(i*(ones(size(thumbFrame.features,1),1)),'VariableNames',{'ThumbNr'});
                         thumbFrame.features = [thumbNr thumbFrame.features];
                         if size(thumbFrame.features,1) > 0
-                            returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                             returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, returnSample.priorLocations(i,:));
                             returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
                             %delete later!?
                             returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);
+                            returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                         end
                     end
                 end
