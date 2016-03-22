@@ -26,7 +26,6 @@ classdef TMP_Detection < SampleProcessor
 %             ts = ThresholdingSegmentation('triangle','global', inputSample.histogram);
 %             this.dataframeProcessor.pipeline{1} = ts;
             this.dataframeProcessor.pipeline{1} = ac;
- 
             for i = 3:numel(this.pipeline)
                 this.pipeline{i}.run(inputSample);
             end  

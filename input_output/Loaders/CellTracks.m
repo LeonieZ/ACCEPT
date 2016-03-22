@@ -52,6 +52,7 @@ classdef CellTracks < Loader
             this.sample.results = Result();
             this.sample.overviewImage = [];
             this.sample.histogram = [];
+            this.sample.mask = [];
         end
    
         function dataFrame = load_data_frame(this,frameNr,varargin)
@@ -112,7 +113,7 @@ classdef CellTracks < Loader
                         col=i-(row-1)*cols;
                         frameOrder(row,col)=i;
                 end
-            end
+            end          
         end
             
     end
@@ -254,8 +255,11 @@ classdef CellTracks < Loader
             if isempty(this.xmlData)
                 this.processXML();
             end
+            index=[];
             %index=[1:this.xmlData.num_events];
-            index=find(this.xmlData.score==1|this.xmlData.score==2);
+            if ~isempty(this.xmlData)
+                index=find(this.xmlData.score==1|this.xmlData.score==2);
+            end
             if isempty(index)
                 locations=[];
             else
@@ -281,9 +285,10 @@ classdef CellTracks < Loader
             % determine in which directory the xml file is located.
             NoXML=0;
             this.xmlData = [];
-            
             % find directory where xml file is located in
             if isempty(this.sample.priorPath)
+                NoXML=1;
+            elseif strcmp(this.sample.priorPath,'No dir found')
                 NoXML=1;
             else
                 XMLFile = dir([this.sample.priorPath filesep '*.xml']);
@@ -343,10 +348,11 @@ classdef CellTracks < Loader
                     this.sample.rows=str2num(this.xmlData.export{2}.runs.record.numrows.Text);
                     this.xmlData.camYSize=str2num(this.xmlData.export{2}.runs.record.camysize.Text);
                     this.xmlData.camXSize=str2num(this.xmlData.export{2}.runs.record.camxsize.Text);
-                else
-                    notify(this,'logMessage',logmessage(2,['unable to read xml']));
+                end
+            else
+                    %notify(this,'logMessage',logmessage(2,['unable to read xml']));
                     %setting row and colums based on nrOfImages
-                    switch this.nrOfFrames
+                    switch this.sample.nrOfFrames
                         case 210 % 6*35 images
                             this.sample.columns=35;
                             this.sample.rows=6;
@@ -366,10 +372,10 @@ classdef CellTracks < Loader
                             this.sample.columns=35;
                             this.sample.rows=4;
                     end
-                    return
-                end
+                    
             end
         end
+       
         
         function [coordinates]=pixels_to_coordinates(this,pixelCoordinates, imgNr)
             row = ceil(imgNr/this.sample.columns) - 1;
