@@ -237,7 +237,7 @@ classdef CellTracks < Loader
         function hasEdge=does_frame_have_edge(this,frameNr)
             row = ceil(frameNr/this.sample.columns) - 1;
             switch row
-                case {0,this.sample.rows} 
+                case {0,this.sample.rows-1} 
                     hasEdge=true;
                 otherwise
                     col=frameNr-row*this.sample.columns;

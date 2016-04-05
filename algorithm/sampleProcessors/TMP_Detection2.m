@@ -11,25 +11,26 @@ classdef TMP_Detection2 < SampleProcessor
             this.name = 'TMP Detection2';
             this.version = '0.1';
             this.io = IO();  
-            this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
-            this.pipeline = this.make_sample_pipeline();
+            this.dataframeProcessor = [];
+            this.pipeline = cell(0);
         end
         
         function run(this,inputSample)
+            this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
+            this.pipeline = this.make_sample_pipeline();
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);
 %             ac = ActiveContourSegmentation('adaptive', 100, 1,{'triangle','global', inputSample.histogram});
-            ac = ActiveContourSegmentation('adaptive', 100, 1,{'triangle','global', inputSample.histogram_down});
+            ac = ActiveContourSegmentation({'adaptive',0.01,0.01}, 100, 1,{'triangle','global', inputSample.histogram_down});
             ac.clear_border = 1;
 %             ts = ThresholdingSegmentation('triangle','global', inputSample.histogram, 3,10);
             ts = ThresholdingSegmentation('triangle','global', inputSample.histogram_down, 3);
             this.dataframeProcessor.pipeline{1} = ts;
             this.pipeline{3}.run(inputSample);
-            inputSample.priorLocations = inputSample.results.thumbnails;
-            inputSample.results = Result();
             this.dataframeProcessor.pipeline{1} = ac;
-            fc = FeatureCollection(this.dataframeProcessor,this.io,1);
+            fc = FeatureCollection(this.dataframeProcessor,this.io,1,inputSample.results.thumbnails);
             this.pipeline{3} = fc;
+            this.io.clear_results(inputSample);
             this.pipeline{3}.run(inputSample); 
             if ~isempty(inputSample.results.features)
                 inputSample.results.thumbnail_images(inputSample.results.features.ThumbNr(find(inputSample.results.features.ch_3_Area==0))) = [];
@@ -38,7 +39,10 @@ classdef TMP_Detection2 < SampleProcessor
                 inputSample.results.features(find(inputSample.results.features.ch_3_Area==0),:) = [];
             end
             this.io.save_results_as_xls(inputSample);
+            this.dataframeProcessor = [];
+            this.pipeline = cell(0);
         end
+        
         
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);

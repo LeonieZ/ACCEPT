@@ -30,11 +30,11 @@ classdef Sample < handle
 %         priorLocations=[];   
     end
     
-    properties (SetAccess={?Loader,?IO,?TMP_Detection2}) %TMP wieder rausnehmen
+    properties (SetAccess={?Loader,?IO}) 
         priorLocations=[];   
     end
     
-    properties (SetAccess={?Loader,?IO,?Base,?TMP_Detection2})%TMP wieder rausnehmen
+    properties (SetAccess={?Loader,?IO,?Base})
         results=Result();
     end
     
