@@ -108,7 +108,7 @@ classdef FeatureCollection < SampleProcessorObject
 %                       thumbNr = array2table(i*(ones(size(thumbFrame.features,1),1)),'VariableNames',{'ThumbNr'});
                         thumbFrame.features = [thumbNr thumbFrame.features];
                         if size(thumbFrame.features,1) > 0
-                            returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, returnSample.priorLocations(i,:));
+                            returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, this.priorLocations(i,:));
                             returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
                             %delete later!?
                             returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);
