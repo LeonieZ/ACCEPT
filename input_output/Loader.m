@@ -31,9 +31,8 @@ classdef (Abstract) Loader < handle
             %if the current sample can be loaded by this class. 
             bool=false;
         end
-    end
-    methods(Access=protected)    
-        function Dir_out = find_dir(this,Dir_in,fileExtension,numberOfFiles)
+        
+        function [Dir_out, bool] = find_dir(Dir_in,fileExtension,numberOfFiles)
             % function to verify in which directory the tiff files are located. There
             % are a few combinations present in the immc databases:
             % immc38: dirs with e.g. .1.2 have a dir "processed" in cartridge dir, dirs
@@ -49,11 +48,13 @@ classdef (Abstract) Loader < handle
 
             % if nothing is found, return error -1
             Dir_out = 'No dir found';
-
+            bool = false;
+            
             while it < 10
                 it = it + 1;
                 if numel(dir([CurrentDir filesep '*.' fileExtension])) >= numberOfFiles
                     Dir_out = CurrentDir;
+                    bool = true;
                     break
                 else
                     FilesDirs = dir(CurrentDir);
@@ -78,6 +79,7 @@ classdef (Abstract) Loader < handle
                 end
             end
         end
+               
     end
 end
 
