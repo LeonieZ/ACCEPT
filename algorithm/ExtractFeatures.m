@@ -36,6 +36,19 @@ classdef ExtractFeatures < DataframeProcessorObject
                         tmpP2A = array2table(P2A,'VariableNames',{strcat('ch_',num2str(ch),'_P2A')});
                         returnFrame.features = [returnFrame.features tmpTable tmpStandardDeviation tmpMass tmpP2A];
                     end
+                                        
+                    for ch_one = 1:inputFrame.nrChannels
+                        for ch_two = 1:ch_one
+                            tmpTbl = table();
+                            for i = 1:this.nrObjects
+                                tmpImg = returnFrame.labelImage == i;
+                                tmpTbl = [tmpTbl; array2table(sum(sum(tmpImg(:,:,ch_one) & tmpImg(:,:,ch_two))),...
+                                    'VariableNames',{strcat('Overlay_ch_',num2str(ch_one),'_ch_',num2str(ch_two))})]; 
+                            end
+                            returnFrame.features = [returnFrame.features tmpTbl];
+                        end
+                    end
+                    
                 end
             elseif isa(inputFrame,'double')
                 if mod(size(inputFrame,3),2) ~= 0
