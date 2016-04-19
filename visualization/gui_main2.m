@@ -260,19 +260,21 @@ function update_list(base)
         end
         set(gui.table,'data', dat,'Visible','off');
         size_nd = get(gui.table,'Extent');
-        while size_nd(4) > 0.35
-            dat(end,:) = [];
-            nbrRows = size(dat,1);
-            set(gui.table,'data', dat);
-            size_nd = get(gui.table,'Extent');
+        if size_nd(4) > 0.326
+            while size_nd(4) > 0.35
+                dat(end,:) = [];
+                nbrRows = size(dat,1);
+                set(gui.table,'data', dat);
+                size_nd = get(gui.table,'Extent');
+            end
+            set(gui.table, 'Position',[(1 - size_nd(3))/2, 0.15 + (0.387 - size_nd(4))/2, size_nd(3), size_nd(4)]);  
+            slider_pos = get(gui.slider,'Position');
+            set(gui.slider,'Position',[(1 + size_nd(3))/2, 0.15 + (0.387 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
+            if nbrSamples > nbrRows
+                set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Visible','on');
+            end
         end
-        set(gui.table, 'Position',[(1 - size_nd(3))/2, 0.15 + (0.387 - size_nd(4))/2, size_nd(3), size_nd(4)]);
         set(gui.table,'Visible','on');
-        slider_pos = get(gui.slider,'Position');
-        set(gui.slider,'Position',[(1 + size_nd(3))/2, 0.15 + (0.387 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
-        if nbrSamples > nbrRows
-            set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Visible','on');
-        end
     end
 end
 
