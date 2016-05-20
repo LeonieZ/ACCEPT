@@ -19,6 +19,7 @@ classdef SampleOverviewLoading < SampleProcessorObject
             if isempty(returnSample.overviewImage)
                 loader = inputSample.loader(inputSample);
                 returnSample.histogram = zeros(65535,inputSample.imageSize(3));
+                returnSample.histogram_down = zeros(65535,inputSample.imageSize(3));
                 frameOrder = loader.calculate_frame_nr_order;
                 reducedSize = [ceil(inputSample.imageSize(1)*this.reductionFactor(1)),inputSample.imageSize(2)*this.reductionFactor(1),inputSample.imageSize(3)];
                 reducedSize = ceil(reducedSize);
@@ -30,6 +31,7 @@ classdef SampleOverviewLoading < SampleProcessorObject
                         tempImage=imresize(frame.rawImage,this.reductionFactor);
                         inputSample.overviewImage(offset(1):offset(1)+reducedSize(1)-1,offset(2):offset(2)+reducedSize(2)-1,:)=tempImage;
                         inputSample.histogram = inputSample.histogram + histc(reshape(frame.rawImage,numel(frame.rawImage)/frame.nrChannels,frame.nrChannels),1:1:65535);
+                        inputSample.histogram_down = inputSample.histogram_down + histc(reshape(tempImage,numel(tempImage)/frame.nrChannels,frame.nrChannels),1:1:65535);
                     end
                 end
             end

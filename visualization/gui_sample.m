@@ -241,6 +241,7 @@ GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','
 topFeatureIndex1 = 9; topFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                       sampleFeatures.(topFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2+1))),1)]);
 % GuiSampleHandle.pointsTop=get(GuiSampleHandle.axesScatterTop,'Children');
 % for i=1:numel(GuiSampleHandle.pointsTop)
 % set(GuiSampleHandle.pointsTop(i),'HitTest','on','ButtonDownFcn',@(handle,event,pointNr)click_point(handle,event,i));
@@ -291,6 +292,7 @@ GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units
 middleFeatureIndex1 = 9; middleFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                          sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
 GuiSampleHandle.popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
@@ -318,6 +320,7 @@ GuiSampleHandle.axesBottom = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units
 bottomFeatureIndex1 = 9; bottomFeatureIndex2 = 17;
 gca; GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
                                          sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]);
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
 GuiSampleHandle.popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
@@ -355,36 +358,42 @@ end
 function popupFeatureTopIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
     set(GuiSampleHandle.axesScatterTop,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
 end
 
 % --- Executes on selection in topFeatureIndex2 (y-axis)
 function popupFeatureTopIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
     set(GuiSampleHandle.axesScatterTop,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex1 (x-axis)
 function popupFeatureMiddleIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
     set(GuiSampleHandle.axesScatterMiddle,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex2 (y-axis)
 function popupFeatureMiddleIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
     set(GuiSampleHandle.axesScatterMiddle,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex1 (x-axis)
 function popupFeatureBottomIndex1_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
     set(GuiSampleHandle.axesScatterBottom,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex2 (y-axis)
 function popupFeatureBottomIndex2_Callback(hObject,~,~)
     selectedFeature = get(hObject,'Value');
     set(GuiSampleHandle.axesScatterBottom,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
 end
 
 % --- Executes on slider movement.
@@ -538,7 +547,10 @@ end
 % end
 
 
-function gate_scatter(~,~,plotnr)
+function gate_scatter(handle,~,plotnr)
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5])
+    drawnow;
     if plotnr == 1
         h = impoly(GuiSampleHandle.axesTop);
         xtest = get(GuiSampleHandle.axesScatterTop,'XData');
@@ -577,6 +589,7 @@ function gate_scatter(~,~,plotnr)
     closestValue = selectedFrames(index(1)); 
     plot_thumbnails(closestValue);
     set(GuiSampleHandle.slider, 'Value',-closestValue);
+    set(handle,'backg',color)
 end
 
 function clear_selection(~,~)
@@ -595,6 +608,9 @@ function clear_selection(~,~)
 end
 
 function select_event(~,~,plotnr)
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5])
+    drawnow;
     if plotnr == 1
         h = impoint(GuiSampleHandle.axesTop);
         xtest = get(GuiSampleHandle.axesScatterTop,'XData');
@@ -661,5 +677,6 @@ function select_event(~,~,plotnr)
         val = round(get(GuiSampleHandle.slider, 'Value'));
         plot_thumbnails(-val);
     end
+    set(handle,'backg',color)
 end
 end

@@ -1,4 +1,4 @@
-classdef MCBP < Loader & IcyPluginData
+classdef VyCAP < Loader & IcyPluginData
     %MCBP Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -8,7 +8,7 @@ classdef MCBP < Loader & IcyPluginData
         pixelSize=0.64
         channelNames
         channelEdgeRemoval=1;
-        sample=Sample();
+        sample
         tiffHeaders
     end
     
@@ -33,23 +33,26 @@ classdef MCBP < Loader & IcyPluginData
         end
         
         function new_sample_path(this,samplePath)
-            this.sample=Sample();
             this.sample.type = this.name;
             this.sample.loader = @MCBP;
+            [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100);
+            [this.sample.priorPath,~] = this.find_dir(samplePath,'xls',1);
             splitPath = regexp(samplePath, filesep, 'split');
             if isempty(splitPath{end})
                 this.sample.id=splitPath{end-1};
             else
                 this.sample.id=splitPath{end};
             end
+            this.preload_tiff_headers();
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
             %this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
-
-            this.preload_tiff_headers(samplePath);
-            this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
             %this.processXML();
+            this.sample.priorLocations = this.prior_locations_in_sample(this.sample);
+            this.sample.results = Result();
+            this.sample.overviewImage = [];
+            this.sample.histogram = [];
         end
         
         function dataFrame = load_data_frame(this,frameNr)
@@ -61,42 +64,23 @@ classdef MCBP < Loader & IcyPluginData
     end
    
     methods(Access=private)
-        function load_scan_info(this,samplePath)
-            [txtDir,dirFound]=Loader.find_dir(samplePath,'txt',4);
-            if dirFound
-                tempTxtFileNames = dir([txtDir filesep '*.txt']);
-                for i=1:numel(tempTxtFileNames)
-                    nameArray{i}=tempTxtFileNames(i).name;
-                end
-                test=strcmp(nameArray(:),'Parameters.txt');
-                
-            else
-                %error
+         
+        function preload_tiff_headers(this)
+            tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
+            for i=1:numel(tempImageFileNames)
+             this.sample.imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
             end
-            
-        end
-        
-        function preload_tiff_headers(this,samplePath)
-            [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',100);
-            if bool
-                tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
-                for i=1:numel(tempImageFileNames)
-                 this.sample.imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
-                end
-                %function to fill the dataP.temp.imageinfos variable
+            %function to fill the dataP.temp.imageinfos variable
 
-                for i=1:numel(this.sample.imageFileNames)
-                    this.sample.tiffHeaders{i}=imfinfo(this.sample.imageFileNames{i});
-                end
-
-                %Have to add a check for the 2^15 offset.
-                %dataP.temp.imagesHaveOffset=false;
-                this.sample.imageSize=[this.sample.tiffHeaders{1}(1).Height this.sample.tiffHeaders{1}(1).Width numel(this.sample.tiffHeaders{1})];
-                this.sample.nrOfFrames=numel(tempImageFileNames);
-                this.sample.nrOfChannels=numel(this.sample.tiffHeaders{1});
-            else
-                %throw error
+            for i=1:numel(this.sample.imageFileNames)
+                this.sample.tiffHeaders{i}=imfinfo(this.sample.imageFileNames{i});
             end
+
+            %Have to add a check for the 2^15 offset.
+            %dataP.temp.imagesHaveOffset=false;
+            this.sample.imageSize=[this.sample.tiffHeaders{1}(1).Height this.sample.tiffHeaders{1}(1).Width numel(this.sample.tiffHeaders{1})];
+            this.sample.nrOfFrames=numel(tempImageFileNames);
+            this.sample.nrOfChannels=numel(this.sample.tiffHeaders{1});
         end
         
         function rawImage=read_im_and_scale(this,imageNr,boundingBox)
@@ -152,18 +136,7 @@ classdef MCBP < Loader & IcyPluginData
         function bool = can_load_this_folder(path)
             %function that must be present in all loader types to test
             %if the current sample can be loaded by this class. 
-            
-            [txtDir,dirFound]=Loader.find_dir(path,'txt',4);
-            if dirFound
-                tempTxtFileNames = dir([txtDir filesep '*.txt']);
-                for i=1:numel(tempTxtFileNames)
-                    nameArray{i}=tempTxtFileNames(i).name;
-                end
-                test=strcmp(nameArray(:),'Parameters.txt');
-                bool=any(test);
-            else
-                bool = false;
-            end    
+            bool=false;
         end
     end
 end

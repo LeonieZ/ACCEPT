@@ -11,6 +11,12 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         single_channel = [];
         init = [];
         adaptive_reg = 0;
+        adaptive_start = 0.01;
+        adaptive_step = 0.05;
+    end
+    
+    properties
+        clear_border = 0;
     end
     
     properties
@@ -41,7 +47,13 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             if isa(lambda,'numeric')
                 this.lambda = lambda;
             elseif strcmp(lambda,'adaptive')
-                this.lambda = 0.01;
+                this.lambda = this.adaptive_start;
+%                 this.lambda = 0.01;
+                this.adaptive_reg = 1;
+            elseif isa(lambda,'cell') && strcmp(lambda{1},'adaptive') && isa(lambda{2},'numeric') && isa(lambda{3},'numeric')
+                this.adaptive_start = lambda{2};
+                this.lambda = this.adaptive_start;
+                this.adaptive_step = lambda{3};
                 this.adaptive_reg = 1;
             end
 
@@ -314,7 +326,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     go_on = 0;
 
                     for s = 1:size(stats,1)
-                        if size(stats(s).PixelIdxList,1) < 10 || stats(s).Eccentricity > 0.95
+                        if size(stats(s).PixelIdxList,1) < 3 || stats(s).Eccentricity > 0.95
                             bin(stats(s).PixelIdxList) = 0;
                         end
                         if stats(s).Solidity < 0.95
@@ -326,7 +338,8 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                 if go_on == 1
                     i = 1; j = 1;
-                    lambda_reg = lambda_reg + 0.05;
+                    lambda_reg = lambda_reg + this.adaptive_step;
+%                     lambda_reg = lambda_reg + 0.05;
                     p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
                     b = zeros(nx,ny); % dims: nx x ny , bregman variable
 

@@ -69,6 +69,12 @@ classdef IO < handle
                         [sample.priorLocations.yBottomLeft(thumbNr) sample.priorLocations.yTopRight(thumbNr)]};
                     outputFrame=loader.load_data_frame(frameNr,boundingBox);
                 end
+                if istable(option)
+                    frameNr = option.frameNr(thumbNr);
+                    boundingBox = {[option.xBottomLeft(thumbNr) option.xTopRight(thumbNr)],...
+                        [option.yBottomLeft(thumbNr) option.yTopRight(thumbNr)]};
+                    outputFrame=loader.load_data_frame(frameNr,boundingBox);
+                end
             else
                 if isempty(sample.results.thumbnails)
                     error('This sample contains no thumbnail locations')
@@ -156,6 +162,10 @@ classdef IO < handle
         
         function update_results(this,sampleList)
             this.updated_results_path(sampleList);
+        end
+        
+        function clear_results(this,currentSample)
+            currentSample.results = Result();
         end
          
     end

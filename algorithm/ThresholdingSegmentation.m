@@ -87,7 +87,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                         if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
                             tmp(inputFrame.mask) = false;
                         end
-                        tmp = bwareaopen(tmp, 10);
+                        tmp = bwareaopen(tmp, 3);
                         returnFrame.segmentedImage(:,:,i) = tmp;  
                     end
                 end

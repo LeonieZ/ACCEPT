@@ -34,8 +34,8 @@ classdef CellTracks < Loader
         function new_sample_path(this,samplePath)
             this.sample.type = this.name;
             this.sample.loader = @CellTracks;
-            this.sample.imagePath = this.find_dir(samplePath,'tif',100);
-            this.sample.priorPath = this.find_dir(samplePath,'xml',1);
+            [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100); 
+            [this.sample.priorPath,~] = this.find_dir(samplePath,'xml',1); 
             splitPath = regexp(samplePath, filesep, 'split');
             if isempty(splitPath{end})
                 this.sample.id=splitPath{end-1};
@@ -52,6 +52,7 @@ classdef CellTracks < Loader
             this.sample.results = Result();
             this.sample.overviewImage = [];
             this.sample.histogram = [];
+            this.sample.mask = [];
         end
    
         function dataFrame = load_data_frame(this,frameNr,varargin)
@@ -112,57 +113,12 @@ classdef CellTracks < Loader
                         col=i-(row-1)*cols;
                         frameOrder(row,col)=i;
                 end
-            end
+            end          
         end
             
     end
-    methods(Access=private)
-%         function Dir_out = find_dir(this,Dir_in,fileExtension,numberOfFiles)
-%             % function to verify in which directory the tiff files are located. There
-%             % are a few combinations present in the immc databases:
-%             % immc38: dirs with e.g. .1.2 have a dir "processed" in cartridge dir, dirs
-%             % without "." too "171651.1.2\processed\"
-%             % immc26: dirs with name of cartridge, nothing else: "172182\mic06122006e7\"
-%             % imcc26: dirs with e.g. .1.2: "173765.1.1\173765.1.1\processed\"
-%            
-% 
-%             CurrentDir = Dir_in;
-% 
-%             % count iterations, if more than 10, return with error.
-%             it = 0;
-% 
-%             % if nothing is found, return error -1
-%             Dir_out = 'No dir found';
-% 
-%             while it < 10
-%                 it = it + 1;
-%                 if numel(dir([CurrentDir filesep '*.' fileExtension])) >= numberOfFiles
-%                     Dir_out = CurrentDir;
-%                     break
-%                 else
-%                     FilesDirs = dir(CurrentDir);
-%                     if size(FilesDirs,1)> 2
-%                         DirCount = 0;
-%                         for ii = 1:size(FilesDirs,1)
-%                             if FilesDirs(ii).isdir && ~strcmp(FilesDirs(ii).name, '.') && ~strcmp(FilesDirs(ii).name, '..') && ~strcmp(FilesDirs(ii).name, '.DS_Store')
-%                                 DirCount = DirCount + 1;
-%                                 NewDir = FilesDirs(ii).name;
-%                             end
-%                         end
-%                         if DirCount == 1
-%                             CurrentDir = [CurrentDir filesep NewDir];
-%                         elseif DirCount == 0
-%                             break
-%                         else
-%                             % if more than 1 directory is found, end search with error
-%                             Dir_out = 'More than one dir found';
-%                             break
-%                         end
-%                     end
-%                 end
-%             end
-%         end
-        
+
+    methods(Access=private)        
         function preload_tiff_headers(this)
             tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
             for i=1:numel(tempImageFileNames)
@@ -236,7 +192,7 @@ classdef CellTracks < Loader
         function hasEdge=does_frame_have_edge(this,frameNr)
             row = ceil(frameNr/this.sample.columns) - 1;
             switch row
-                case {0,this.sample.rows} 
+                case {0,this.sample.rows-1} 
                     hasEdge=true;
                 otherwise
                     col=frameNr-row*this.sample.columns;
@@ -254,8 +210,11 @@ classdef CellTracks < Loader
             if isempty(this.xmlData)
                 this.processXML();
             end
+            index=[];
             %index=[1:this.xmlData.num_events];
-            index=find(this.xmlData.score==1|this.xmlData.score==2);
+            if ~isempty(this.xmlData)
+                index=find(this.xmlData.score==1|this.xmlData.score==2);
+            end
             if isempty(index)
                 locations=[];
             else
@@ -281,9 +240,10 @@ classdef CellTracks < Loader
             % determine in which directory the xml file is located.
             NoXML=0;
             this.xmlData = [];
-            
             % find directory where xml file is located in
             if isempty(this.sample.priorPath)
+                NoXML=1;
+            elseif strcmp(this.sample.priorPath,'No dir found')
                 NoXML=1;
             else
                 XMLFile = dir([this.sample.priorPath filesep '*.xml']);
@@ -343,10 +303,11 @@ classdef CellTracks < Loader
                     this.sample.rows=str2num(this.xmlData.export{2}.runs.record.numrows.Text);
                     this.xmlData.camYSize=str2num(this.xmlData.export{2}.runs.record.camysize.Text);
                     this.xmlData.camXSize=str2num(this.xmlData.export{2}.runs.record.camxsize.Text);
-                else
-                    notify(this,'logMessage',logmessage(2,['unable to read xml']));
+                end
+            else
+                    %notify(this,'logMessage',logmessage(2,['unable to read xml']));
                     %setting row and colums based on nrOfImages
-                    switch this.nrOfFrames
+                    switch this.sample.nrOfFrames
                         case 210 % 6*35 images
                             this.sample.columns=35;
                             this.sample.rows=6;
@@ -366,10 +327,10 @@ classdef CellTracks < Loader
                             this.sample.columns=35;
                             this.sample.rows=4;
                     end
-                    return
-                end
+                    
             end
         end
+       
         
         function [coordinates]=pixels_to_coordinates(this,pixelCoordinates, imgNr)
             row = ceil(imgNr/this.sample.columns) - 1;

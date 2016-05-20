@@ -4,6 +4,8 @@ classdef Default < Loader
     
     properties
         name='Default'
+        channelNames='Unknown' 
+        channelEdgeRemoval=1;
         hasEdges='false'
         pixelSize=1
         sample
@@ -16,6 +18,10 @@ classdef Default < Loader
         
         function dataFrame = load_data_frame(this,frameNr)
         
+        end
+        function dataFrame = load_thumb_frame(this,frameNr,option)
+        end
+        function frameOrder = calculate_frame_nr_order(this)    
         end
     end
     

@@ -11,19 +11,21 @@ classdef TMP_Detection < SampleProcessor
             this.name = 'TMP Detection';
             this.version = '0.1';
             this.io = IO();  
-            this.dataframeProcessor = DataframeProcessor('WholeImage_Analysis', this.make_dataframe_pipeline(),'0.1');
+            this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end
         
         function run(this,inputSample)
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);
-%             ac = ActiveContourSegmentation('adaptive', 100, 1,{'triangle','global', inputSample.histogram});
+%             ac = ActiveContourSegmentation(0.1, 50, 1,{'triangle','global', inputSample.histogram_down},[],3);
+            ac = ActiveContourSegmentation('adaptive', 50, 1,{'triangle','global', inputSample.histogram_down},[],3);
+            ac.clear_border = 1;
 %             this.dataframeProcessor.pipeline{1} = ac;
 %             ts = ThresholdingSegmentation('triangle','global', inputSample.histogram, [ 3 3 3 3]);
-            ts = ThresholdingSegmentation('triangle','global', inputSample.histogram);
-            this.dataframeProcessor.pipeline{1} = ts;
- 
+%             ts = ThresholdingSegmentation('triangle','global', inputSample.histogram);
+%             this.dataframeProcessor.pipeline{1} = ts;
+            this.dataframeProcessor.pipeline{1} = ac;
             for i = 3:numel(this.pipeline)
                 this.pipeline{i}.run(inputSample);
             end  

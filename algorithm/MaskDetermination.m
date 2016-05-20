@@ -28,7 +28,9 @@ classdef MaskDetermination < SampleProcessorObject
                 
                 openImg = imopen(inputSample.overviewImage(:,:,this.channelEdgeRemoval),se);
                 mask_small = regiongrowing(double(openImg)/max(double(openImg(:))), this.maxDist, [round(size(openImg,1)/2),round(size(openImg,2)/2)]);
-                returnSample.mask = bwmorph(~mask_small,'open');                
+                returnSample.mask = bwmorph(~mask_small,'open'); 
+                inputSample.histogram_down = inputSample.histogram_down - histc(reshape(inputSample.overviewImage(repmat(returnSample.mask,1,1,inputSample.nrOfChannels)),...
+                    numel(inputSample.overviewImage(repmat(returnSample.mask,1,1,inputSample.nrOfChannels)))/inputSample.nrOfChannels,inputSample.nrOfChannels),1:1:65535);
         end
     end
     
