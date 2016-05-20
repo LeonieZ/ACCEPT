@@ -117,6 +117,7 @@ classdef CellTracks < Loader
         end
             
     end
+
     methods(Access=private)        
         function preload_tiff_headers(this)
             tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);

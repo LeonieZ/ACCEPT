@@ -19,6 +19,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         clear_border = 0;
     end
     
+    properties
+        clear_border = 0;
+    end
+    
     properties (Constant)
         sigma = 0.1; 
         tau = 0.1;
