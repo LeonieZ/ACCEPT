@@ -58,23 +58,41 @@ classdef MCBP < Loader & IcyPluginData
         end
         function frameOrder = calculate_frame_nr_order(this)
         end
-    end
-   
-    methods(Access=private)
         function load_scan_info(this,samplePath)
+            %find text files to extract metadata
             [txtDir,dirFound]=Loader.find_dir(samplePath,'txt',4);
             if dirFound
+                %When files are found check their names
                 tempTxtFileNames = dir([txtDir filesep '*.txt']);
                 for i=1:numel(tempTxtFileNames)
                     nameArray{i}=tempTxtFileNames(i).name;
                 end
-                test=strcmp(nameArray(:),'Parameters.txt');
-                
+                                
+                bool=strcmp(nameArray(:),'Parameters.txt')
+                %Try and open Parameters.txt
+                if bool
+                    fid=fopen(strcat(txtDir,filesep,'Parameters.txt'))
+                    tline = fgetl(fid);
+                    i=1;
+                    while ischar(tline)
+                        parameters{i}=tline;
+                        tline = fgetl(fid);
+                        i=i+1;
+                    end
+                    fclose(fid);
+                    filtersUsed=dlmread(strcat(txtDir,filesep,'Used Filters.txt'),'\t');
+                    
+               end
+               keyboard
             else
                 %error
             end
             
         end
+    end
+   
+    methods(Access=private)
+
         
         function preload_tiff_headers(this,samplePath)
             [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',100);
