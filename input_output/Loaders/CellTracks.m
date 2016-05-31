@@ -383,18 +383,16 @@ classdef CellTracks < Loader
         function bool = can_load_this_folder(path)
             %function that must be present in all loader types to test
             %if the current sample can be loaded by this class. 
-            bool=true;
-%                         %check if image is CellTracks image
-%             try tags=dataP.temp.imageinfos{1}(1).UnknownTags;
-%                 for i=1:numel(tags)
-%                     if tags(i).ID==754
-%                         dataP.temp.imagesAreFromCT=true;
-%                     end
-%                 end
-%             catch dataP.temp.imagesAreFromCT=false;
-%             end
+            splitPath = regexp(path, filesep, 'split');
+            if isempty(splitPath{end})
+                id=splitPath{end-1};
+            else
+                id=splitPath{end};
+            end
+            name=strsplit(id,'.');
+            test=exist(strcat(path,filesep,name{1},'.xml'),'file');
+            bool=(test==2);
         end
- 
     end
 end
 
