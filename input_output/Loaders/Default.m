@@ -24,6 +24,13 @@ classdef Default < Loader
         function frameOrder = calculate_frame_nr_order(this)    
         end
     end
-    
+    methods(Static)
+        function bool = can_load_this_folder(path)
+            %function that must be present in all loader types to test
+            %if the current sample can be loaded by this class.         
+                bool = true;
+        end    
+    end
 end
+
 

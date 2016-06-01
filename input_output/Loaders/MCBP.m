@@ -166,6 +166,7 @@ classdef MCBP < Loader & IcyPluginData
             end
         end
     end
+    
     methods(Static)
         function bool = can_load_this_folder(path)
             %function that must be present in all loader types to test

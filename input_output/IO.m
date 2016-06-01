@@ -231,10 +231,13 @@ classdef IO < handle
         function loaderHandle=check_sample_type(this,samplePath)
             %Checks which loader types can load the sample path and chooses
             %the first one on the list. 
-            for i=1:numel(this.loaderTypesAvailable)
-                canLoad(i) = this.loaderTypesAvailable{i}.can_load_this_folder(samplePath);
+            loaderFound=false;
+            i=0;
+            while ~loaderFound
+                i=i+1; 
+                loaderFound = this.loaderTypesAvailable{i}.can_load_this_folder(samplePath);
             end
-            loaderHandle=this.loaderTypesAvailable{find(canLoad,1)};
+            loaderHandle=this.loaderTypesAvailable{i};
         end
         
         function [sampleNames,loaderUsed]=available_samples(this,inputPath)
@@ -254,6 +257,7 @@ classdef IO < handle
                 sampleNames{i}=samples(i).name;
                 loaderUsed{i}=this.check_sample_type([inputPath,filesep,samples(i).name]);
             end
+
         end
         
         function [isProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames)
