@@ -46,12 +46,11 @@ classdef MCBP < Loader & IcyPluginData
             end
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
-            %this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
             this.load_scan_info(samplePath);
             this.preload_tiff_headers(samplePath);
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
-            %this.processXML();
+
         end
         
         function dataFrame = load_data_frame(this,frameNr,varargin)
@@ -70,7 +69,7 @@ classdef MCBP < Loader & IcyPluginData
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
 
-        function dataFrame = load_thumb_frame(this,frameNr,option)
+        function dataFrame = load_thumb_frame(this,thumbNr,option)
             if exist('option','var')
                 if strcmp('prior',option)
                     if isempty(this.sample.priorLocations)
