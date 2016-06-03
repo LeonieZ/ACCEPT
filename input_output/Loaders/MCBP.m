@@ -6,10 +6,12 @@ classdef MCBP < Loader & IcyPluginData
         name='MCBP'
         hasEdges='false'
         pixelSize=0.64
-        channelNames
+        channelNames={'PerCP','DAPI','PE','Marker'}
         channelEdgeRemoval=1;
         sample=Sample();
+        channelRemapping;
         tiffHeaders
+        filtersUsed
     end
     
     events
@@ -46,18 +48,67 @@ classdef MCBP < Loader & IcyPluginData
             this.sample.hasEdges = this.hasEdges;
             %this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
-
+            this.load_scan_info(samplePath);
             this.preload_tiff_headers(samplePath);
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
             %this.processXML();
         end
         
-        function dataFrame = load_data_frame(this,frameNr)
+        function dataFrame = load_data_frame(this,frameNr,varargin)
+            dataFrame = Dataframe(frameNr,...
+            this.does_frame_have_edge(frameNr),...
+            this.channelEdgeRemoval,...
+            this.read_im(frameNr,varargin{:}));
+            if ~isempty(this.sample.mask)
+                [row, col] = this.frameNr_to_row_col(frameNr);
+                [size_x_mask, size_y_mask] = size(this.sample.mask);
+                size_x_small = round(size_x_mask / this.sample.rows);
+                size_y_small = round(size_y_mask / this.sample.columns);
+                mask_extract = this.sample.mask((row - 1)*size_x_small + 1 : row * size_x_small, (col - 1)*size_y_small + 1 : col * size_y_small);
+                dataFrame.mask = imresize(mask_extract,[size(dataFrame.rawImage,1),size(dataFrame.rawImage,2)]);
+            end
+            addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
+
         function dataFrame = load_thumb_frame(this,frameNr,option)
+            if exist('option','var')
+                if strcmp('prior',option)
+                    if isempty(this.sample.priorLocations)
+                        error('This sample contains no prior locations')
+                    end
+                    frameNr = this.sample.priorLocations.frameNr(thumbNr);
+%                     boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
+%                         [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+                    boundingBox = {[this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)],...
+                        [this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)]};
+                    dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im(frameNr,boundingBox));
+                end
+            else
+                if isempty(this.sample.results.thumbnails)
+                    error('This sample contains no thumbnail locations')
+                end
+                frameNr = this.sample.results.thumbnails.frameNr(thumbNr);
+%                 boundingBox = {[this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)],...
+%                     [this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)]};
+                boundingBox = {[this.sample.results.thumbnails.xBottomLeft(thumbNr) this.sample.results.thumbnails.xTopRight(thumbNr)],...
+                    [this.sample.results.thumbnails.yBottomLeft(thumbNr) this.sample.results.thumbnails.yTopRight(thumbNr)]};
+                dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im(frameNr,boundingBox));
+                %some function is needed to load any possible saved
+                %dataframes/segmentation.
+            end
         end
         function frameOrder = calculate_frame_nr_order(this)
+            frameOrder=zeros(this.sample.rows,this.sample.columns);
+            for i=1:this.sample.nrOfFrames
+                row = ceil(i/this.sample.columns);
+                cols = this.sample.columns;
+                col=i-(row-1)*cols;
+                frameOrder(row,col)=i;
+            end 
         end
+    end
+   
+    methods(Access=private)
         function load_scan_info(this,samplePath)
             %find text files to extract metadata
             [txtDir,dirFound]=Loader.find_dir(samplePath,'txt',4);
@@ -68,10 +119,11 @@ classdef MCBP < Loader & IcyPluginData
                     nameArray{i}=tempTxtFileNames(i).name;
                 end
                                 
-                bool=strcmp(nameArray(:),'Parameters.txt')
+                bool=strcmp(nameArray(:),'Parameters.txt');
                 %Try and open Parameters.txt
-                if bool
-                    fid=fopen(strcat(txtDir,filesep,'Parameters.txt'))
+                i=find(bool,true);
+                if bool(i)
+                    fid=fopen(strcat(txtDir,filesep,'Parameters.txt'));
                     tline = fgetl(fid);
                     i=1;
                     while ischar(tline)
@@ -80,44 +132,49 @@ classdef MCBP < Loader & IcyPluginData
                         i=i+1;
                     end
                     fclose(fid);
-                    filtersUsed=dlmread(strcat(txtDir,filesep,'Used Filters.txt'),'\t');
-                    
+                    tempFiltersUsed=dlmread(strcat(txtDir,filesep,'Used Filters.txt'),'\t');
+                    this.filtersUsed=find(tempFiltersUsed==true);
+                end
+               this.sample.columns=str2num(parameters{29}(19:end));
+               this.sample.rows=str2num(parameters{30}(19:end));
+               this.channelNames{1}=parameters{31}(11:end);
+               this.channelNames{2}=parameters{32}(11:end);
+               this.channelNames{3}=parameters{33}(11:end);
+               this.channelNames{4}=parameters{34}(11:end);
+               this.channelRemapping(strcmp(this.channelNames,'PerCP'))=1;
+               this.channelRemapping(strcmp(this.channelNames,'DAPI'))=2;
+               this.channelRemapping(strcmp(this.channelNames,'PE'))=3;
+               this.channelRemapping(10-sum(this.channelRemapping(1:3)))=4;
+               if ~(sum(this.channelRemapping(1:4))==10)
+                   %error
                end
-               keyboard
             else
                 %error
             end
-            
         end
-    end
-   
-    methods(Access=private)
-
         
         function preload_tiff_headers(this,samplePath)
-            [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',100);
+            [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',100);    
             if bool
-                tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
-                for i=1:numel(tempImageFileNames)
-                 this.sample.imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+                for j=1:numel(this.filtersUsed)
+                    tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{this.filtersUsed(j)} '*.tif']);
+                    for i=1:numel(tempImageFileNames)
+                        this.sample.imageFileNames{i}{j} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+                        this.sample.tiffHeaders{i}{j}=imfinfo(this.sample.imageFileNames{i}{j});
+                    end
+                    %function to fill the dataP.temp.imageinfos variable
                 end
-                %function to fill the dataP.temp.imageinfos variable
-
-                for i=1:numel(this.sample.imageFileNames)
-                    this.sample.tiffHeaders{i}=imfinfo(this.sample.imageFileNames{i});
-                end
-
-                %Have to add a check for the 2^15 offset.
-                %dataP.temp.imagesHaveOffset=false;
-                this.sample.imageSize=[this.sample.tiffHeaders{1}(1).Height this.sample.tiffHeaders{1}(1).Width numel(this.sample.tiffHeaders{1})];
+         %Have to add a check for the 2^15 offset.
+                    %dataP.temp.imagesHaveOffset=false;
+                this.sample.imageSize=[this.sample.tiffHeaders{1}{1}(1).Height this.sample.tiffHeaders{1}{1}(1).Width numel(this.filtersUsed)];
                 this.sample.nrOfFrames=numel(tempImageFileNames);
-                this.sample.nrOfChannels=numel(this.sample.tiffHeaders{1});
+                this.sample.nrOfChannels=numel(this.filtersUsed);
             else
                 %throw error
             end
         end
         
-        function rawImage=read_im_and_scale(this,imageNr,boundingBox)
+        function rawImage=read_im(this,imageNr,boundingBox)
             % use the previously gathered imageinfo and read all images in a multipage
             % tiff. read only one channel if a channel is specified. Rescale and
             % stretch values and rescale to approx old values if the image is a
@@ -141,29 +198,46 @@ classdef MCBP < Loader & IcyPluginData
             end
             for i=1:this.sample.nrOfChannels;
                 try
-                    imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr}));
+                    imagetemp = double(imread(this.sample.imageFileNames{imageNr}{i},'info',this.sample.tiffHeaders{imageNr}{i}));
                 catch
                     notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr}, 'from channel ' num2str(i) ' is not readable!'])) ;
                     return
                 end
-                if  this.rescaleTiffs 
-                    
-                    UnknownTags = this.sample.tiffHeaders{imageNr}(i).UnknownTags;
-
-                    LowValue  =  UnknownTags(2).Value;
-                    HighValue =  UnknownTags(3).Value;
-
-
-                    % scale tiff back to "pseudo 12-bit". More advanced scaling necessary? 
-                    imagetemp = LowValue + imagetemp * ((HighValue-LowValue)/max(imagetemp(:)));
-                    rawImage(:,:,this.channelRemapping(1,i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
-                else
-                    if max(imagetemp) > 32767
-                        imagetemp = imagetemp - 32768;
-                    end
-                    rawImage(:,:,this.channelRemapping(1,i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
+                if max(imagetemp) > 32767
+                    imagetemp = imagetemp - 32768;
                 end
+                
+                rawImage(:,:,this.channelRemapping(i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
+                
             end
+        end
+        
+        function hasEdge=does_frame_have_edge(this,frameNr)
+            row = ceil(frameNr/this.sample.columns) - 1;
+            switch row
+                case {0,this.sample.rows-1} 
+                    hasEdge=true;
+                otherwise
+                    col=frameNr-row*this.sample.columns;
+                    if col==this.sample.columns
+                        hasEdge=true;
+                    elseif col==1
+                        hasEdge=true;
+                    else
+                        hasEdge=false;
+                    end 
+            end
+        end
+        
+        function load_neighbouring_frames(this,sourceFrame,~)
+            % to be implemented
+            neigbouring_frames=this.calculate_neighbouring_frames(sourceFrame.frameNr);
+        
+        end
+        
+        function neigbouring_frames=calculate_neigbouring_frames(this,frameNr)
+            % to be implemented
+            neigbouring_frames=[1,2,3];
         end
     end
     
