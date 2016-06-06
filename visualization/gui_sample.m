@@ -343,7 +343,10 @@ GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter
 GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.003 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
         
 
-
+%% Create export button----
+% export gates as manual classification
+GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Export Gates','FontUnits', 'normalized',...
+            'FontSize',.32,'Position', [0.023 0.925 0.1 0.06],'Callback', {@export_gates}); 
                                 
 %% Callback and helper functions
 
@@ -510,22 +513,6 @@ end
 function updateScatterPlots(pos,booleanOnOff)
     GuiSampleHandle.selectedFrames(pos) = booleanOnOff;
     GuiSampleHandle.selectedCells(sampleFeatures.ThumbNr == pos) = booleanOnOff;
-    
-%     %disp(['Scatter plot should be marked resp. unmarked with row/thumb ' num2str(pos) ' here']);
-%     % create RGB triple for scatter plots, assumption: two clusters red/blue
-% %     numberScatterPoints = size(get(GuiSampleHandle.axesScatterTop,'XData'),2);
-% %     rgbTriple = repmat([0 0 1],[numberScatterPoints,1]);
-%     selectedThumbIndices = find(GuiSampleHandle.selectedFrames);
-%     counterSelectedCells = 0;
-%     GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
-%     for t = 1:numel(selectedThumbIndices)
-%         selThumb = selectedThumbIndices(t);
-%         GuiSampleHandle.selectedCells = GuiSampleHandle.selectedCells + (sampleFeatures.ThumbNr == selThumb);
-% %         rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-% %         rgbTriple(GuiSampleHandle.selectedCells,2) = 0;
-% %         rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-%         counterSelectedCells = counterSelectedCells + sum(GuiSampleHandle.selectedCells);
-%     end
     rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
     rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
     rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
@@ -540,11 +527,6 @@ function updateScatterPlots(pos,booleanOnOff)
     set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
         num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
 end
-
-% --- Helper function used in thumbnail gallery to react on user clicks
-% function clickScatterPoint(handle,event)
-%     disp(['Selected scatter point ',num2str(pointIndex)])
-% end
 
 
 function gate_scatter(handle,~,plotnr)
@@ -607,7 +589,7 @@ function clear_selection(~,~)
     plot_thumbnails(-val);
 end
 
-function select_event(~,~,plotnr)
+function select_event(handle,~,plotnr)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
@@ -624,12 +606,9 @@ function select_event(~,~,plotnr)
         xtest = get(GuiSampleHandle.axesScatterBottom,'XData');
         ytest = get(GuiSampleHandle.axesScatterBottom,'YData');
     end
-%     parentAx = get(handle,'Parent');
-%     h = impoint(parentAx);
     pos = getPosition(h);
-    pos_extended = [0.95*pos(1), 0.95*pos(2); 0.95*pos(1), 1.05*pos(2); 1.05*pos(1), 1.05*pos(2); 1.05*pos(1), 0.95*pos(2)];
-%     xtest = get(handle,'XData');
-%     ytest = get(handle,'YData');
+%     pos_extended = [0.95*pos(1), 0.95*pos(2); 0.95*pos(1), 1.05*pos(2); 1.05*pos(1), 1.05*pos(2); 1.05*pos(1), 0.95*pos(2)];
+    pos_extended = [pos(1)-10, pos(2)-10; pos(1)-10, pos(2)+10; pos(1)+10, pos(2)+10; pos(1)+10, pos(2)-10];
     [in,~] = inpolygon(xtest,ytest,pos_extended(:,1),pos_extended(:,2));
     if sum(in) > 1
         indices = find(in);
@@ -657,7 +636,7 @@ function select_event(~,~,plotnr)
         set(GuiSampleHandle.slider, 'Value',-sampleFeatures.ThumbNr(in));
     else
         GuiSampleHandle.selectedCells(in) = 0;
-        if isempty(find(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells) == sampleFeatures.ThumbNr(in), 1))
+        if ~isempty(GuiSampleHandle.selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells) == sampleFeatures.ThumbNr(in), 1))
             GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(in)) = 0; 
         end
         rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
@@ -678,5 +657,31 @@ function select_event(~,~,plotnr)
         plot_thumbnails(-val);
     end
     set(handle,'backg',color)
+end
+
+function export_gates(~,~)
+    set(0,'defaultUicontrolFontSize', 14)
+    exist = true;
+    name = inputdlg({''},...
+        'Please enter a name for your manual selection.', [1,75],{''},'on');
+    classes = currentSample.results.classification.Properties.VariableNames;
+    while exist 
+        [exist,loc] = ismember(name,classes);
+        if exist
+            choice = questdlg('There exists a classification with this name. Do you want to overwrite it?', ...
+                                    'Error', 'Yes','No','No');
+            switch choice
+                case 'Yes'
+                    currentSample.results.classification(:,loc) = [];
+                    exist = false;
+                case 'No'
+                    name = inputdlg({''},...
+                        'Please enter a new name for your manual selection.', [1,75],{''},'on');            
+            end
+        end
+    end
+    currentSample.results.classification = [currentSample.results.classification array2table(GuiSampleHandle.selectedCells,'VariableNames',{name{1}})];
+    base.io.save_sample(currentSample);
+    set(0,'defaultUicontrolFontSize', 12)
 end
 end

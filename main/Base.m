@@ -51,8 +51,10 @@ classdef Base < handle
             nrProcessed = 0;
             profile on
             if ~isempty(find(this.sampleList.isProcessed(find(this.sampleList.toBeProcessed)))) %#ok<EFIND,FNDSB>
+                set(0,'defaultUicontrolFontSize', 14)
                 choice = questdlg('Some selected samples are already processed. Do you want to process them again?', ...
                                 'Processed Sample', 'Yes','No','No');
+                set(0,'defaultUicontrolFontSize', 12)
                 switch choice
                     case 'Yes'
                         for k=1:nbrSamples
