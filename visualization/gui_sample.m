@@ -343,10 +343,13 @@ GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter
 GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.003 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
         
 
-%% Create export button----
+%% Create export/load button----
 % export gates as manual classification
-GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Export Gates','FontUnits', 'normalized',...
-            'FontSize',.32,'Position', [0.023 0.925 0.1 0.06],'Callback', {@export_gates}); 
+GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Export Selection','FontUnits', 'normalized',...
+            'FontSize',.5,'Position', [0.023 0.925 0.125 0.04],'Callback', {@export_gates}); 
+% load gates as manual classification
+GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Load Selection','FontUnits', 'normalized',...
+            'FontSize',.5,'Position', [0.15 0.925 0.12 0.04],'Callback', {@load_gates}); 
                                 
 %% Callback and helper functions
 
@@ -683,5 +686,53 @@ function export_gates(~,~)
     currentSample.results.classification = [currentSample.results.classification array2table(GuiSampleHandle.selectedCells,'VariableNames',{name{1}})];
     base.io.save_sample(currentSample);
     set(0,'defaultUicontrolFontSize', 12)
+end
+
+function load_gates(~,~)
+    classes = currentSample.results.classification.Properties.VariableNames;
+    if isempty(classes)
+        msgbox('No prior selection avaliable.')
+    elseif size(classes,2)==1
+        GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
+        GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
+        GuiSampleHandle.selectedCells = currentSample.results.classification{:,1};
+        GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells)) = 1; 
+        rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
+        rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
+        rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
+        rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
+        rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
+        rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+        set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+        set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+        set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
+        set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
+        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+        val = round(get(GuiSampleHandle.slider, 'Value'));
+        plot_thumbnails(-val);      
+    else
+        [s,v] = listdlg('PromptString',[{'There are multiple prior selections available. Please select one:'} {''}],...
+                'SelectionMode','single',...
+                'ListString',classes,'ListSize',[250,150]);
+        if v == 1
+            GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
+            GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
+            GuiSampleHandle.selectedCells = currentSample.results.classification{:,s};
+            GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells)) = 1; 
+            rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
+            rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
+            rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
+            rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
+            rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
+            rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+            set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+            set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+            set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
+            set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
+            num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+            val = round(get(GuiSampleHandle.slider, 'Value'));
+            plot_thumbnails(-val); 
+        end
+    end
 end
 end
