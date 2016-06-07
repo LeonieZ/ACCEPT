@@ -25,6 +25,7 @@ classdef MCBP < Loader & IcyPluginData
                 if isa(input,'Sample')
                     if strcmp(input.type,this.name)
                         this.sample=input;
+                        this.load_scan_info(this.sample.priorPath);
                     else
                     error('tried to use incorrect sampletype with CellTracks Loader');
                     end
@@ -111,6 +112,7 @@ classdef MCBP < Loader & IcyPluginData
         function load_scan_info(this,samplePath)
             %find text files to extract metadata
             [txtDir,dirFound]=Loader.find_dir(samplePath,'txt',4);
+            this.sample.priorPath=samplePath;
             if dirFound
                 %When files are found check their names
                 tempTxtFileNames = dir([txtDir filesep '*.txt']);
@@ -200,8 +202,13 @@ classdef MCBP < Loader & IcyPluginData
                 try
                     imagetemp = double(imread(this.sample.imageFileNames{imageNr,i},'info',this.sample.tiffHeaders{imageNr,i}));
                 catch
-                    notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr,i}, 'from channel ' num2str(i) ' is not readable!'])) ;
-                    return
+                    if imageNr>0
+                        notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr,i}, 'from channel ' num2str(i) ' is not readable!'])) ;
+                        return
+                    else
+                        notify(this,'logMessage',LogMessage(2,['Tiff', ' is missing or is not readable!'])) ;
+                        return
+                    end
                 end
                 if max(imagetemp) > 32767
                     imagetemp = imagetemp - 32768;
