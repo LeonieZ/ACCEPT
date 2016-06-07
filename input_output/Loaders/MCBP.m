@@ -9,7 +9,7 @@ classdef MCBP < Loader & IcyPluginData
         channelNames={'PerCP','DAPI','PE','Marker'}
         channelEdgeRemoval=1;
         sample=Sample();
-        channelRemapping;
+        channelRemapping=[];
         tiffHeaders
         filtersUsed
     end
@@ -76,10 +76,10 @@ classdef MCBP < Loader & IcyPluginData
                         error('This sample contains no prior locations')
                     end
                     frameNr = this.sample.priorLocations.frameNr(thumbNr);
-%                     boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
-%                         [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
-                    boundingBox = {[this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)],...
-                        [this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)]};
+                    boundingBox = {[this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)],...
+                         [this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)]};
+%                    boundingBox = {[this.sample.priorLocations.xBottomLeft(thumbNr) this.sample.priorLocations.xTopRight(thumbNr)],...
+%                        [this.sample.priorLocations.yBottomLeft(thumbNr) this.sample.priorLocations.yTopRight(thumbNr)]};
                     dataFrame=Dataframe(thumbNr,false,this.channelEdgeRemoval,this.read_im(frameNr,boundingBox));
                 end
             else
@@ -140,10 +140,11 @@ classdef MCBP < Loader & IcyPluginData
                this.channelNames{2}=parameters{32}(11:end);
                this.channelNames{3}=parameters{33}(11:end);
                this.channelNames{4}=parameters{34}(11:end);
+               this.channelRemapping=[0,0,0,0];
                this.channelRemapping(strcmp(this.channelNames,'PerCP'))=1;
                this.channelRemapping(strcmp(this.channelNames,'DAPI'))=2;
                this.channelRemapping(strcmp(this.channelNames,'PE'))=3;
-               this.channelRemapping(10-sum(this.channelRemapping(1:3)))=4;
+               this.channelRemapping(this.channelRemapping==0)=4;
                if ~(sum(this.channelRemapping(1:4))==10)
                    %error
                end
@@ -156,16 +157,16 @@ classdef MCBP < Loader & IcyPluginData
             [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',100);    
             if bool
                 for j=1:numel(this.filtersUsed)
-                    tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{this.filtersUsed(j)} '*.tif']);
+                    tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{this.filtersUsed(j)} '.tif']);
                     for i=1:numel(tempImageFileNames)
-                        this.sample.imageFileNames{i}{j} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
-                        this.sample.tiffHeaders{i}{j}=imfinfo(this.sample.imageFileNames{i}{j});
+                        this.sample.imageFileNames{i,j} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+                        this.sample.tiffHeaders{i,j}=imfinfo(this.sample.imageFileNames{i,j});
                     end
                     %function to fill the dataP.temp.imageinfos variable
                 end
          %Have to add a check for the 2^15 offset.
                     %dataP.temp.imagesHaveOffset=false;
-                this.sample.imageSize=[this.sample.tiffHeaders{1}{1}(1).Height this.sample.tiffHeaders{1}{1}(1).Width numel(this.filtersUsed)];
+                this.sample.imageSize=[this.sample.tiffHeaders{1,1}(1).Height this.sample.tiffHeaders{1,1}(1).Width numel(this.filtersUsed)];
                 this.sample.nrOfFrames=numel(tempImageFileNames);
                 this.sample.nrOfChannels=numel(this.filtersUsed);
             else
@@ -197,15 +198,14 @@ classdef MCBP < Loader & IcyPluginData
             end
             for i=1:this.sample.nrOfChannels;
                 try
-                    imagetemp = double(imread(this.sample.imageFileNames{imageNr}{i},'info',this.sample.tiffHeaders{imageNr}{i}));
+                    imagetemp = double(imread(this.sample.imageFileNames{imageNr,i},'info',this.sample.tiffHeaders{imageNr,i}));
                 catch
-                    notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr}, 'from channel ' num2str(i) ' is not readable!'])) ;
+                    notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr,i}, 'from channel ' num2str(i) ' is not readable!'])) ;
                     return
                 end
                 if max(imagetemp) > 32767
                     imagetemp = imagetemp - 32768;
                 end
-                
                 rawImage(:,:,this.channelRemapping(i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
                 
             end

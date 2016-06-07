@@ -9,16 +9,16 @@ classdef IcyPluginData < handle
         function locations=prior_locations_in_sample(this,samplePath)
             locations=[];
             [sample.priorPath,bool]=this.find_dir(samplePath,'xls',1);
-            thumbSize=[50,50];
+            thumbSize=[64,64];
             if bool==1 
                 try [~,~,raw]=xlsread([sample.priorPath,filesep,'result.xls'],1);
                     for i=1:(size(raw,1)-1)
                         eventNr(i)=i;
                         frameNr(i)=str2num(raw{i+1,6})+1;
-                        xBottomLeft(i)=str2num(raw{i+1,3})-thumbSize(1)/2;
-                        yBottomLeft(i)=str2num(raw{i+1,4})-thumbSize(2)/2;
-                        xTopRight(i)=str2num(raw{i+1,3})+thumbSize(1)/2;
-                        yTopRight(i)=str2num(raw{i+1,4})+thumbSize(2)/2;
+                        xBottomLeft(i)=round(str2num(raw{i+1,3}))+10-(thumbSize(1)/2);
+                        yBottomLeft(i)=round(str2num(raw{i+1,4}))+10-(thumbSize(2)/2);
+                        xTopRight(i)=round(str2num(raw{i+1,3}))+9+(thumbSize(1)/2);
+                        yTopRight(i)=round(str2num(raw{i+1,4}))+9+(thumbSize(2)/2);
                     end
                     locations=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
                 catch
