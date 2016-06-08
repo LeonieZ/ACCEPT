@@ -162,6 +162,8 @@ function visualize(handle,~,base)
             else
                % run sampleVisGui with loaded sample
                gui_sample(base,currentSample);
+%                CS_scoring_gui(base,currentSample);
+
             end  
         else
             msgbox('No directories selected.')

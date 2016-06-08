@@ -134,23 +134,107 @@ classdef IO < handle
             t.close;
         end
         
-        function save_thumbnail(this,currentSample,eventNr)
-           %to be implemented 
-           currentDataFrame=this.load_thumbnail_frame(currentSample,eventNr,'prior');
-           currentDataFrame.preProcessedImage=currentDataFrame.rawImage(:,:,3);
-           currentDataFrame.preProcessedImage(2:7,2:7)=4095;
-            t=Tiff([num2str(eventNr),'_thumb.tif'],'w');
-            t.setTag('Photometric',t.Photometric.MinIsBlack);
-            t.setTag('Compression',t.Compression.LZW);
-            t.setTag('ImageLength',size(currentDataFrame.rawImage,1));
-            t.setTag('ImageWidth',size(currentDataFrame.rawImage,2));
-            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
-            t.setTag('BitsPerSample',8);
-            t.setTag('SamplesPerPixel',1);
-            t.write(uint8(currentDataFrame.preProcessedImage./4095.*255));
-            t.close;
+        function save_thumbnail(this,currentSample,eventNr,option)
+           [id,~] = strtok(currentSample.id,'.');
+           if ~exist([currentSample.savePath,'frames',filesep,id],'dir')
+               mkdir([currentSample.savePath,'frames',filesep,id]);
+           end
+
+           if exist('option','var')
+                if strcmp('prior',option)
+                    if exist('eventNr','var') && ~isempty(eventNr)
+                        currentDataFrame=this.load_thumbnail_frame(currentSample,eventNr,'prior');
+                        t=Tiff([currentSample.savePath,'frames',filesep,id,filesep, num2str(eventNr),'_thumb_prior.tif'],'w');
+                        t.setTag('Photometric',t.Photometric.MinIsBlack);
+                        t.setTag('Compression',t.Compression.LZW);
+                        t.setTag('ImageLength',size(currentDataFrame.rawImage,1));
+                        t.setTag('ImageWidth',size(currentDataFrame.rawImage,1));
+                        t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+                        t.setTag('BitsPerSample',16);
+                        t.setTag('SamplesPerPixel',1);
+                        t.write(uint16(currentDataFrame.rawImage(:,:,1)));
+                        t.close;
+                        for j = 2:currentSample.nrOfChannels
+                            imwrite(uint16(currentDataFrame.rawImage(:,:,j)), [currentSample.savePath,'frames',filesep,id,filesep, num2str(eventNr),'_thumb_prior.tif'], 'writemode', 'append');
+                        end
+                    else
+                        for i = 1:size(currentSample.priorLocations)
+                            currentDataFrame=this.load_thumbnail_frame(currentSample,i,'prior');
+                            t=Tiff([currentSample.savePath,'frames',filesep,id,filesep, num2str(i),'_thumb_prior.tif'],'w');
+                            t.setTag('Photometric',t.Photometric.MinIsBlack);
+                            t.setTag('Compression',t.Compression.LZW);
+                            t.setTag('ImageLength',size(currentDataFrame.rawImage,1));
+                            t.setTag('ImageWidth',size(currentDataFrame.rawImage,2));
+                            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+                            t.setTag('BitsPerSample',16);
+                            t.setTag('SamplesPerPixel',1);
+                            t.write(uint16(currentDataFrame.rawImage(:,:,1)));
+                            t.close;
+                            for j = 1:currentSample.nrOfChannels
+                              imwrite(uint16(currentDataFrame.rawImage(:,:,j)), [currentSample.savePath,'frames',filesep,id,filesep, num2str(i),'_thumb_prior.tif'], 'writemode', 'append');
+                            end                            
+                        end
+                    end
+                end
+           else
+                if exist('eventNr','var')
+                    data = currentSample.results.thumbnail_images{eventNr}(:,:,1);
+                    t=Tiff([currentSample.savePath,'frames',filesep,id,filesep, num2str(eventNr),'_thumb.tif'],'w');
+                    t.setTag('Photometric',t.Photometric.MinIsBlack);
+                    t.setTag('Compression',t.Compression.LZW);
+                    t.setTag('ImageLength',size(currentSample.results.thumbnail_images{eventNr},1));
+                    t.setTag('ImageWidth',size(currentSample.results.thumbnail_images{eventNr},2));
+                    t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+                    t.setTag('BitsPerSample',16);
+                    t.setTag('SamplesPerPixel',1);
+                    t.write(uint16(data));
+                    t.close;
+                    s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,num2str(eventNr),'_thumb_segm.tif'],'w');
+                    s.setTag('Photometric',t.Photometric.MinIsBlack);
+                    s.setTag('Compression',t.Compression.LZW);
+                    s.setTag('ImageLength',size(data,1));
+                    s.setTag('ImageWidth',size(data,2));
+                    s.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+                    s.setTag('BitsPerSample',1);
+                    s.setTag('SamplesPerPixel',1);
+                    s.write(currentSample.results.segmentation{eventNr}(:,:,1));
+                    s.close;
+                    for j = 2:currentSample.nrOfChannels
+                          imwrite(uint16(currentSample.results.thumbnail_images{eventNr}(:,:,j)), [currentSample.savePath,'frames',filesep,id,filesep, num2str(eventNr),'_thumb.tif'], 'writemode', 'append');
+                          imwrite(currentSample.results.segmentation{eventNr}(:,:,j), [currentSample.savePath,'frames',filesep,id,filesep,num2str(eventNr),'_thumb_segm.tif'], 'writemode', 'append');     
+                    end
+                else
+                    for i = 1:size(currentSample.results.thumbnail_images,2)
+                        data = currentSample.results.thumbnail_images{i}(:,:,1);
+                        t=Tiff([currentSample.savePath,'frames',filesep,id,filesep, num2str(i),'_thumb.tif'],'w');
+                        t.setTag('Photometric',t.Photometric.MinIsBlack);
+                        t.setTag('Compression',t.Compression.LZW);
+                        t.setTag('ImageLength',size(currentSample.results.thumbnail_images{i},1));
+                        t.setTag('ImageWidth',size(currentSample.results.thumbnail_images{i},2));
+                        t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+                        t.setTag('BitsPerSample',16);
+                        t.setTag('SamplesPerPixel',1);
+                        t.write(uint16(data));
+                        t.close;
+                        s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,num2str(i),'_thumb_segm.tif'],'w');
+                        s.setTag('Photometric',t.Photometric.MinIsBlack);
+                        s.setTag('Compression',t.Compression.LZW);
+                        s.setTag('ImageLength',size(data,1));
+                        s.setTag('ImageWidth',size(data,2));
+                        s.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+                        s.setTag('BitsPerSample',1);
+                        s.setTag('SamplesPerPixel',1);
+                        s.write(currentSample.results.segmentation{i}(:,:,1));
+                        s.close;
+                        for j = 1:currentSample.nrOfChannels
+                          imwrite(uint16(currentSample.results.thumbnail_images{i}(:,:,j)), [currentSample.savePath,'frames',filesep,id,filesep, num2str(i),'_thumb.tif'], 'writemode', 'append');
+                          imwrite(currentSample.results.segmentation{i}(:,:,j), [currentSample.savePath,'frames',filesep,id,filesep,num2str(i),'_thumb_segm.tif'], 'writemode', 'append'); 
+                        end
+                    end
+                end
+           end
         end
-        
+                                   
         function save_results_as_xls(this,currentSample)
             tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
             if ispc

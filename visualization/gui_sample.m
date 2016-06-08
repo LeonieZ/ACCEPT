@@ -78,7 +78,7 @@ GuiSampleHandle.tableDetails = uicontrol('Style','text','Parent',GuiSampleHandle
                                   'Units','normalized','Position',[0 0 1 1],...
                                   'String',entry,'FontUnits','normalized', 'FontSize',0.6*(1/size(entry,1)),'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
 
-tabExtend = get(GuiSampleHandle.tableDetails,'Extent');
+% tabExtend = get(GuiSampleHandle.tableDetails,'Extent');
 tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
 %panelPosition = get(GuiSampleHandle.uiPanelOverview,'Position');
 %tabPosition(4) = tabExtend(4).*tabPosition(4);
@@ -343,13 +343,17 @@ GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter
 GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.003 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
         
 
-%% Create export/load button----
+%% Create export/load buttons----
 % export gates as manual classification
 GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Export Selection','FontUnits', 'normalized',...
-            'FontSize',.5,'Position', [0.023 0.925 0.125 0.04],'Callback', {@export_gates}); 
+            'FontSize',.5,'Position', [0.023 0.94 0.125 0.04],'Callback', {@export_gates}); 
 % load gates as manual classification
 GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Load Selection','FontUnits', 'normalized',...
-            'FontSize',.5,'Position', [0.15 0.925 0.12 0.04],'Callback', {@load_gates}); 
+            'FontSize',.5,'Position', [0.15 0.94 0.12 0.04],'Callback', {@load_gates}); 
+        
+% export thumbnails
+GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Export Thumbnails','FontUnits', 'normalized',...
+            'FontSize',.5,'Position', [0.826 0.94 0.15 0.04],'Callback', {@export_thumbs}); 
                                 
 %% Callback and helper functions
 
@@ -478,7 +482,7 @@ function plotImInAxis(im,segm,hAx,hIm)
 end
 
 % --- Helper function used in thumbnail gallery to react on user clicks
-function openSpecificImage(handle,~,row)
+function openSpecificImage(~,~,row)
     type = get(gcf,'SelectionType');
     switch type
         case 'open' % double-click
@@ -662,7 +666,10 @@ function select_event(handle,~,plotnr)
     set(handle,'backg',color)
 end
 
-function export_gates(~,~)
+function export_gates(handle,~)
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5])
+    drawnow;
     set(0,'defaultUicontrolFontSize', 14)
     exist = true;
     name = inputdlg({''},...
@@ -683,12 +690,19 @@ function export_gates(~,~)
             end
         end
     end
-    currentSample.results.classification = [currentSample.results.classification array2table(GuiSampleHandle.selectedCells,'VariableNames',{name{1}})];
-    base.io.save_sample(currentSample);
+    if ~isempty(name)
+        currentSample.results.classification = [currentSample.results.classification array2table(GuiSampleHandle.selectedCells,'VariableNames',{name{1}})];
+        base.io.save_sample(currentSample);
+        base.io.save_results_as_xls(currentSample)
+    end
     set(0,'defaultUicontrolFontSize', 12)
+    set(handle,'backg',color)
 end
 
-function load_gates(~,~)
+function load_gates(handle,~)
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5])
+    drawnow;
     classes = currentSample.results.classification.Properties.VariableNames;
     if isempty(classes)
         msgbox('No prior selection avaliable.')
@@ -734,5 +748,14 @@ function load_gates(~,~)
             plot_thumbnails(-val); 
         end
     end
+    set(handle,'backg',color)
+end
+
+function export_thumbs(handle,~)
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5])
+    drawnow;
+    base.io.save_thumbnail(currentSample)
+    set(handle,'backg',color)
 end
 end
