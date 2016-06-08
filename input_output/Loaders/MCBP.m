@@ -25,7 +25,6 @@ classdef MCBP < Loader & IcyPluginData
                 if isa(input,'Sample')
                     if strcmp(input.type,this.name)
                         this.sample=input;
-                        this.load_scan_info(this.sample.priorPath);
                     else
                     error('tried to use incorrect sampletype with CellTracks Loader');
                     end
@@ -158,11 +157,13 @@ classdef MCBP < Loader & IcyPluginData
         function preload_tiff_headers(this,samplePath)
             [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',100);    
             if bool
-                for j=1:numel(this.filtersUsed)
-                    tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{this.filtersUsed(j)} '.tif']);
-                    for i=1:numel(tempImageFileNames)
-                        this.sample.imageFileNames{i,j} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
-                        this.sample.tiffHeaders{i,j}=imfinfo(this.sample.imageFileNames{i,j});
+                for j=1:numel(this.channelRemapping)
+                    if any(this.filtersUsed==j)
+                        tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{j} '.tif']);
+                        for i=1:numel(tempImageFileNames)
+                            this.sample.imageFileNames{i,this.channelRemapping(j)} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+                            this.sample.tiffHeaders{i,this.channelRemapping(j)}=imfinfo(this.sample.imageFileNames{i,this.channelRemapping(j)});
+                        end
                     end
                     %function to fill the dataP.temp.imageinfos variable
                 end
@@ -213,7 +214,7 @@ classdef MCBP < Loader & IcyPluginData
                 if max(imagetemp) > 32767
                     imagetemp = imagetemp - 32768;
                 end
-                rawImage(:,:,this.channelRemapping(i))=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
+                rawImage(:,:,i)=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
                 
             end
         end
