@@ -27,6 +27,7 @@ classdef FeatureCollection < SampleProcessorObject
             
             if this.use_thumbs == 0
                 for i = 1:inputSample.nrOfFrames
+                    %%%% CHECK IF CORRECT!!%%%%%
                     dataFrame = this.io.load_data_frame(inputSample,i);
                     this.dataProcessor.run(dataFrame);
                     objectsfoundearlier = size(inputSample.results.features,1);
@@ -75,25 +76,24 @@ classdef FeatureCollection < SampleProcessorObject
                     end
                 end
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
+                disp('hello')
                 size(inputSample.priorLocations,1)
                 for i = 1:size(inputSample.priorLocations,1)
                     i
                     thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
                     this.dataProcessor.run(thumbFrame);
-                    thumbsfoundearlier = size(returnSample.results.thumbnails,1);
+%                     thumbsfoundearlier = size(returnSample.results.thumbnails,1);
                     objectsfound = size(thumbFrame.features,1);
                     if objectsfound > 0
-                        thumbNr = array2table((thumbsfoundearlier+1)*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
-%                       thumbNr = array2table(i*(ones(size(thumbFrame.features,1),1)),'VariableNames',{'ThumbNr'});
+%                         thumbNr = array2table((thumbsfoundearlier+1)*ones(objectsfound,1),'VariableNames',{'ThumbNr'})
+                        thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
                         thumbFrame.features = [thumbNr thumbFrame.features];
-                        if size(thumbFrame.features,1) > 0
-                            returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, returnSample.priorLocations(i,:));
-                            returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
-                            %delete later!?
-                            returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);
-                            returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
-                        end
+                        returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                     end
+                    returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, returnSample.priorLocations(i,:));
+                    returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
+                    %delete later!?
+                    returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);
                 end
             elseif this.use_thumbs == 1 && ~isempty(this.priorLocations)
                 size(this.priorLocations,1)
@@ -101,20 +101,18 @@ classdef FeatureCollection < SampleProcessorObject
                     i
                     thumbFrame = this.io.load_thumbnail_frame(inputSample,i,this.priorLocations); 
                     this.dataProcessor.run(thumbFrame);
-                    thumbsfoundearlier = size(returnSample.results.thumbnails,1);
+%                     thumbsfoundearlier = size(returnSample.results.thumbnails,1);
                     objectsfound = size(thumbFrame.features,1);
                     if objectsfound > 0
-                        thumbNr = array2table((thumbsfoundearlier+1)*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
-%                       thumbNr = array2table(i*(ones(size(thumbFrame.features,1),1)),'VariableNames',{'ThumbNr'});
+%                         thumbNr = array2table((thumbsfoundearlier+1)*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
+                        thumbNr = array2table(i*(ones(size(objectsfound,1),1)),'VariableNames',{'ThumbNr'});
                         thumbFrame.features = [thumbNr thumbFrame.features];
-                        if size(thumbFrame.features,1) > 0
-                            returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, this.priorLocations(i,:));
-                            returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
-                            %delete later!?
-                            returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);
-                            returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
-                        end
+                        returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                     end
+                    returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, this.priorLocations(i,:));
+                    returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
+                    %delete later!?
+                    returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);
                 end
             end
         end

@@ -11,7 +11,7 @@ height = maxRelHeight;
 GuiSampleHandle.fig_main = figure('Units','normalized','Position',[posx posy width height],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off');
 
-%% Set maximum instensiy
+%% Set maximum intensity
 if strcmp(currentSample.dataTypeOriginalImage,'uint8')
     maxi = 255;
 elseif strcmp(currentSample.dataTypeOriginalImage,'uint12')
@@ -25,6 +25,19 @@ maxi = 4095;
 %     sc_gui.maxi = 4095;
 % end
 
+%handle empty thumbs
+usedThumbs = find(ismember(linspace(1,size(currentSample.results.thumbnails,1),size(currentSample.results.thumbnails,1)),currentSample.results.features{:,1}));
+nrUsedThumbs = size(usedThumbs,2);
+
+%replace NaN values with zeros
+sampleFeatures = currentSample.results.features;
+sampleFeatures_noNaN = sampleFeatures{:,:};
+sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
+sampleFeatures{:,:} = sampleFeatures_noNaN;
+%handle selections
+GuiSampleHandle.selectedFrames = false(nrUsedThumbs,1);
+GuiSampleHandle.selectedCells = false(size(sampleFeatures,1),1);
+rgbTriple = repmat([0 0 1],[size(sampleFeatures,1),1]);
 %% Main title
 GuiSampleHandle.title_axes = axes('Units','normalized','Position',[0.5 0.95 0.18 0.04]); axis off;
 GuiSampleHandle.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} Sample Visualizer','Units','normalized','FontUnits','normalized','FontSize',0.8,'verticalAlignment','base','horizontalAlignment','center');
@@ -66,7 +79,8 @@ for i = 1:numel(propnames)
    entry{i} = [rnames{i}, ': ',num2str(dat{i})];
 end
 
-dat{6} = size(currentSample.results.thumbnails,1);
+% dat{6} = size(currentSample.results.thumbnails,1);
+dat{6} = size(currentSample.results.features,1);
 entry{6} = [rnames{6}, ': ',num2str(dat{6})];
 
 GuiSampleHandle.uiPanelTable = uipanel('Parent',GuiSampleHandle.uiPanelOverview,...
@@ -206,34 +220,18 @@ for i=1:rows
     end
 end
 % check if slider is needed     
-if  size(currentSample.results.thumbnails,1)>5
-    set(GuiSampleHandle.slider,'Max',-3,'Min',-size(currentSample.results.thumbnails,1)+2,...
-        'Value',-3,'SliderStep', [1, 1] / (size(currentSample.results.thumbnails,1) - 5));
+if  nrUsedThumbs>5
+    set(GuiSampleHandle.slider,'Max',-3,'Min',-nrUsedThumbs+2,...
+        'Value',-3,'SliderStep', [1, 1] / (nrUsedThumbs - 5));
 else
     set(GuiSampleHandle.slider,'enable','off');
 end
-% only first overlay image per thumbnail can be selected
-% hence total number of selectable resp. table rows is 
-numberOfThumbs = size(currentSample.results.thumbnails,1);
-% note: one thumbnail can have several cells to be measured
-GuiSampleHandle.selectedFrames = zeros(numberOfThumbs,1);
 
 % go through all thumbnails (resp. dataframes)
 plot_thumbnails(3);
 
 
 %% Fill uiPanelScatter
-%
-%replace NaN values with zeros
-sampleFeatures = currentSample.results.features;
-sampleFeatures_noNaN = sampleFeatures{:,:};
-sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
-sampleFeatures{:,:} = sampleFeatures_noNaN;
-
-%handle selections
-GuiSampleHandle.selectedFrames = false(size(currentSample.results.thumbnails,1),1);
-GuiSampleHandle.selectedCells = false(size(sampleFeatures,1),1);
-rgbTriple = repmat([0 0 1],[size(sampleFeatures,1),1]);
 
 marker_size = 30;
 % create data for scatter plot at the top
@@ -415,7 +413,7 @@ end
 % --- Plot thumbnails around index i
 function plot_thumbnails(val)
     %numberOfThumbs=size(currentSample.priorLocations,1);
-    numberOfThumbs=size(currentSample.results.thumbnails,1);
+    numberOfThumbs = nrUsedThumbs;
     thumbIndex=[val-2:1:val+2];
     thumbIndex(thumbIndex<1)=[];
     thumbIndex(thumbIndex>numberOfThumbs)=[];
@@ -425,8 +423,10 @@ function plot_thumbnails(val)
             % obtain dataFrame from io
 %             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
 %             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd);
-            rawImage = currentSample.results.thumbnail_images{thumbInd};
-            segmentedImage = currentSample.results.segmentation{thumbInd};
+%             rawImage = currentSample.results.thumbnail_images{thumbInd};
+%             segmentedImage = currentSample.results.segmentation{thumbInd};
+            rawImage = currentSample.results.thumbnail_images{usedThumbs(thumbInd)};
+            segmentedImage = currentSample.results.segmentation{usedThumbs(thumbInd)};
             k = (j-1)*maxNumCols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
 %             plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
@@ -519,7 +519,7 @@ end
 % --- Helper function to update scatter plots
 function updateScatterPlots(pos,booleanOnOff)
     GuiSampleHandle.selectedFrames(pos) = booleanOnOff;
-    GuiSampleHandle.selectedCells(sampleFeatures.ThumbNr == pos) = booleanOnOff;
+    GuiSampleHandle.selectedCells(sampleFeatures.ThumbNr == usedThumbs(pos)) = booleanOnOff;
     rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
     rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
     rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
@@ -557,7 +557,7 @@ function gate_scatter(handle,~,plotnr)
     pos = getPosition(h);
     [in,~] = inpolygon(xtest,ytest,pos(:,1),pos(:,2));
     GuiSampleHandle.selectedCells(in) = 1;
-    GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(in)) = 1; 
+    GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1; 
     rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
     rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
     rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
@@ -624,7 +624,7 @@ function select_event(handle,~,plotnr)
     end
     if GuiSampleHandle.selectedCells(in) == 0
         GuiSampleHandle.selectedCells(in) = 1;
-        GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(in)) = 1; 
+        GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1; 
         rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
         rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
         rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
@@ -639,12 +639,12 @@ function select_event(handle,~,plotnr)
         set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
             num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update view to selected thumbnail
-        plot_thumbnails(sampleFeatures.ThumbNr(in));
+        plot_thumbnails(find(usedThumbs == sampleFeatures.ThumbNr(in)));
         set(GuiSampleHandle.slider, 'Value',-sampleFeatures.ThumbNr(in));
     else
         GuiSampleHandle.selectedCells(in) = 0;
         if ~isempty(GuiSampleHandle.selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells) == sampleFeatures.ThumbNr(in), 1))
-            GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(in)) = 0; 
+            GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0; 
         end
         rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
         rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
@@ -710,7 +710,7 @@ function load_gates(handle,~)
         GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
         GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
         GuiSampleHandle.selectedCells = currentSample.results.classification{:,1};
-        GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells)) = 1; 
+        GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells))) = 1; 
         rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
         rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
         rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
@@ -732,7 +732,7 @@ function load_gates(handle,~)
             GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
             GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
             GuiSampleHandle.selectedCells = currentSample.results.classification{:,s};
-            GuiSampleHandle.selectedFrames(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells)) = 1; 
+            GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells))) = 1; 
             rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
             rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
             rgbTriple(GuiSampleHandle.selectedCells,3) = 0;

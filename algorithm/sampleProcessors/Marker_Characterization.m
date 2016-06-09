@@ -29,10 +29,16 @@ classdef Marker_Characterization < SampleProcessor
             
             if ~isempty(inputSample.results.features)
                 inputSample.results.features(find(inputSample.results.features.ch_3_Area==0),:) = [];
+                notNec = find(~ismember(linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)),inputSample.results.features{:,1}));
+                for i = 1:size(notNec,2)
+                    inputSample.results.thumbnail_images{1,notNec(i)} = [];
+                    inputSample.results.segmentation{1,notNec(i)} = [];
+                end
             end
             this.io.save_results_as_xls(inputSample);
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
+
         end
         
         function pipeline = make_sample_pipeline(this)
