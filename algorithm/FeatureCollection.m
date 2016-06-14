@@ -76,7 +76,6 @@ classdef FeatureCollection < SampleProcessorObject
                     end
                 end
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
-                disp('hello')
                 size(inputSample.priorLocations,1)
                 for i = 1:size(inputSample.priorLocations,1)
                     i

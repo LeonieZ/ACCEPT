@@ -125,7 +125,22 @@ function process(handle,~,base)
                 msgbox('no dirs selected');
             end
         else
-            msgbox('All samples are processed. No sample selected for reprocessing.')
+            set(0,'defaultUicontrolFontSize', 14)
+            choice = questdlg('All samples are processed. Do you want to process them again?', ...
+                                'Processed Sample', 'Yes','No','No');
+            set(0,'defaultUicontrolFontSize', 12)
+            switch choice
+                case 'Yes'
+                    base.sampleList.toBeProcessed = base.sampleList.isProcessed;
+                    gui.selectedCells = base.sampleList.toBeProcessed;
+                    dat = get(gui.table,'data');
+                    for r=1:size(dat,1)
+                        dat{r,2} = gui.selectedCells(sliderpos+r);     
+                    end 
+                    set(gui.table,'data',dat);
+                    base.run();
+                case 'No'
+            end
         end
     else
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
@@ -250,7 +265,7 @@ function update_list(base)
         gui.selectedCells = false(nbrSamples,1);
         nbrAttributes = 2;
         dat = cell(min(nbrSamples,nbrRows),nbrAttributes);
-        for r=1:min(nbrSamples,nbrRows)
+        for r=1:min([nbrSamples,nbrRows,nbrSamples - sliderpos])
             dat{r,1} = sl.sampleNames{1,r+sliderpos};
             if sl.isProcessed(1,r+sliderpos) == 0
                 dat(r,1) = cellfun(@(x) ['<html><table border=0 width=400 bgcolor=#FF9999><TR><TD>' x '</TD></TR> </table></html>'], dat(r,1), 'UniformOutput', false);
@@ -263,7 +278,7 @@ function update_list(base)
         set(gui.table,'data', dat,'Visible','off');
         size_nd = get(gui.table,'Extent');
         if size_nd(4) > 0.326
-            while size_nd(4) > 0.35
+            while size_nd(4) > 0.33
                 dat(end,:) = [];
                 nbrRows = size(dat,1);
                 set(gui.table,'data', dat);
@@ -272,9 +287,10 @@ function update_list(base)
             set(gui.table, 'Position',[(1 - size_nd(3))/2, 0.15 + (0.387 - size_nd(4))/2, size_nd(3), size_nd(4)]);  
             slider_pos = get(gui.slider,'Position');
             set(gui.slider,'Position',[(1 + size_nd(3))/2, 0.15 + (0.387 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
-            if nbrSamples > nbrRows
-                set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Visible','on');
-            end
+
+        end
+        if nbrSamples > nbrRows
+            set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Visible','on');
         end
         set(gui.table,'Visible','on');
     end
