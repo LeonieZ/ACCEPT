@@ -87,10 +87,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     elseif isa(this.init,'cell') && isa(this.init{1},'char') && isa(this.init{2},'char')
                         validatestring(this.init{1},{'otsu','triangle'});
                         validatestring(this.init{2},{'global','local'});
-                        if strcmp(this.init{2},'local')
-                            threshSeg = ThresholdingSegmentation(this.init{1},'local',[],this.maskForChannels);
-                        elseif strcmp(this.init{2},'global') && ~isempty(this.init{3})
+                        if strcmp(this.init{2},'global') && ~isempty(this.init{3})
                             threshSeg = ThresholdingSegmentation(this.init{1},'global',this.init{3},this.maskForChannels);
+                        else
+                            threshSeg = ThresholdingSegmentation(this.init{1},'local',[],this.maskForChannels);
                         end
                         cvInit = threshSeg.run(inputFrame.rawImage);
                     elseif isa(this.init,'cell') && isa(this.init{1},'char') && strcmp(this.init{1},'manual')

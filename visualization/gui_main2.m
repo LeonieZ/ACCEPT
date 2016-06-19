@@ -265,7 +265,14 @@ function update_list(base)
         gui.selectedCells = false(nbrSamples,1);
         nbrAttributes = 2;
         dat = cell(min(nbrSamples,nbrRows),nbrAttributes);
-        for r=1:min([nbrSamples,nbrRows,nbrSamples - sliderpos])
+        if nbrSamples - sliderpos > 0
+            nrField = min([nbrSamples,nbrRows,nbrSamples - sliderpos]);
+        else
+            nrField = min([nbrSamples,nbrRows]);
+            sliderpos = 0;
+            set(gui.slider,'Value',sliderpos);
+        end
+        for r=1:nrField
             dat{r,1} = sl.sampleNames{1,r+sliderpos};
             if sl.isProcessed(1,r+sliderpos) == 0
                 dat(r,1) = cellfun(@(x) ['<html><table border=0 width=400 bgcolor=#FF9999><TR><TD>' x '</TD></TR> </table></html>'], dat(r,1), 'UniformOutput', false);

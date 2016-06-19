@@ -17,10 +17,11 @@ if strcmp(currentSample.dataTypeOriginalImage,'uint8')
 elseif strcmp(currentSample.dataTypeOriginalImage,'uint12')
     maxi = 4095;
 else
-    maxi = 65535;
+%     maxi = 65535;
+%     Set maxi to 4095 until uint12 is implemented
+    maxi = 4095;
 end
-% Set maxi to 4095 until uint12 is implemented
-maxi = 4095;
+
 % if sc_gui.maxi == 65535 && max(cellfun(@(x)max(max(max(x))),sc_gui.thumbs(1,:))) <= 4095
 %     sc_gui.maxi = 4095;
 % end
@@ -99,24 +100,27 @@ tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
 %tabPosition(3) = tabExtend(3).*tabPosition(3);
 %set(GuiSampleHandle.uiPanelTable,'Position',tabPosition);
 
- 
-% % create overview image per channel
- GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
-                                'Units','normalized','Position',[tabPosition(1)+tabPosition(3)+0.01 0.07 1-(tabPosition(1)+tabPosition(3)+0.02) 0.82]);
-%                            
- defCh = 2; % default channel for overview when starting the sample visualizer
- blank=zeros(size(currentSample.overviewImage(:,:,defCh)));
- GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
- colormap(GuiSampleHandle.axesOverview,parula(4096));
- high=prctile(reshape(currentSample.overviewImage(:,:,defCh),[1,size(currentSample.overviewImage,1)*size(currentSample.overviewImage,2)]),99);
- plotImInAxis(currentSample.overviewImage(:,:,defCh).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
-  
-% % create choose button to switch color channel
- GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
-                                     'Units','normalized','Position',[0.4 -0.09 0.08 0.85],...
-                                     'FontUnits','normalized','FontSize',0.02,...
-                                     'Value',defCh,...
-                                     'Callback',{@popupChannel_callback});
+if ~isempty(currentSample.overviewImage) 
+    % % create overview image per channel
+     GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
+                                    'Units','normalized','Position',[tabPosition(1)+tabPosition(3)+0.01 0.07 1-(tabPosition(1)+tabPosition(3)+0.02) 0.82]);
+    %                            
+     defCh = 2; % default channel for overview when starting the sample visualizer
+
+     blank=zeros(size(currentSample.overviewImage(:,:,defCh)));
+     GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
+     colormap(GuiSampleHandle.axesOverview,parula(4096));
+     high=prctile(reshape(currentSample.overviewImage(:,:,defCh),[1,size(currentSample.overviewImage,1)*size(currentSample.overviewImage,2)]),99);
+     plotImInAxis(currentSample.overviewImage(:,:,defCh).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+
+
+    % % create choose button to switch color channel
+     GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
+                                         'Units','normalized','Position',[0.4 -0.09 0.08 0.85],...
+                                         'FontUnits','normalized','FontSize',0.02,...
+                                         'Value',defCh,...
+                                         'Callback',{@popupChannel_callback});
+end
 
                                 
 %% Fill uiPanelGallery
@@ -499,13 +503,13 @@ function openSpecificImage(~,~,row)
                     set(surroundingAx,'YColor',[1.0 0.5 0]);
                     set(surroundingAx,'LineWidth',3);
                     set(surroundingAx,'Visible','on');
-                    pos = -round(get(GuiSampleHandle.slider,'Value'))-3+row;
+                    pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
                     updateScatterPlots(pos,1);
                 else
 %                     set(gcbo,'Selected','off');
                     surroundingAx = get(gcbo,'Parent');
                     set(surroundingAx,'Visible','off');
-                    pos = -round(get(GuiSampleHandle.slider,'Value'))-3+row;
+                    pos = max(-round(get(GuiSampleHandle.slider,'Value'))-3+row,1);
                     updateScatterPlots(pos,0);
                 end
             end
@@ -615,8 +619,9 @@ function select_event(handle,~,plotnr)
     end
     pos = getPosition(h);
 %     pos_extended = [0.95*pos(1), 0.95*pos(2); 0.95*pos(1), 1.05*pos(2); 1.05*pos(1), 1.05*pos(2); 1.05*pos(1), 0.95*pos(2)];
-    pos_extended = [pos(1)-10, pos(2)-10; pos(1)-10, pos(2)+10; pos(1)+10, pos(2)+10; pos(1)+10, pos(2)-10];
+    pos_extended = [pos(1)-50, pos(2)-50; pos(1)-50, pos(2)+50; pos(1)+50, pos(2)+50; pos(1)+50, pos(2)-50];
     [in,~] = inpolygon(xtest,ytest,pos_extended(:,1),pos_extended(:,2));
+    sum(in)
     if sum(in) > 1
         indices = find(in);
         [~,index] = min((xtest(in) - pos(1)).^2 + (ytest(in) - pos(2)).^2);

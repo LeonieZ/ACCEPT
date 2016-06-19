@@ -24,6 +24,9 @@ classdef FeatureCollection < SampleProcessorObject
         
         function returnSample = run(this, inputSample)
             returnSample = inputSample;
+            if strcmp(inputSample.type,'ThumbnailLoader')
+                this.use_thumbs = 0;
+            end
             
             if this.use_thumbs == 0
                 for i = 1:inputSample.nrOfFrames
