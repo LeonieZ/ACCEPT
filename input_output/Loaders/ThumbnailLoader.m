@@ -56,6 +56,13 @@ classdef ThumbnailLoader < Loader
             false,...
             this.channelEdgeRemoval,...
             this.read_im(frameNr,varargin{:}));
+            name = strsplit(this.sample.imageFileNames{frameNr},'.');
+            if exist([name{1} '_segm.tif'], 'file') == 2
+                dataFrame.segmentedImage = this.read_segm(frameNr);
+                sumImage = sum(dataFrame.segmentedImage,3); 
+                labels = repmat(bwlabel(sumImage,8),1,1,size(dataFrame.segmentedImage,3));
+                dataFrame.labelImage = labels.*dataFrame.segmentedImage;
+            end
         end
         
         
@@ -113,7 +120,7 @@ classdef ThumbnailLoader < Loader
             for i=1:this.sample.nrOfChannels;
                 try
                     name = strsplit(this.sample.imageFileNames{imageNr},'.');
-                    imagetemp = double(imread([name{1} '_segm.tif'], i, 'info',this.sample.tiffHeaders{imageNr}));
+                    imagetemp = imread([name{1} '_segm.tif'], i);
                 catch
                     notify(this,'logMessage',LogMessage(2,['Segmentation from Tiff', this.sample.imageFileNames{imageNr}, 'from channel ' num2str(i) ' is not readable!'])) ;
                     return
