@@ -75,25 +75,38 @@ classdef FeatureCollection < SampleProcessorObject
                         returnSample.results.segmentation = horzcat(returnSample.results.segmentation, segmentation);
                     end
                 end
+            %------------------
+            
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
-                size(inputSample.priorLocations,1)
-                for i = 1:size(inputSample.priorLocations,1)
-                    i
-                    thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
-                    this.dataProcessor.run(thumbFrame);
-%                     thumbsfoundearlier = size(returnSample.results.thumbnails,1);
-                    objectsfound = size(thumbFrame.features,1);
-                    if objectsfound > 0
-%                         thumbNr = array2table((thumbsfoundearlier+1)*ones(objectsfound,1),'VariableNames',{'ThumbNr'})
-                        thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
-                        thumbFrame.features = [thumbNr thumbFrame.features];
-                        returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
-                    end
-                    returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, returnSample.priorLocations(i,:));
-                    returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
-                    %delete later!?
-                    returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);
+                nPriorLoc = size(inputSample.priorLocations,1)
+                thumbFrames = cell(nPriorLoc,1);
+                for j = 1:nPriorLoc
+                    j
+                    thumbFrames{j} = this.io.load_thumbnail_frame(inputSample,j,'prior');
                 end
+                
+                featureTables = cell(nPriorLoc,1);
+                
+                parfor i = 1:nPriorLoc
+                    i
+                    this.dataProcessor.run(thumbFrames{i});
+                    objectsfound = size(thumbFrames{i}.features,1);
+                    if objectsfound > 0
+                        thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
+                        featureTables{i} = [thumbNr thumbFrames{i}.features];
+                    end
+                end
+                
+                for k = 1:nPriorLoc
+                    k
+                    % add extracted features to current sample result
+                    returnSample.results.features = vertcat(returnSample.results.features,featureTables{k});
+                    returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, returnSample.priorLocations(k,:));
+                    returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrames{k}.segmentedImage);
+                    returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrames{k}.rawImage);
+                end
+                
+            %------------------
             elseif this.use_thumbs == 1 && ~isempty(this.priorLocations)
                 size(this.priorLocations,1)
                 for i = 1:size(this.priorLocations,1)
