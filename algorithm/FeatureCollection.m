@@ -79,30 +79,24 @@ classdef FeatureCollection < SampleProcessorObject
             
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
                 nPriorLoc = size(inputSample.priorLocations,1);
-                thumbFrames = cell(nPriorLoc,1);
-                for j = 1:nPriorLoc
-                    %j
-                    thumbFrames{j} = this.io.load_thumbnail_frame(inputSample,j,'prior');
-                end
-                
                 thumbFramesProcessed = cell(nPriorLoc,1);
                 featureTables = cell(nPriorLoc,1);
                 
+                % parallelized
                 parfor i = 1:nPriorLoc
-                    i
-                    this.dataProcessor.run(thumbFrames{i});
+                    thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior');
+                    this.dataProcessor.run(thumbFrame);
                     % for the parallel version we need an explicit update
                     % of the i-th dataFrame called thumbFrames{i}
-                    thumbFramesProcessed{i} = thumbFrames{i};
-                    objectsfound = size(thumbFrames{i}.features,1);
+                    thumbFramesProcessed{i} = thumbFrame;
+                    objectsfound = size(thumbFrame.features,1);
                     if objectsfound > 0
                         thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
-                        featureTables{i} = [thumbNr thumbFrames{i}.features];
+                        featureTables{i} = [thumbNr thumbFrame.features];
                     end
                 end
                 
                 for k = 1:nPriorLoc
-                    %k
                     % add extracted features to current sample result
                     returnSample.results.features = vertcat(returnSample.results.features,featureTables{k});
                     returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, returnSample.priorLocations(k,:));
