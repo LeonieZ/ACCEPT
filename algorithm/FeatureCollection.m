@@ -78,18 +78,22 @@ classdef FeatureCollection < SampleProcessorObject
             %------------------
             
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
-                nPriorLoc = size(inputSample.priorLocations,1)
+                nPriorLoc = size(inputSample.priorLocations,1);
                 thumbFrames = cell(nPriorLoc,1);
                 for j = 1:nPriorLoc
-                    j
+                    %j
                     thumbFrames{j} = this.io.load_thumbnail_frame(inputSample,j,'prior');
                 end
                 
+                thumbFramesProcessed = cell(nPriorLoc,1);
                 featureTables = cell(nPriorLoc,1);
                 
                 parfor i = 1:nPriorLoc
                     i
                     this.dataProcessor.run(thumbFrames{i});
+                    % for the parallel version we need an explicit update
+                    % of the i-th dataFrame called thumbFrames{i}
+                    thumbFramesProcessed{i} = thumbFrames{i};
                     objectsfound = size(thumbFrames{i}.features,1);
                     if objectsfound > 0
                         thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
@@ -98,12 +102,12 @@ classdef FeatureCollection < SampleProcessorObject
                 end
                 
                 for k = 1:nPriorLoc
-                    k
+                    %k
                     % add extracted features to current sample result
                     returnSample.results.features = vertcat(returnSample.results.features,featureTables{k});
                     returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, returnSample.priorLocations(k,:));
-                    returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrames{k}.segmentedImage);
-                    returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrames{k}.rawImage);
+                    returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFramesProcessed{k}.segmentedImage);
+                    returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFramesProcessed{k}.rawImage);
                 end
                 
             %------------------
