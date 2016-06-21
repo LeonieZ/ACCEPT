@@ -83,6 +83,7 @@ classdef FeatureCollection < SampleProcessorObject
                 featureTables = cell(nPriorLoc,1);
                 
                 % parallelized
+                
                 parfor i = 1:nPriorLoc
                     thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior');
                     this.dataProcessor.run(thumbFrame);
