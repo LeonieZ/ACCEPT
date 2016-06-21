@@ -24,15 +24,26 @@ classdef SampleOverviewLoading < SampleProcessorObject
                 reducedSize = [ceil(inputSample.imageSize(1)*this.reductionFactor(1)),inputSample.imageSize(2)*this.reductionFactor(1),inputSample.imageSize(3)];
                 reducedSize = ceil(reducedSize);
                 inputSample.overviewImage = zeros(reducedSize(1)*inputSample.rows,reducedSize(2)*inputSample.columns,reducedSize(3),'uint16');
-                for i = 1:inputSample.rows
-                    for j = 1:inputSample.columns
-                        offset=[reducedSize(1)*(i-1)+1,reducedSize(2)*(j-1)+1];
-                        frame = loader.load_data_frame(frameOrder(i,j));
-                        tempImage=imresize(frame.rawImage,this.reductionFactor);
-                        inputSample.overviewImage(offset(1):offset(1)+reducedSize(1)-1,offset(2):offset(2)+reducedSize(2)-1,:)=tempImage;
-                        inputSample.histogram = inputSample.histogram + histc(reshape(frame.rawImage,numel(frame.rawImage)/frame.nrChannels,frame.nrChannels),1:1:65535);
-                        inputSample.histogram_down = inputSample.histogram_down + histc(reshape(tempImage,numel(tempImage)/frame.nrChannels,frame.nrChannels),1:1:65535);
-                    end
+                
+                % parallelize with parfor
+                [I,J] = ind2sub([inputSample.rows,inputSample.columns],1:inputSample.rows*inputSample.columns);
+                tempImage = cell(1,inputSample.rows*inputSample.columns);
+                offset = cell(1,inputSample.rows*inputSample.columns);
+                histc1 = cell(1,inputSample.rows*inputSample.columns);
+                histc2 = cell(1,inputSample.rows*inputSample.columns);
+                parfor k=1:inputSample.rows*inputSample.columns
+                    i=I(k);
+                    j=J(k);                    
+                    frame = loader.load_data_frame(frameOrder(i,j)); %costly
+                    tempImage{k} = imresize(frame.rawImage,this.reductionFactor);                    
+                    offset{k} = [reducedSize(1)*(i-1)+1,reducedSize(2)*(j-1)+1];                                        
+                    histc1{k} = histc(reshape(frame.rawImage,numel(frame.rawImage)/frame.nrChannels,frame.nrChannels),1:1:65535); %costly
+                    histc2{k} = histc(reshape(tempImage{k},numel(tempImage{k})/frame.nrChannels,frame.nrChannels),1:1:65535); %costly
+                end
+                for k=1:inputSample.rows*inputSample.columns
+                    inputSample.overviewImage(offset{k}(1):offset{k}(1)+reducedSize(1)-1,offset{k}(2):offset{k}(2)+reducedSize(2)-1,:) = tempImage{k};
+                    inputSample.histogram      = inputSample.histogram      + histc1{k};                    
+                    inputSample.histogram_down = inputSample.histogram_down + histc2{k};
                 end
             end
         end
