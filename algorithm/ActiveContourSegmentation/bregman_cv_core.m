@@ -28,19 +28,20 @@ function u = bregman_cv_core(f,nx,ny,lambda_reg,breg_it,inner_it,...
 
             % update mean values (mu0 and mu1)
             if (mod(j,mu_update) == 0) % && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
-                if max(max((init<0.5))) == 1 && max(max((init>=0.5))) == 1
-                    mu0 = max(mean(mean(f(init<0.5))),0); % mean value outside object
-                    mu1 = max(mean(mean(f(init>=0.5))),0); % mean value inside object
-                elseif max(max((init<0.5))) == 0
-                    mu0 = min(f(:));
-                    mu1 = mean(mean(f(init>=0.5)));
-                elseif max(max((init>=0.5))) == 0
-                    mu0 = mean(mean(f(init<0.5)));
-                    mu1 = max(f(:));
-                end
-                if useMask
-                    f(mask) = mu0;
-                end
+                  warning('this part has not been implemented in the C-code')
+%                 if max(max((init<0.5))) == 1 && max(max((init>=0.5))) == 1
+%                     mu0 = max(mean(mean(f(init<0.5))),0); % mean value outside object
+%                     mu1 = max(mean(mean(f(init>=0.5))),0); % mean value inside object
+%                 elseif max(max((init<0.5))) == 0
+%                     mu0 = min(f(:));
+%                     mu1 = mean(mean(f(init>=0.5)));
+%                 elseif max(max((init>=0.5))) == 0
+%                     mu0 = mean(mean(f(init<0.5)));
+%                     mu1 = max(f(:));
+%                 end
+%                 if useMask
+%                     f(mask) = mu0;
+%                 end
             end
 
             % update inner index

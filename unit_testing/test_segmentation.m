@@ -20,10 +20,10 @@ f = f_true + var * randn(size(f_true));
 
 % generated segmentation object
 lambda   = 5;
-inner_it = 400;
+inner_it = 5;
 breg_it  = 5;
 ac = ActiveContourSegmentation(lambda,inner_it,breg_it);
-%ac.tol = eps;
+ac.tol = eps;
 
 % run Bregman-CV segmentation
 profile on;
