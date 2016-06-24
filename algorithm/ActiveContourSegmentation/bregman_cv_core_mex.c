@@ -28,78 +28,90 @@
 #endif
 
 /* headers */
-float Estimate_constants(float *f,float *mus,int nx,int ny);
+/*float Estimate_constants(float *f,float *mus,int nx,int ny);*/
 float Set_zeros(float *u,float *u_bar,float *p1,float *p2,int nx,int ny);
 float Scale(float *f,float *f_scaled,int nx,int ny);
 float Update_constants(float *f,float *u,float *mus,int nx,int ny);
 float Projection_dual_lq_ball(float *u,float *p1,float *p2,int nx, int ny,float sigma);
-float Projection_data_fidelity(float *u,float *p1,float *p2,float *b,float *f,float *mus,int nx,int ny,float tau,float alpha);
+float Projection_data_fidelity(float *u,float *p1,float *p2,float *b,float *f,float *mus,int nx,int ny,float tau,float lambda);
 float Primal_update(float *u_bar,float *u,float *u_old,int nx,int ny,float theta);
-float Bregman_update(float *f,float *mus,float *b,int nx,int ny,float alpha);
+float Bregman_update(float *f,float *mus,float *b,int nx,int ny,float lambda);
 float Binary_result(float *u,int nx,int ny,float thresh);
 float Copy_array(float *u, float *u_old, int size);
+float Relative_error(float *stat_u, float *u, float *u_old, int nx, int ny);
 
 void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){    
     
     /* input variable declarations */
-    int nx, ny, breg_iter, iter;
-    float *f, alpha, tol, mu0, mu1;
+    int nx, ny, breg_it, inner_it;
+    float *f, lambda, tol, *u_input, *u_bar, mu0, mu1;
     
     /* output and temporary variable declarations */
     int i, j;
-    float *u, *u_bar, *u_old, *p1, *p2, *b, *mus, sigma, tau, theta;
+    float *u, *u_old, *p1, *p2, *b, *mus, sigma, tau, theta, *stat_u;
 
     /* handling Matlab INPUT parameters */
-    f         = (float *)   mxGetData(prhs[0]); /* vectorized input image */
-    nx        = (int)     mxGetScalar(prhs[1]); /* number of rows in Matlab */
-    ny        = (int)     mxGetScalar(prhs[2]); /* number of columns in Matlab */
-    alpha     = (float)   mxGetScalar(prhs[3]); /* regularization parameter */
-    breg_iter = (int)     mxGetScalar(prhs[4]); /* number of Bregman iterations */
-    iter      = (int)     mxGetScalar(prhs[5]); /* number of inner iterations */
-    tol       = (float)   mxGetScalar(prhs[6]); /* tolerance, algorithm accuracy */
-    mu0       = (float)   mxGetScalar(prhs[7]);
-    mu1       = (float)   mxGetScalar(prhs[8]);
-    /* p         = 
-       u         =
-       u_bar     = 
+    f         = (float *)   mxGetData(prhs[0]);  /* vectorized input image */
+    nx        = (int)     mxGetScalar(prhs[1]);  /* number of rows in Matlab */
+    ny        = (int)     mxGetScalar(prhs[2]);  /* number of columns in Matlab */
+    lambda    = (float)   mxGetScalar(prhs[3]);  /* regularization parameter */
+    breg_it   = (int)     mxGetScalar(prhs[4]);  /* number of Bregman inner_itations */
+    inner_it  = (int)     mxGetScalar(prhs[5]);  /* number of inner inner_itations */
+    tol       = (float)   mxGetScalar(prhs[6]);  /* tolerance, algorithm accuracy */
+    u_input   = (float *)   mxGetData(prhs[7]);
+    u_bar     = (float *)   mxGetData(prhs[8]);
+    sigma     = (float)   mxGetScalar(prhs[9]);  /* convergence parameters */
+    tau       = (float)   mxGetScalar(prhs[10]);
+    theta     = (float)   mxGetScalar(prhs[11]);
+    mu0       = (float)   mxGetScalar(prhs[12]); /* mean values */
+    mu1       = (float)   mxGetScalar(prhs[13]);
+    /* NOT NEEDED?!
+       p         = 
        b         =
-       init      =
+       init      = 
        mu_update =
-       mu0       =
-       mu1       =
        useMask   =
        mask      = */
-   
-    /* convergence parameters */
-    sigma = 0.1f;
-    tau   = 0.1f;
-    theta = 0.5f;
     
     /* handling Matlab OUTPUT parameters */
     u     = (float *) mxGetData(plhs[0]=mxCreateNumericMatrix(nx,ny,mxSINGLE_CLASS,mxREAL));
+    /* initialize: u = u_input */
+    Copy_array(u_input,u,nx*ny);
     
-    /* arrays used in the algorithms */
+    /* arrays and variables used in the algorithms */
+    /*u_bar = (float *) calloc(nx*ny,sizeof(float));*/
+    p1    = (float *) calloc(nx*ny,sizeof(float));
+    p2    = (float *) calloc(nx*ny,sizeof(float));
+    u_old = (float *) calloc(nx*ny,sizeof(float));
+    b     = (float *) calloc(nx*ny,sizeof(float));
+    
+    /* Variables to be returned to Matlab 
     u_bar = (float *) mxGetData(plhs[1]=mxCreateNumericMatrix(nx,ny,mxSINGLE_CLASS,mxREAL));
     p1    = (float *) mxGetData(plhs[2]=mxCreateNumericMatrix(nx,ny,mxSINGLE_CLASS,mxREAL));
     p2    = (float *) mxGetData(plhs[3]=mxCreateNumericMatrix(nx,ny,mxSINGLE_CLASS,mxREAL));
     u_old = (float *) mxGetData(plhs[4]=mxCreateNumericMatrix(nx,ny,mxSINGLE_CLASS,mxREAL));
-    b     = (float *) mxGetData(plhs[5]=mxCreateNumericMatrix(nx,ny,mxSINGLE_CLASS,mxREAL));
+    b     = (float *) mxGetData(plhs[5]=mxCreateNumericMatrix(nx,ny,mxSINGLE_CLASS,mxREAL));*/
+    
+    stat_u = (float*) calloc(1,sizeof(float));
+    stat_u[0] = FLT_MAX;
     
     mus = (float*) calloc(2,sizeof(float));    
     /* compute estimate for foreground and background intensity constants mu0 and mu1 */
-    /* Estimate_constants(f,mus,nx,ny); */
+    /*Estimate_constants(f,mus,nx,ny);*/
     mus[0] = mu0; mus[1] = mu1; /* use mu parameters being transfered here */
-    mexPrintf("\n mus[0]= %e, mus[1]= %e \n",mus[0],mus[1]);
+    /*mexPrintf("\n mus[0]= %e, mus[1]= %e \n",mus[0],mus[1]);*/
     
-    /* Bregman iterations */
-    for (i = 0; i < breg_iter; i++){
+    /* Bregman inner_itations */
+    for (i = 0; i < breg_it; i++){
     
         /* set u, u_bar, p1 and p2 back to zero */
-        /*Set_zeros(u,u_bar,p1,p2,nx,ny);*/
+        /* Set_zeros(u,u_bar,p1,p2,nx,ny); */
         
-        /* main primal-dual iteration */
-        for (j = 0; j < iter; j++){
-            /* mexPrintf("\nInner iteration: %d\n",j+1); */
+        /* main primal-dual inner_itation */
+        j = 0;
+        while ( j < inner_it && stat_u[0] >= tol){
+        /*for (j = 0; j < inner_it; j++){*/
+            /* mexPrintf("\nInner inner_itation: %d\n",j+1); */
 
             /* STEP 1 : update p according to 
              * p_(j+1) = (I+sigma delta F*)^(-1)(p_j + sigma K u_bar_j) 
@@ -108,15 +120,21 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
              */
             Projection_dual_lq_ball(u_bar,p1,p2,nx,ny,sigma);
 
-            /* store old iterate: u_old = u */
+            /* store old inner_itate: u_old = u */
             Copy_array(u,u_old,nx*ny);
                         
             /* STEP 2: update u according to
              * u_(j+1) = (I+tau delta G)^(-1)(u_j - tau K* p_(j+1))
              * more precisely:
-             * u_(j+1) = max(0,min(1,u_j+tau*div(p_(j+1))-tau/alpha*((f-mu1)^2-(f-mu0)^2-alpha*b_i)))
+             * u_(j+1) = max(0,min(1,u_j+tau*div(p_(j+1))-tau/lambda*((f-mu1)^2-(f-mu0)^2-lambda*b_i)))
              */
-            Projection_data_fidelity(u,p1,p2,b,f,mus,nx,ny,tau,alpha);
+            Projection_data_fidelity(u,p1,p2,b,f,mus,nx,ny,tau,lambda);
+            
+            /* Track relative error of u iterates for stopping criterion 
+             * stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2));
+             */
+            Relative_error(stat_u,u,u_old,nx,ny);
+            /*mexPrintf("\n stat_u = %e \n",stat_u[0]);*/
             
             /* STEP 3: update u_bar according to
              * u_bar_(j+1) = u_(j+1)+ theta * (u_(j+1) - u_j)
@@ -125,12 +143,14 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
           
             /* Update mu values (mu0 and mu1) */
             /* Note: There is no mu update used here */
+            
+            j = j+1;
         }
         
         /* update b (outer Bregman update)
-         * b = b + 1/alpha * ((f-mu0)^2 - (f-mu1)^2)
+         * b = b + 1/lambda * ((f-mu0)^2 - (f-mu1)^2)
          */
-        Bregman_update(f,mus,b,nx,ny,alpha);
+        Bregman_update(f,mus,b,nx,ny,lambda);
         
         /* Update mu values (mu0 and mu1) */
         /*Update_constants(f,u,mus,nx,ny);
@@ -250,9 +270,9 @@ float Projection_dual_lq_ball(float *u,float *p1,float *p2,int nx, int ny,float 
 }
 
 /* Projection data fidelity
- * u_(j+1) = max(0,min(1,u_j+tau*div(p_(j+1))-tau/alpha*((f-mu1)^2-(f-mu0)^2-lambda*b_i)))
+ * u_(j+1) = max(0,min(1,u_j+tau*div(p_(j+1))-tau/lambda*((f-mu1)^2-(f-mu0)^2-lambda*b_i)))
  */
-float Projection_data_fidelity(float *u,float *p1,float *p2,float *b,float *f,float *mus,int nx,int ny,float tau,float alpha){
+float Projection_data_fidelity(float *u,float *p1,float *p2,float *b,float *f,float *mus,int nx,int ny,float tau,float lambda){
     int i,j;
     float P_v1, P_v2,div;
 #pragma omp parallel for shared(u,p1,p2) private(i,j,P_v1,P_v2,div)
@@ -270,11 +290,26 @@ float Projection_data_fidelity(float *u,float *p1,float *p2,float *b,float *f,fl
                 if (j == ny-1) P_v2 = -p2[(j-1)*nx + i];
                 else P_v2 = p2[j*nx + i] - p2[   (j-1)*nx + i];
             div = P_v1 + P_v2;
-            u[j*nx + i] = MAX( 0.0f , MIN(1.0f , u[j*nx + i] + tau*div - (tau/alpha)*(pow(f[j*nx + i]-mus[1],2)-pow(f[j*nx + i]-mus[0],2)-alpha*b[j*nx + i]) ) );
+            u[j*nx + i] = MAX( 0.0f , MIN(1.0f , u[j*nx + i] + tau*div - (tau/lambda)*(pow(f[j*nx + i]-mus[1],2)-pow(f[j*nx + i]-mus[0],2)-lambda*b[j*nx + i]) ) );
 
         }
     }
     return *u;
+}
+
+/* Track relative error of u iterates for stopping criterion 
+ * stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2));
+ */
+float Relative_error(float *stat_u, float *u, float *u_old, int nx, int ny){
+    int i;
+    float norm_u_res = 0.0f;
+    float norm_uold = 0.0f;
+    for(i=0;i<nx*ny;i++){
+        norm_u_res = norm_u_res + pow(u[i]-u_old[i],2);
+        norm_uold  = norm_uold  + pow(u_old[i],2);
+    }
+    stat_u[0] = norm_u_res/(norm_uold*nx*ny);
+    return *stat_u;
 }
 
 /* Primal solution update
@@ -292,10 +327,10 @@ float Primal_update(float *u_bar,float *u,float *u_old,int nx,int ny,float theta
 /* Bregman update
  * b = b + 1/lambda * ((f-mu0)^2 - (f-mu1)^2)
  */
-float Bregman_update(float *f,float *mus,float *b,int nx,int ny,float alpha){
+float Bregman_update(float *f,float *mus,float *b,int nx,int ny,float lambda){
     int i;
     for(i=0;i<nx*ny;i++){
-        b[i] = b[i] + (1/alpha)*(pow(f[i]-mus[0],2)-pow(f[i]-mus[1],2));
+        b[i] = b[i] + (1/lambda)*(pow(f[i]-mus[0],2)-pow(f[i]-mus[1],2));
     }
     return *b;
 }
@@ -318,7 +353,7 @@ float Binary_result(float *u,int nx,int ny,float thresh){
 
 /********************************************************************/
 
-/* store old iterate */
+/* store old inner_itate */
 float Copy_array(float *u, float *u_old, int size){
     int i;
 #pragma omp parallel for shared(u,u_old) private(i)

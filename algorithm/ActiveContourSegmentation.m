@@ -26,7 +26,6 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         theta = 0.5;
     end
 
-
     methods
         function this = ActiveContourSegmentation(lambda, inner_it, breg_it, varargin)
             if nargin > 5
@@ -185,11 +184,11 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             end
             % the data type of input data f dominates the general data type
             % used within bregman_cv, preferrably it is 'single'
-            type = class(f);
+            type = 'single';
             f = cast(f,type);
 
             % set lambda
-            lambda_reg = this.lambda(k);
+            lambda = this.lambda(k);
 
             % dimensions
             [nx, ny] = size(f);
@@ -197,10 +196,6 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
             %scale data f
             f = f-min(f(:)); f = f/max(f(:));
-
-            % initialize dual variable
-            p = zeros(nx,ny,dim,type); % dims: nx x ny x dim, dual variable
-            b = zeros(nx,ny,type); % dims: nx x ny , bregman variable
 
             if isempty(init)
                 init(:,:,k) = f;
@@ -232,24 +227,45 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 mask = dataFrame.mask;
             end %note: in case you are using the AC function on a double image using a mask is not possible
 
+            % TODO: Check C-Code in case more l iterations are needed
             for l = 1:20
+                %l
+                useC = 1;
 
                 %%%%%%%%%%%%%%% Bregman_CV_CORE %%%%%%%%%%%%%%%%%%%%%
                 % this part is parallelized via C/mex and openMP code
-                u = bregman_cv_core(f,nx,ny,lambda_reg,this.breg_it(k),this.inner_it,...
-                                    this.tol,p,u,u_bar,b,this.sigma,this.tau,this.theta,...
-                                    init(:,:,k),this.mu_update,mu0,mu1,useMask,mask);
-%                figure; imagesc(u);
+                
+                % initialize dual variable
+                if (~useC)
+                    p = zeros(nx,ny,dim,type); % dims: nx x ny x dim, dual variable
+                    b = zeros(nx,ny,type);     % dims: nx x ny , bregman variable
+                    u = bregman_cv_core(f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
+                                        this.tol,p,u,u_bar,b,this.sigma,this.tau,this.theta,...
+                                        init(:,:,k),this.mu_update,mu0,mu1,useMask,mask);
+                    %figure; imagesc(u); colorbar;
+                end
+
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%               [uC,u_barC,p1C,p2C,u_oldC,bC] =...
-%                    bregman_cv_core_mex(...
-%                    f,nx,ny,lambda_reg,this.breg_it(k),this.inner_it,...
-%                    this.tol,mu0,mu1);
-%               figure; imagesc(uC);
+                if (useC)
+                    u     = cast(u,type);
+                    u_bar = cast(u,type);
+                    [u] =... %,u_barC,p1C,p2C,u_oldC,bC] =...
+                        bregman_cv_core_mex(...
+                                       f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
+                                       this.tol,u,u_bar,this.sigma,this.tau,this.theta,...
+                                       mu0,mu1);
+                    %figure; imagesc(u); colorbar;
+    %                 if norm((u >= 0.5) - (uC >= 0.5)) == 0
+    %                     disp('Test passed!')
+    %                 end
+    %                 figure; imagesc((u >= 0.5) - (uC >= 0.5));
+                end
+                %%%%%%%%%%%%%%% Bregman_CV_CORE %%%%%%%%%%%%%%%%%%%%%
 
                 bin = u >= 0.5;
 
                 if this.adaptive_reg == 1
+                    %disp('Entering the adaptive segmentation case now...')
                     stats = regionprops(bin,'Solidity','Eccentricity','PixelIdxList');
                     go_on = 0;
 
@@ -285,9 +301,9 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                     if go_on == 1
                         i = 1; j = 1;
-                        lambda_reg = lambda_reg + this.adaptive_step;
-                        p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
-                        b = zeros(nx,ny); % dims: nx x ny , bregman variable
+                        lambda = lambda + this.adaptive_step;
+                        %p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
+                        %b = zeros(nx,ny); % dims: nx x ny , bregman variable
 
                         if isempty(init)
                             init(:,:,k) = f;
