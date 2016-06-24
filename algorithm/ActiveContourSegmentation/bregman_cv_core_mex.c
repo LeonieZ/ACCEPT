@@ -1,3 +1,37 @@
+/* 
+ * ========================================================================
+ * Bregman CV CORE: C-Implementation of Primal-Dual Hybrid-Gradient Method
+ * efficiently solving the Multiscale TV Segmentation Problem
+ * Reference: https://arxiv.org/abs/1604.06665
+ * C. Brune, L. Zeune, G. van Dalum, 24 June 2016 (version 1)
+ * ========================================================================
+ * 
+ * INPUT PARAMETERS
+ *  f         vectorized input image
+ *  nx        number of rows in Matlab
+ *  ny        number of columns in Matlab
+ *  lambda    regularization parameter
+ *  breg_it   number of Bregman inner_itations
+ *  inner_it  number of inner inner_itations
+ *  tol       tolerance, algorithm accuracy
+ *  u_input   
+ *  u_bar     
+ *  sigma     convergence parameter
+ *  tau       convergence parameter
+ *  theta     convergence parameter
+ *  mu0       pre-estimated mean value
+ *  mu1       pre-estimated mean value
+ *
+ * OUTPUT PARAMETERS
+ *  u         desired image (binary segmentation obtained via u > 0.5)
+ *
+ * USAGE compilation in Matlab:
+ *  mex bregman_cv_core_mex.c COPTIMFLAGS='-O3';
+ *
+ * COPYRIGHT: GPL open source license
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -5,20 +39,6 @@
 #include <matrix.h>
 #include "mex.h"
 #include "omp.h"
-
-/* C-Implementation of Primal-Dual Hybrid-Gradient Method solving a Multiscale TV Segmentation Problem
- * Input Parameters
- * TODO 
- *
- * Output Parameters
- * TODO
- *
- * Compile: mex bregman_cv_core_mex.c
- *
- * References:
- * TODO
- *
- */
 
 #if !defined(MAX)
     #define	MAX(A, B)	((A) > (B) ? (A) : (B))
@@ -65,13 +85,6 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
     theta     = (float)   mxGetScalar(prhs[11]);
     mu0       = (float)   mxGetScalar(prhs[12]); /* mean values */
     mu1       = (float)   mxGetScalar(prhs[13]);
-    /* NOT NEEDED?!
-       p         = 
-       b         =
-       init      = 
-       mu_update =
-       useMask   =
-       mask      = */
     
     /* handling Matlab OUTPUT parameters */
     u     = (float *) mxGetData(plhs[0]=mxCreateNumericMatrix(nx,ny,mxSINGLE_CLASS,mxREAL));
@@ -155,8 +168,6 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
         /* Update mu values (mu0 and mu1) */
         /*Update_constants(f,u,mus,nx,ny);
         mexPrintf("\n mus[0]= %e, mus[1]= %e \n",mus[0],mus[1]);*/
-        
-        /* TODO save all the intermediate results if needed */
         
         /* Binary_result(u,nx,ny,0.5f); */
     }

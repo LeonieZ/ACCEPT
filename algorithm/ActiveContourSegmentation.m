@@ -227,16 +227,16 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 mask = dataFrame.mask;
             end %note: in case you are using the AC function on a double image using a mask is not possible
 
-            % TODO: Check C-Code in case more l iterations are needed
-            for l = 1:20
-                %l
-                useC = 1;
-
-                %%%%%%%%%%%%%%% Bregman_CV_CORE %%%%%%%%%%%%%%%%%%%%%
-                % this part is parallelized via C/mex and openMP code
+            maxContourUpd = 20;
+            
+            for l = 1:maxContourUpd
                 
-                % initialize dual variable
+                %% Specify usage of C-implementation for Bregman CV Core
+                useC = true;
+
+                %%%%%%%%%%%%%%% Bregman_CV_CORE START %%%%%%%%%%%%%%%%%%%%%
                 if (~useC)
+                    % initialize dual variable
                     p = zeros(nx,ny,dim,type); % dims: nx x ny x dim, dual variable
                     b = zeros(nx,ny,type);     % dims: nx x ny , bregman variable
                     u = bregman_cv_core(f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
@@ -244,23 +244,19 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                                         init(:,:,k),this.mu_update,mu0,mu1,useMask,mask);
                     %figure; imagesc(u); colorbar;
                 end
-
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % C/mex code parallelized via openMP
                 if (useC)
-                    u     = cast(u,type);
-                    u_bar = cast(u,type);
-                    [u] =... %,u_barC,p1C,p2C,u_oldC,bC] =...
-                        bregman_cv_core_mex(...
+                    % cast to type (e.g. single) is needed due to C arrays
+                    u = cast(u,type); u_bar = cast(u,type);
+                    % init of dual variable p is done within C-code (calloc)
+                    u = bregman_cv_core_mex(...
                                        f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
                                        this.tol,u,u_bar,this.sigma,this.tau,this.theta,...
                                        mu0,mu1);
                     %figure; imagesc(u); colorbar;
-    %                 if norm((u >= 0.5) - (uC >= 0.5)) == 0
-    %                     disp('Test passed!')
-    %                 end
-    %                 figure; imagesc((u >= 0.5) - (uC >= 0.5));
                 end
-                %%%%%%%%%%%%%%% Bregman_CV_CORE %%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%% Bregman_CV_CORE END %%%%%%%%%%%%%%%%%%%%%%%
 
                 bin = u >= 0.5;
 
@@ -322,6 +318,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     break
                 end
             end
+            
             if this.clear_border
                 bin = imclearborder(bin);
             end
