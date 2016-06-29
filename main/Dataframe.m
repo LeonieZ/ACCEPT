@@ -60,11 +60,5 @@ classdef Dataframe < handle
                 this.nrChannels = size(this.rawImage,3);
         end
         
-%         function value = get.labelImage(this)
-%             %remove doubles at boarder
-%             sumImage = sum(this.segmentedImage,3); 
-%             labels = repmat(bwlabel(sumImage,8),1,1,this.nrChannels);
-%             value = labels.*this.segmentedImage; 
-%         end
     end
 end

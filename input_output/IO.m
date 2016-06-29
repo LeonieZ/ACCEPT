@@ -105,6 +105,13 @@ classdef IO < handle
             end
         end
         
+       function load_thumbs_to_results(this,sample)
+           loader=sample.loader(sample);
+           if isa(loader,'ThumbnailLoader')
+               loader.load_thumbs_to_results();
+           end
+       end
+        
         function save_sample_processor(this,smplLst,processor)
             save([smplLst.save_path(),'processed.mat'],'processor','-append','-v7.3');
         end

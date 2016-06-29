@@ -39,7 +39,7 @@ classdef Marker_Characterization < SampleProcessor
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
 %             this.io.save_thumbnail(inputSample,[],'prior');
-%             this.io.save_thumbnail(inputSample);
+            this.io.save_thumbnail(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)

@@ -24,6 +24,24 @@ function uiHandle=ACCEPT(varargin)
     parse(parser,varargin{:});
     if parser.Results.noGui==false
         uiHandle = gui_main2(base);
+    elseif parser.Results.noGui==true && ~isempty(parser.Results.inputFolder) && ~isempty(parser.Results.outputFolder)
+        base.sampleList.inputPath = parser.Results.inputFolder;
+        base.sampleList.resultPath = parser.Results.outputFolder;
+        base.io.update_sample_list(base.sampleList)
+        if isempty(parser.Results.sampleName)
+            base.sampleList.toBeProcessed = ~base.sampleList.isProcessed;
+        else
+            base.sampleList.toBeProcessed = strcmp(base.sampleList.sampleNames,parser.Results.sampleName);
+        end
+        if ~isempty(parser.Results.customFunction)
+            name = strsplit(parser.Results.customFunction,'.');
+            fh = str2func(name{1});
+            fh(base)
+        end
+        if ~isempty(parser.Results.sampleProcessor)
+            base.run();
+        end
+        keyboard
     end
 end
 
@@ -63,9 +81,10 @@ function parser = gen_input_parser(base)
     parser.FunctionName='batchmode input parser';
     parser.addOptional('noGui',false,@(x)islogical(x));
     %Additional options can be added here
-    %parser.addOptional('sampleProcessor',@(a) any(validatestring(a,base.availableSampleProcessors)));
+    parser.addOptional('sampleProcessor',[],@(a) any(validatestring(a,base.availableSampleProcessors)));
     %Optional: io atributes, defaults set to io defaults.
-    %parser.addOptional('inputFolder','',@(x) isdir(x));
-    %parser.addOptional('outputFolder','',@(x) isdir(x));
-    %parser.addOptional('overwriteResults',this.io.overwriteResults,@(x)islogical(x))
+    parser.addOptional('inputFolder',[],@(x) isdir(x));
+    parser.addOptional('outputFolder',[],@(x) isdir(x));
+    parser.addOptional('sampleName',[],@(x) isstr(x));
+    parser.addOptional('customFunction',[],@(x) (exist(x,'file')==2))
 end
