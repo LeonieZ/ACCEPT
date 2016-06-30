@@ -52,16 +52,26 @@ classdef ThumbnailLoader < Loader
         end
    
         function dataFrame = load_data_frame(this,frameNr,varargin)
+            rawImage = this.read_im(frameNr,varargin{:});
+            if size(rawImage,3) < this.sample.nrOfChannels
+                for l = size(rawImage,3)+1:this.sample.nrOfChannels
+                    rawImage(:,:,l) = zeros(size(rawImage,1),size(rawImage,2));
+                end
+            end
             dataFrame = Dataframe(frameNr,...
-            false,...
-            this.channelEdgeRemoval,...
-            this.read_im(frameNr,varargin{:}));
+            false,this.channelEdgeRemoval,rawImage);
             name = strsplit(this.sample.imageFileNames{frameNr},'.');
             if exist([name{1} '_segm.tif'], 'file') == 2
                 dataFrame.segmentedImage = this.read_segm(frameNr);
                 sumImage = sum(dataFrame.segmentedImage,3); 
                 labels = repmat(bwlabel(sumImage,8),1,1,size(dataFrame.segmentedImage,3));
                 dataFrame.labelImage = labels.*dataFrame.segmentedImage;
+            end
+            if ~isempty(dataFrame.segmentedImage) && size(dataFrame.segmentedImage,3) < this.sample.nrOfChannels
+                for l = size(dataFrame.segmentedImage,3)+1:this.sample.nrOfChannels
+                        dataFrame.segmentedImage(:,:,l) = zeros(size(dataFrame.rawImage,1),size(dataFrame.rawImage,2));
+                        dataFrame.labelImage(:,:,l) = zeros(size(dataFrame.rawImage,1),size(dataFrame.rawImage,2));
+                end
             end
         end
         

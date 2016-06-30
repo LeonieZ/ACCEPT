@@ -24,12 +24,10 @@ classdef FeatureCollection < SampleProcessorObject
         
         function returnSample = run(this, inputSample)
             returnSample = inputSample;
-            if strcmp(inputSample.type,'ThumbnailLoader')
-                this.use_thumbs = 0;
-            end
             
             if this.use_thumbs == 0
                 for i = 1:inputSample.nrOfFrames
+                    i
                     %%%% CHECK IF CORRECT!!%%%%%
                     dataFrame = this.io.load_data_frame(inputSample,i);
                     this.dataProcessor.run(dataFrame);
@@ -38,6 +36,7 @@ classdef FeatureCollection < SampleProcessorObject
                     if objectsfound > 0
                         thumbNr = array2table(linspace(objectsfoundearlier+1,objectsfoundearlier+size(dataFrame.features,1),...
                             size(dataFrame.features,1))','VariableNames',{'ThumbNr'});
+                        
                         dataFrame.features = [thumbNr dataFrame.features]; %maybe change like below?!
                         inputSample.results.features=vertcat(inputSample.results.features, dataFrame.features);
                         bb = struct2cell(regionprops(dataFrame.labelImage,'BoundingBox'));
@@ -79,10 +78,18 @@ classdef FeatureCollection < SampleProcessorObject
                     end
                 end
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
-                size(inputSample.priorLocations,1)
-                for i = 1:size(inputSample.priorLocations,1)
+                if strcmp(inputSample.type,'ThumbnailLoader')
+                    thumbsNr = inputSample.nrOfFrames
+                else 
+                    thumbsNr = size(inputSample.priorLocations,1)
+                end
+                for i = 1:thumbsNr
                     i
-                    thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
+                    if strcmp(inputSample.type,'ThumbnailLoader')
+                        thumbFrame = this.io.load_data_frame(inputSample,i);
+                    else
+                        thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
+                    end
                     this.dataProcessor.run(thumbFrame);
 %                     thumbsfoundearlier = size(returnSample.results.thumbnails,1);
                     objectsfound = size(thumbFrame.features,1);
@@ -92,7 +99,9 @@ classdef FeatureCollection < SampleProcessorObject
                         thumbFrame.features = [thumbNr thumbFrame.features];
                         returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                     end
-                    returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, returnSample.priorLocations(i,:));
+                    if ~strcmp(inputSample.type,'ThumbnailLoader')
+                        returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, returnSample.priorLocations(i,:));
+                    end
                     returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
                     %delete later!?
                     returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);

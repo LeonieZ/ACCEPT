@@ -41,7 +41,6 @@ function uiHandle=ACCEPT(varargin)
         if ~isempty(parser.Results.sampleProcessor)
             base.run();
         end
-        keyboard
     end
 end
 

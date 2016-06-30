@@ -27,7 +27,7 @@ end
 % end
 
 %handle empty thumbs
-usedThumbs = find(ismember(linspace(1,size(currentSample.results.thumbnails,1),size(currentSample.results.thumbnails,1)),currentSample.results.features{:,1}));
+usedThumbs = find(ismember(linspace(1,size(currentSample.results.thumbnail_images,2),size(currentSample.results.thumbnail_images,2)),currentSample.results.features{:,1}));
 nrUsedThumbs = size(usedThumbs,2);
 
 %replace NaN values with zeros
