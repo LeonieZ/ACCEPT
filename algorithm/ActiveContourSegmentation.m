@@ -13,11 +13,12 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         adaptive_reg = 0;
         adaptive_start = 0.01;
         adaptive_step = 0.05;
+        use_openMP = false;
     end
 
     properties
         clear_border = 0;
-        tol   = 1e-9;
+        tol   = 1e-10;
     end
 
     properties (Constant)
@@ -28,6 +29,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
     methods
         function this = ActiveContourSegmentation(lambda, inner_it, breg_it, varargin)
+            if nargin > 6
+               this.use_openMP = varargin{4};
+            end
+            
             if nargin > 5
                 this.single_channel = varargin{3};
             end
@@ -250,10 +255,17 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     % cast to type (e.g. single) is needed due to C arrays
                     u = cast(u,type); u_bar = cast(u,type);
                     % init of dual variable p is done within C-code (calloc)
-                    u = bregman_cv_core_mex(...
+                    if this.use_openMP && exist('bregman_cv_core_mex_openMP','file') == 3
+                        u = bregman_cv_core_mex_openMP(...
                                        f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
                                        this.tol,u,u_bar,this.sigma,this.tau,this.theta,...
                                        mu0,mu1);
+                    else
+                        u = bregman_cv_core_mex(...
+                                       f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
+                                       this.tol,u,u_bar,this.sigma,this.tau,this.theta,...
+                                       mu0,mu1);
+                    end
                     %figure; imagesc(u); colorbar;
                 end
                 %%%%%%%%%%%%%%% Bregman_CV_CORE END %%%%%%%%%%%%%%%%%%%%%%%
