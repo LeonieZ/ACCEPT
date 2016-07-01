@@ -172,6 +172,8 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
         /* Binary_result(u,nx,ny,0.5f); */
     }
     
+    /* free variables */
+    free(u_old); free(p1); free(p2); free(b); free(mus); free(stat_u); /* algorithm arrays */
 }
 
 /******************************/

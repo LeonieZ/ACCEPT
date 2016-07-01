@@ -9,14 +9,10 @@ end
 
 % Works on Mac with clang and gcc (6.1, incl. openMP).
 if ismac
-    openMP = false;
     % compare xml file in /Users/userxyz/.matlab/R2016a/mex_C_maci64.xml
     % for compiler parameters
-    if openMP
-        mex bregman_cv_core_mex.c COPTIMFLAGS='-O3' CFLAGS='\$CFLAGS -fopenmp -Wall' LDFLAGS='\$LDFLAGS -fopenmp';
-    else
-        mex bregman_cv_core_mex.c COPTIMFLAGS='-O3'
-    end
+    mex -output bregman_cv_core_mex_openMP bregman_cv_core_mex.c COPTIMFLAGS='-O3' CFLAGS='\$CFLAGS -fopenmp -Wall' LDFLAGS='\$LDFLAGS -fopenmp';
+    mex bregman_cv_core_mex.c COPTIMFLAGS='-O3';
 end
 
 if isunix
