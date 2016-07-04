@@ -6,12 +6,13 @@ classdef MCBP < Loader & IcyPluginData
         name='MCBP'
         hasEdges='false'
         pixelSize=0.64
-        channelNames={'PerCP','DAPI','PE','Marker'}
+        channelNames={};
         channelEdgeRemoval=1;
         sample=Sample();
         channelRemapping=[];
         tiffHeaders
         filtersUsed
+        channelsUsed={'PerCP','DAPI','PE','Marker'};
     end
     
     events
@@ -50,6 +51,7 @@ classdef MCBP < Loader & IcyPluginData
             this.load_scan_info(samplePath);
             this.preload_tiff_headers(samplePath);
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
+            this.calculate_frame_order();
 
         end
         
@@ -66,6 +68,7 @@ classdef MCBP < Loader & IcyPluginData
                 mask_extract = this.sample.mask((row - 1)*size_x_small + 1 : row * size_x_small, (col - 1)*size_y_small + 1 : col * size_y_small);
                 dataFrame.mask = imresize(mask_extract,[size(dataFrame.rawImage,1),size(dataFrame.rawImage,2)]);
             end
+            dataFrame.adjacentFrames=this.calculate_neigbouring_frames(frameNr);
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
 
@@ -104,6 +107,7 @@ classdef MCBP < Loader & IcyPluginData
                 col=i-(row-1)*cols;
                 frameOrder(row,col)=i;
             end 
+            this.sample.frameOrder=frameOrder;
         end
     end
    
@@ -142,9 +146,9 @@ classdef MCBP < Loader & IcyPluginData
                this.channelNames{3}=parameters{33}(11:end);
                this.channelNames{4}=parameters{34}(11:end);
                this.channelRemapping=[0,0,0,0];
-               this.channelRemapping(strcmp(this.channelNames,'PerCP'))=1;
-               this.channelRemapping(strcmp(this.channelNames,'DAPI'))=2;
-               this.channelRemapping(strcmp(this.channelNames,'PE'))=3;
+               this.channelRemapping(strcmp(this.channelNames,this.channelUsed{1}))=1;
+               this.channelRemapping(strcmp(this.channelNames,this.channelUsed{2}))=2;
+               this.channelRemapping(strcmp(this.channelNames,this.channelUsed{3}))=3;
                this.channelRemapping(this.channelRemapping==0)=4;
                if ~(sum(this.channelRemapping(1:4))==10)
                    %error
@@ -243,8 +247,14 @@ classdef MCBP < Loader & IcyPluginData
         end
         
         function neigbouring_frames=calculate_neigbouring_frames(this,frameNr)
-            % to be implemented
-            neigbouring_frames=[1,2,3];
+            [x,y]=find(this.sample.frameOrder==frameNr);
+            x=[x-1,x,x+1];
+            y=[y-1,y,y+1];
+            x(x<1)=[];
+            x(x>this.sample.rows)=[];
+            y(y<1)=[];
+            y(y>this.sample.columns)=[];
+            neigbouring_frames=this.sample.frameOrder(x,y);
         end
     end
     

@@ -27,7 +27,7 @@ classdef Sample < handle
         channelEdgeRemoval=4;
         dataTypeOriginalImage='uint16';
         pixelSize=1;
-        priorLocations=[];   
+        priorLocations=[];
     end
     
     properties (SetAccess={?Loader,?IO,?Base})
@@ -52,6 +52,7 @@ classdef Sample < handle
         savePath
         rows
         columns
+        frameOrder
     end
     properties (Access={?Loader})
         imagePath
