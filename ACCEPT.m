@@ -25,8 +25,18 @@ function uiHandle=ACCEPT(varargin)
     if parser.Results.noGui==false
         uiHandle = gui_main2(base);
     elseif parser.Results.noGui==true && ~isempty(parser.Results.inputFolder) && ~isempty(parser.Results.outputFolder)
-        base.sampleList.inputPath = parser.Results.inputFolder;
-        base.sampleList.resultPath = parser.Results.outputFolder;
+        if strfind(parser.Results.inputFolder,'ACCEPT') == 1
+            path = strsplit(parser.Results.inputFolder,'ACCEPT');
+            base.sampleList.inputPath = [installDir path{2}];
+        else
+            base.sampleList.inputPath = parser.Results.inputFolder;
+        end
+        if strfind(parser.Results.outputFolder,'ACCEPT') == 1
+            path = strsplit(parser.Results.outputFolder,'ACCEPT');
+            base.sampleList.resultPath = [installDir path{2}];
+        else
+            base.sampleList.resultPath = parser.Results.inputFolder;
+        end
         base.io.update_sample_list(base.sampleList)
         if isempty(parser.Results.sampleName)
             base.sampleList.toBeProcessed = ~base.sampleList.isProcessed;
