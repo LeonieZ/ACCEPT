@@ -13,17 +13,17 @@ seed_clust = 0; RandStream.setGlobalStream(RandStream('mrg32k3a','Seed',seed_clu
 
 % load double/single image
 balls_var_size;
-var = 0.1;
+var = 0.2;
 f_true = imresize(single(IM),[1036 1248]); %randn(200,200,'single'); %1036x1248
 clear IM IM2;
 f = f_true + var * randn(size(f_true));
 
 % generated segmentation object
 lambda   = 5;
-inner_it = 400;
-breg_it  = 5;
+inner_it = 500;
+breg_it  = 1;
 ac = ActiveContourSegmentation(lambda,inner_it,breg_it);
-%ac.tol = eps;
+ac.tol = 1e-9;
 
 % run Bregman-CV segmentation
 profile on;
@@ -32,4 +32,4 @@ profile off;
 profile viewer;
 
 % visualize result
-figure; imagesc(result);
+%figure; imagesc(result);

@@ -1,7 +1,7 @@
 classdef ActiveContourSegmentation < DataframeProcessorObject
     %ACTIVECONTOUR_SEGMENTATION Summary of this class goes here
     %   Detailed explanation goes here
-    
+
     properties (SetAccess = private)
         maskForChannels = [];
         lambda = [];
@@ -13,26 +13,30 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         adaptive_reg = 0;
         adaptive_start = 0.01;
         adaptive_step = 0.05;
+        use_openMP = false;
     end
-    
+
     properties
         clear_border = 0;
-        tol   = 1e-9;
+        tol   = 1e-10;
     end
-    
+
     properties (Constant)
         sigma = 0.1;
         tau   = 0.1;
         theta = 0.5;
     end
-    
-    
+
     methods
         function this = ActiveContourSegmentation(lambda, inner_it, breg_it, varargin)
+            if nargin > 6
+               this.use_openMP = varargin{4};
+            end
+            
             if nargin > 5
                 this.single_channel = varargin{3};
             end
-            
+
             if nargin > 4 && ~isempty(varargin{2})
                 this.maskForChannels = varargin{2};
             end
@@ -52,12 +56,12 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             this.breg_it   = breg_it;
             this.inner_it  = inner_it;
             this.mu_update = inner_it+1;
-            
+
             if nargin > 3
                 this.init = varargin{1};
             end
         end
-        
+
         function returnFrame = run(this, inputFrame)
             % Segmentation on Dataframe: this is the standard call via the graphical user interface
             if isa(inputFrame,'Dataframe')
@@ -80,8 +84,8 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if size(this.breg_it,2) == 1
                     this.breg_it = repmat(this.breg_it,1, inputFrame.nrChannels);
                 end
-                
-                if ~isempty(this.init) 
+
+                if ~isempty(this.init)
                     if isa(this.init,'double') || isa(this.init,'logical')
                         cvInit = this.init;
                     elseif isa(this.init,'cell') && isa(this.init{1},'char') && isa(this.init{2},'char')
@@ -102,7 +106,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 else
                     cvInit = [];
                 end
-               
+
                 for i = 1:inputFrame.nrChannels
                     if any(this.maskForChannels == i)
                         tmp = bregman_cv(this, inputFrame, i, cvInit);
@@ -114,10 +118,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if isempty(this.single_channel) && isa(inputFrame,'Dataframe')
                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 end
-                
-                sumImage = sum(returnFrame.segmentedImage,3); 
+
+                sumImage = sum(returnFrame.segmentedImage,3);
                 labels = repmat(bwlabel(sumImage,8),1,1,size(returnFrame.segmentedImage,3));
-                returnFrame.labelImage = labels.*returnFrame.segmentedImage; 
+                returnFrame.labelImage = labels.*returnFrame.segmentedImage;
 
             % Segmentation on double array: this case can be used for separate image segmentation and testing purposes
             elseif isa(inputFrame,'double') || isa(inputFrame,'single')
@@ -137,8 +141,8 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if size(this.breg_it,2) == 1
                     this.breg_it = repmat(this.breg_it,1,size(inputFrame,3));
                 end
-                
-                if ~isempty(this.init) 
+
+                if ~isempty(this.init)
                     if isa(this.init,'double') || isa(this.init,'single') || isa(this.init,'logical')
                         cvInit = this.init;
                     elseif isa(this.init,'cell') && isa(this.init{1},'char') && isa(this.init{2},'char')
@@ -171,12 +175,12 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 if isempty(this.single_channel)
                     returnFrame = returnFrame(:,:,this.maskForChannels);
                 end
-                
+
             else
                 error('Active Contour Segmentation can only be used on dataframes or double images.')
             end
         end
-        
+
         function bin = bregman_cv(this, dataFrame, k, init)
             if isa(dataFrame,'Dataframe')
                 f = dataFrame.rawImage(:,:,k);
@@ -185,22 +189,18 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             end
             % the data type of input data f dominates the general data type
             % used within bregman_cv, preferrably it is 'single'
-            type = class(f);
+            type = 'single';
             f = cast(f,type);
 
             % set lambda
-            lambda_reg = this.lambda(k);
+            lambda = this.lambda(k);
 
             % dimensions
             [nx, ny] = size(f);
             dim = ndims(f);
 
-            %scale data f    
+            %scale data f
             f = f-min(f(:)); f = f/max(f(:));
-
-            % initialize dual variable
-            p = zeros(nx,ny,dim,type); % dims: nx x ny x dim, dual variable
-            b = zeros(nx,ny,type); % dims: nx x ny , bregman variable
 
             if isempty(init)
                 init(:,:,k) = f;
@@ -226,24 +226,54 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
             useMask = false;
             mask    = [];
-            if isa(dataFrame,'Dataframe') && dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) 
+            if isa(dataFrame,'Dataframe') && dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask)
                 f(dataFrame.mask) = mu0;
                 useMask = true;
                 mask = dataFrame.mask;
             end %note: in case you are using the AC function on a double image using a mask is not possible
-            
-            for l = 1:20
 
-                %%%%%%%%%%%%%%% Bregman_CV_CORE %%%%%%%%%%%%%%%%%%%%%
-                % this part is parallelized via C/mex and openMP code
-                u = bregman_cv_core(f,nx,ny,lambda_reg,this.breg_it(k),this.inner_it,...
-                                    this.tol,p,u,u_bar,b,this.sigma,this.tau,this.theta,...
-                                    init(:,:,k),this.mu_update,mu0,mu1,useMask,mask);
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            maxContourUpd = 20;
+            
+            for l = 1:maxContourUpd
+                
+                %% Specify usage of C-implementation for Bregman CV Core
+                useC = true;
+
+                %%%%%%%%%%%%%%% Bregman_CV_CORE START %%%%%%%%%%%%%%%%%%%%%
+                if (~useC)
+                    % initialize dual variable
+                    p = zeros(nx,ny,dim,type); % dims: nx x ny x dim, dual variable
+                    b = zeros(nx,ny,type);     % dims: nx x ny , bregman variable
+                    u = bregman_cv_core(f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
+                                        this.tol,p,u,u_bar,b,this.sigma,this.tau,this.theta,...
+                                        init(:,:,k),this.mu_update,mu0,mu1,useMask,mask);
+                    %figure; imagesc(u); colorbar;
+                end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % C/mex code parallelized via openMP
+                if (useC)
+                    % cast to type (e.g. single) is needed due to C arrays
+                    u = cast(u,type); u_bar = cast(u,type);
+                    % init of dual variable p is done within C-code (calloc)
+                    if this.use_openMP && exist('bregman_cv_core_mex_openMP','file') == 3
+                        u = bregman_cv_core_mex_openMP(...
+                                       f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
+                                       this.tol,u,u_bar,this.sigma,this.tau,this.theta,...
+                                       mu0,mu1);
+                    else
+                        u = bregman_cv_core_mex(...
+                                       f,nx,ny,lambda,this.breg_it(k),this.inner_it,...
+                                       this.tol,u,u_bar,this.sigma,this.tau,this.theta,...
+                                       mu0,mu1);
+                    end
+                    %figure; imagesc(u); colorbar;
+                end
+                %%%%%%%%%%%%%%% Bregman_CV_CORE END %%%%%%%%%%%%%%%%%%%%%%%
 
                 bin = u >= 0.5;
 
                 if this.adaptive_reg == 1
+                    %disp('Entering the adaptive segmentation case now...')
                     stats = regionprops(bin,'Solidity','Eccentricity','PixelIdxList');
                     go_on = 0;
 
@@ -279,9 +309,9 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                     if go_on == 1
                         i = 1; j = 1;
-                        lambda_reg = lambda_reg + this.adaptive_step;
-                        p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
-                        b = zeros(nx,ny); % dims: nx x ny , bregman variable
+                        lambda = lambda + this.adaptive_step;
+                        %p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
+                        %b = zeros(nx,ny); % dims: nx x ny , bregman variable
 
                         if isempty(init)
                             init(:,:,k) = f;
@@ -295,15 +325,16 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                         end
                     else
                         break
-                    end   
+                    end
                 else
                     break
                 end
             end
+            
             if this.clear_border
                 bin = imclearborder(bin);
             end
         end
     end
-    
+
 end

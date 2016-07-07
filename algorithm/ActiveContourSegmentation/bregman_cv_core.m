@@ -1,4 +1,4 @@
-function u = bregman_cv_core(f,nx,ny,lambda_reg,breg_it,inner_it,...
+function u = bregman_cv_core(f,nx,ny,lambda,breg_it,inner_it,...
                              tol,p,u,u_bar,b,sigma,tau,theta,...
                              init,mu_update,mu0,mu1,useMask,mask)
     
@@ -9,38 +9,40 @@ function u = bregman_cv_core(f,nx,ny,lambda_reg,breg_it,inner_it,...
     while i <= breg_it % Bregman iteration steps
         stat_u = []; 
         while j <= inner_it && (isempty(stat_u) || ~isempty(stat_u) && stat_u(end) >= tol) % inner TV iteration steps
+            
             %%% step 1 : update p according to 
             %%% p_(n+1) = (I+delta F*)^(-1)(p_n + sigma K u_bar_n)
             % update dual p
             arg1 = p + sigma * grad(u_bar,'shift');
             p = arg1 ./ max(1,repmat(sqrt(sum(arg1.^2,3)),[1 1 dim])); %different for aniso TV
-
+            
             %%% step 2: update u according to
             %%% u_(n+1) = (I+tau G)^(-1)(u_n - tau K* p_(n+1))
             u_old = u;
-            arg2 =  (u + tau * div(p,'shift')) - tau/lambda_reg * ((f - mu1).^2 - (f - mu0).^2 - lambda_reg * b);
+            arg2 =  (u + tau * div(p,'shift')) - tau/lambda * ((f - mu1).^2 - (f - mu0).^2 - lambda * b);
             u = max(0, min(1,arg2));
-            stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2));         
-
+            stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2));       
+            
             %%% step 3: update u_bar according to
             %%% u_bar_(n+1) = u_(n+1)+ theta * (u_(n+1) - u_n)
             u_bar = u + theta * (u - u_old);
 
             % update mean values (mu0 and mu1)
             if (mod(j,mu_update) == 0) % && sum(sum((u>=0.5)))>0 && sum(sum((u<0.5)))>0
-                if max(max((init<0.5))) == 1 && max(max((init>=0.5))) == 1
-                    mu0 = max(mean(mean(f(init<0.5))),0); % mean value outside object
-                    mu1 = max(mean(mean(f(init>=0.5))),0); % mean value inside object
-                elseif max(max((init<0.5))) == 0
-                    mu0 = min(f(:));
-                    mu1 = mean(mean(f(init>=0.5)));
-                elseif max(max((init>=0.5))) == 0
-                    mu0 = mean(mean(f(init<0.5)));
-                    mu1 = max(f(:));
-                end
-                if useMask
-                    f(mask) = mu0;
-                end
+                  warning('this part has not been implemented in the C-code')
+%                 if max(max((init<0.5))) == 1 && max(max((init>=0.5))) == 1
+%                     mu0 = max(mean(mean(f(init<0.5))),0); % mean value outside object
+%                     mu1 = max(mean(mean(f(init>=0.5))),0); % mean value inside object
+%                 elseif max(max((init<0.5))) == 0
+%                     mu0 = min(f(:));
+%                     mu1 = mean(mean(f(init>=0.5)));
+%                 elseif max(max((init>=0.5))) == 0
+%                     mu0 = mean(mean(f(init<0.5)));
+%                     mu1 = max(f(:));
+%                 end
+%                 if useMask
+%                     f(mask) = mu0;
+%                 end
             end
 
             % update inner index
@@ -49,7 +51,7 @@ function u = bregman_cv_core(f,nx,ny,lambda_reg,breg_it,inner_it,...
         end
 
         % update b (outer bregman update)
-        b = b + 1/lambda_reg * ((f - mu0).^2 - (f - mu1).^2);
+        b = b + 1/lambda * ((f - mu0).^2 - (f - mu1).^2);
 
         % update outer index
         i = i + 1; j = 1;
