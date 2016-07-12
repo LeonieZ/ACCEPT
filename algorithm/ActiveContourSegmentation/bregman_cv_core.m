@@ -8,7 +8,7 @@ function u = bregman_cv_core(f,nx,ny,lambda,breg_it,inner_it,...
     i = 1; j = 1;
     while i <= breg_it % Bregman iteration steps
         stat_u = []; 
-        while j <= inner_it && (isempty(stat_u) || ~isempty(stat_u) && stat_u(end) >= tol) % inner TV iteration steps
+        while j <= inner_it %&& (isempty(stat_u) || ~isempty(stat_u) && stat_u(end) >= tol) % inner TV iteration steps
             
             %%% step 1 : update p according to 
             %%% p_(n+1) = (I+delta F*)^(-1)(p_n + sigma K u_bar_n)
@@ -47,8 +47,9 @@ function u = bregman_cv_core(f,nx,ny,lambda,breg_it,inner_it,...
 
             % update inner index
             j = j + 1;
-
+            
         end
+        j
 
         % update b (outer bregman update)
         b = b + 1/lambda * ((f - mu0).^2 - (f - mu1).^2);

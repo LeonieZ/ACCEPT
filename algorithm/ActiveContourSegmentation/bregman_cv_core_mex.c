@@ -122,7 +122,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
         
         /* main primal-dual inner_itation */
         j = 0;
-        while ( j < inner_it && stat_u[0] >= tol){
+        while ( j < inner_it ){/* && stat_u[0] >= tol){ */
         /*for (j = 0; j < inner_it; j++){*/
             /* mexPrintf("\nInner inner_itation: %d\n",j+1); */
 

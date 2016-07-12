@@ -18,18 +18,22 @@ classdef TMP_Detection < SampleProcessor
         function run(this,inputSample)
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);
-%             ac = ActiveContourSegmentation(0.1, 50, 1,{'triangle','global', inputSample.histogram_down},[],3);
-            adaptive_start = 0.001;
-            adaptive_step  = 0.005;
-            use_openMP     = true;
-            ac = ActiveContourSegmentation({'adaptive',adaptive_start,adaptive_step},...
-                                           500, 1,{'triangle','global', inputSample.histogram_down},...
-                                           [],3,use_openMP);
+%             adaptive_start = 0.001;
+%             adaptive_step  = 0.005;
+%             use_openMP     = true;
+%             ac = ActiveContourSegmentation({'adaptive',adaptive_start,adaptive_step},...
+%                                            500, 1,{'triangle','global', inputSample.histogram_down},...
+%                                            [],3,use_openMP);
+            lambda          = 0.01;
+            inner_it        = 200;
+            breg_it         = 1;
+            init            = {'triangle','global', inputSample.histogram_down};
+            maskForChannels = [];
+            single_ch       = 3;
+            use_openMP      = true;
+            ac = ActiveContourSegmentation(lambda,inner_it,breg_it,init,...
+                                           maskForChannels,single_ch,use_openMP);
             ac.clear_border = 1;
-%             this.dataframeProcessor.pipeline{1} = ac;
-%             ts = ThresholdingSegmentation('triangle','global', inputSample.histogram, [ 3 3 3 3]);
-%             ts = ThresholdingSegmentation('triangle','global', inputSample.histogram);
-%             this.dataframeProcessor.pipeline{1} = ts;
             this.dataframeProcessor.pipeline{1} = ac;
             for i = 3:numel(this.pipeline)
                 this.pipeline{i}.run(inputSample);
