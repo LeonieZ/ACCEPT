@@ -51,7 +51,7 @@ classdef MCBP < Loader & IcyPluginData
             this.load_scan_info(samplePath);
             this.preload_tiff_headers(samplePath);
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
-            this.calculate_frame_order();
+            this.calculate_frame_nr_order();
 
         end
         
@@ -146,9 +146,9 @@ classdef MCBP < Loader & IcyPluginData
                this.channelNames{3}=parameters{33}(11:end);
                this.channelNames{4}=parameters{34}(11:end);
                this.channelRemapping=[0,0,0,0];
-               this.channelRemapping(strcmp(this.channelNames,this.channelUsed{1}))=1;
-               this.channelRemapping(strcmp(this.channelNames,this.channelUsed{2}))=2;
-               this.channelRemapping(strcmp(this.channelNames,this.channelUsed{3}))=3;
+               this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{1}))=1;
+               this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{2}))=2;
+               this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{3}))=3;
                this.channelRemapping(this.channelRemapping==0)=4;
                if ~(sum(this.channelRemapping(1:4))==10)
                    %error

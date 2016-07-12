@@ -120,9 +120,16 @@ classdef CellTracks < Loader
 
     methods(Access=private)        
         function preload_tiff_headers(this)
-            tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
+            tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']); 
+            tempImageFileNames_cleared = [];
             for i=1:numel(tempImageFileNames)
-             this.sample.imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+                if find(ismember(strfind(tempImageFileNames(i).name,'.'),1))
+                    tempImageFileNames_cleared = [tempImageFileNames_cleared i];
+                end
+            end
+            tempImageFileNames(tempImageFileNames_cleared) = [];
+            for i=1:numel(tempImageFileNames)
+                this.sample.imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];
             end
             %function to fill the dataP.temp.imageinfos variable
 
@@ -247,6 +254,14 @@ classdef CellTracks < Loader
                 NoXML=1;
             else
                 XMLFile = dir([this.sample.priorPath filesep '*.xml']);
+            end
+            
+            if size(XMLFile,1) > 1
+                for i = 1:size(XMLFile,1)
+                    if find(ismember(strfind(XMLFile(1).name,'.'),1))
+                        XMLFile(i) = [];
+                    end
+                end
             end
                 
             % Load & process XML file
