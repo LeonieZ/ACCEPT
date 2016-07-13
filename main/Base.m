@@ -94,7 +94,8 @@ classdef Base < handle
                     if this.sampleList.toBeProcessed(k) == 1
                         wbar_fraction = nrProcessed / sum(this.sampleList.toBeProcessed);
                         waitbar(wbar_fraction,wbar,'Please wait...')
-s                        sample.results=Result(); 
+                        sample = this.io.load_sample(this.sampleList,k);
+                        sample.results=Result(); 
                         waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
                         disp(['Processing sample ',sample.id ,'...']);
                         this.sampleProcessor.run(sample);
