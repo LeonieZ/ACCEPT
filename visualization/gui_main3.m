@@ -172,7 +172,7 @@ function visualize(handle,~,base)
                msgbox('Empty Sample.')
             else
                % run sampleVisGui with loaded sample
-               gui_sample(base,currentSample);
+               gui_sample2(base,currentSample);
 %                CS_scoring_gui(base,currentSample);
 
             end  
