@@ -3,6 +3,9 @@ function handle = gui_main3(base)
 % global gui
 
 tasks = [];
+set(0,'units','characters');  
+screensz = get(0,'screensize');
+
 
 % Update chooseButton for tasks via available sampleProcessors
 gui.tasks_raw = base.availableSampleProcessors;
@@ -13,18 +16,12 @@ end
 % select DEFAULT sampleProcessor number (in alphabetical order) for visualization
 defaultSampleProcessorNumber = 1;
 
-uni_logo = imread('logoUT.png'); [uni_logo_x, uni_logo_y, ~] = size(uni_logo); uni_logo_rel = uni_logo_x / uni_logo_y;
-cancerid_logo = imread('logoCancerID.png'); [cancerid_logo_x, cancerid_logo_y, ~] = size(cancerid_logo); cancerid_logo_rel = cancerid_logo_x / cancerid_logo_y;
+uni_logo = imread('logoUT.png'); 
+cancerid_logo = imread('logoCancerID.png');
 % subtitle = imread('title2.tif'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
 
-%Menu
-gui.screensize = get( 0, 'Screensize' );
-gui.rel_screen = (0.5*gui.screensize(3))/(0.75*gui.screensize(4));
 
-%window
-posx = 0.25; posy = 0.15; width = 0.5; height = 0.75; gui.rel = width/height;
-
-gui.fig_main = figure('Units','characters','Position',[80 12 160 60],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
+gui.fig_main = figure('Units','characters','Position',[(screensz(3)-160)/2 12 160 60],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color', [1 1 1],'Resize','off','Visible','off');
 
 gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','characters','Position',[35 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@process,base}); 
@@ -79,14 +76,23 @@ if sz_inButton(3) > 32 || sz_resButton(3) > 32
     set(gui.results_path_button,'Position',[67.2-new_sz 32.2 new_sz 2.3]);
 end
 
-gui.uni_logo_axes = axes('Units','characters','Position',[91.2 1.5 64 24*uni_logo_rel*gui.rel_screen]);
-gui.uni_logo = imagesc(uni_logo); axis off;
+gui.uni_logo_axes = axes('Units','characters','Position',[91.2 1.5 64 3]);
+gui.uni_logo = imagesc(uni_logo); axis image; axis off;
 
-gui.cancerid_logo_axes = axes('Units','characters','Position',[105.6 49.8 48 18*cancerid_logo_rel*gui.rel_screen]); 
-gui.cancerid_logo = imagesc(cancerid_logo); axis off;
+gui.cancerid_logo_axes = axes('Units','characters','Position',[107.2 49.8 48 9.5]); 
+gui.cancerid_logo = imagesc(cancerid_logo); axis image; axis off;
 
+% calculate conversion factor pixels to characters
+figure('Visible','off');
+size_pixels=get(gcf,'Position');
+set(gcf,'Units','characters');
+size_characters=get(gcf,'Position');
+f=size_pixels(3:4)./size_characters(3:4);
+%%% 
+
+figure(gui.fig_main);
 gui.table = uitable('Parent', gui.fig_main, 'Data', [],'ColumnName', {'Sample name','Select'},'ColumnFormat', {'char','logical'},'ColumnEditable', [false,true],'RowName',[],'Units','characters',...
-    'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.32*0.595*0.5*gui.screensize(3) 0.32*0.395*0.5*gui.screensize(3)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt));
+    'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.7*51.2*f(1) 0.3*51.2*f(1)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt));
 gui.slider = uicontrol('Style','Slider','Parent',gui.fig_main,'Units','characters','Position',[105.6 10.8 3.2 19.6],'Min',-1,'Max',0,'Value',0,...
     'SliderStep', [1, 1] ,'Visible','off','Callback',{@update_table,base});
 handle = gui.fig_main;
