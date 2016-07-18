@@ -174,7 +174,7 @@ function visualize(handle,~,base)
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
             % load selected sample
             currentSample = base.io.load_sample(base.sampleList,selectedCellsInTable(1));
-            if size(currentSample.results.thumbnails,1)<1
+            if size(currentSample.results.thumbnails,1)<1 || isempty(currentSample.results.features)
                msgbox('Empty Sample.')
             else
                % run sampleVisGui with loaded sample

@@ -27,8 +27,9 @@ sampleFeatures_noNaN = sampleFeatures{:,:};
 sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
 sampleFeatures{:,:} = sampleFeatures_noNaN;
 %handle selections
-GuiSampleHandle.selectedFrames = false(nrUsedThumbs,1);
-GuiSampleHandle.selectedCells = false(size(sampleFeatures,1),1);
+selectedFrames = false(nrUsedThumbs,1);
+currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
+selectedCells = false(size(sampleFeatures,1),1);
 rgbTriple = repmat([0 0 1],[size(sampleFeatures,1),1]);
 %% Main title
 GuiSampleHandle.title_axes = axes('Units','characters','Position',[110 61.8 39.6 2.6]); axis off;
@@ -45,7 +46,7 @@ GuiSampleHandle.uiPanelOverview = uipanel('Parent',GuiSampleHandle.fig_main,...
 
 % create panel for thumbnail gallery (bottom-left)
 GuiSampleHandle.uiPanelGallery = uipanel('Parent',GuiSampleHandle.fig_main,...
-                                    'Units','characters','Position',[5.1 1.3 151.6 43.1],...
+                                    'Units','characters','Position',[5.1 1.3 151.6 42.1],...
                                      'Title','Cell Gallery','TitlePosition','CenterTop',...
                                      'FontUnits','normalized','FontSize',0.033,...
                                      'BackgroundColor',[1 1 1]);
@@ -119,12 +120,12 @@ columnTextSize = 0.68;
                        
 % create panel for thumbnails next to slider                          
 GuiSampleHandle.uiPanelThumbsOuter = uipanel('Parent',GuiSampleHandle.uiPanelGallery,...
-                                        'Units','characters','Position',[0 0 147 39.3],...
+                                        'Units','characters','Position',[0 0 147 38.3],...
                                         'BackgroundColor',gui_sample_color);
                                    
 % create slider for gallery
 GuiSampleHandle.slider = uicontrol('Style','Slider','Parent',GuiSampleHandle.uiPanelGallery,...
-                              'Units','characters','Position',[147.3 0 3 39.3],...
+                              'Units','characters','Position',[147.3 0 3 38.3],...
                               'Callback',{@slider_callback});
                                     
 % compute relative dimension of the thumbnail grid
@@ -138,13 +139,13 @@ space = (144.1 - cols *15.1)/(2*cols);
 for i = 1:cols
     if i == 1
         GuiSampleHandle.textCol(i) = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                    'Units','characters','Position',[space 39.5 15.1 1.7],...
+                                    'Units','characters','Position',[space 38.5 15.1 1.7],...
                                     'String','Overlay','HorizontalAlignment','center',...
                                     'FontUnits', 'normalized','FontSize',columnTextSize,...
                                     'BackgroundColor',gui_sample_color);
     else
         GuiSampleHandle.textCol(i) = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                    'Units','characters','Position',[(2*(i-1)+1)*space+(i-1)*15.1 39.5 15.1 1.7],...
+                                    'Units','characters','Position',[(2*(i-1)+1)*space+(i-1)*15.1 38.5 15.1 1.7],...
                                     'String',currentSample.channelNames{i-1},'HorizontalAlignment','center',...
                                     'FontUnits', 'normalized','FontSize',columnTextSize,...
                                     'BackgroundColor',gui_sample_color);
@@ -152,10 +153,10 @@ for i = 1:cols
 end
 
 % pitch (box for axis) height and width
-rPitch  = 38/rows;
+rPitch  = 37/rows;
 cPitch  = 144.1/cols;
 % axis height and width
-axHeight = 35.4/rows;
+axHeight = 34.4/rows;
 axWidth = 132.3/cols;
 
 %-----
@@ -179,7 +180,7 @@ map(end+1,:) = [1,0,0];
 
 for i=1:rows
     % specify row location for all columns
-    y = 38.8-i*rPitch;
+    y = 37.8-i*rPitch;
     % plot overlay image in first column
     x = 0;
     ind = (i-1)*(cols) + 1; % 5,10,15... index for first column element
@@ -203,6 +204,11 @@ if  nrUsedThumbs>5
 else
     set(GuiSampleHandle.slider,'enable','off');
 end
+
+GuiSampleHandle.sortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.55,'String', 'Selected cells to top.','Position', [130.7 43.45 26 1.65],'Callback', @sort_cells); 
+GuiSampleHandle.resortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.55,'String', 'Original sorting.','Position', [108 43.45 22 1.65],'Callback', @resort_cells); 
 
 % go through all thumbnails (resp. dataframes)
 plot_thumbnails(3);
@@ -405,20 +411,18 @@ function plot_thumbnails(val)
     if ~isempty(thumbIndex)
         for j=1:numel(thumbIndex)
             thumbInd=thumbIndex(j);
-            % obtain dataFrame from io
-%             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
-%             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd);
-%             rawImage = currentSample.results.thumbnail_images{thumbInd};
-%             segmentedImage = currentSample.results.segmentation{thumbInd};
-            rawImage = currentSample.results.thumbnail_images{usedThumbs(thumbInd)};
-            segmentedImage = currentSample.results.segmentation{usedThumbs(thumbInd)};
+%             rawImage = currentSample.results.thumbnail_images{usedThumbs(thumbInd)};
+%             segmentedImage = currentSample.results.segmentation{usedThumbs(thumbInd)};
+            rawImage = currentSample.results.thumbnail_images{usedThumbs(currPos(thumbInd))};
+            segmentedImage = currentSample.results.segmentation{usedThumbs(currPos(thumbInd))};
             k = (j-1)*cols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
 %             plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
             plotImInAxis(rawImage,[],hAxes(k),hImages(k));
             
             % update visual selection dependent on selectedFrames array
-            if GuiSampleHandle.selectedFrames(thumbInd) == 1
+%             if selectedFrames(thumbInd) == 1
+            if selectedFrames(currPos(thumbInd)) == 1
 %                 set(hImages(k),'Selected','on');
                 set(hAxes(k),'XTick',[]);
                 set(hAxes(k),'yTick',[]);
@@ -485,13 +489,13 @@ function openSpecificImage(~,~,row)
                     set(surroundingAx,'LineWidth',3);
                     set(surroundingAx,'Visible','on');
                     pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
-                    updateScatterPlots(pos,1);
+                    updateScatterPlots(currPos(pos),1);
                 else
 %                     set(gcbo,'Selected','off');
                     surroundingAx = get(gcbo,'Parent');
                     set(surroundingAx,'Visible','off');
                     pos = max(-round(get(GuiSampleHandle.slider,'Value'))-3+row,1);
-                    updateScatterPlots(pos,0);
+                    updateScatterPlots(currPos(pos),0);
                 end
             end
         case 'extend' % shift & left mouse button action
@@ -500,8 +504,8 @@ function openSpecificImage(~,~,row)
                 posToDelete = sampleFeatures.ThumbNr == pos;
                 sampleFeatures(posToDelete,:) = [];
                 rgbTriple(posToDelete,:) = [];
-                GuiSampleHandle.selectedFrames(pos) = [];
-                GuiSampleHandle.selectedCells(posToDelete) = [];
+                selectedFrames(pos) = [];
+                selectedCells(posToDelete) = [];
                 usedThumbs(pos) = [];
                 plot_thumbnails(pos);
                 
@@ -520,7 +524,7 @@ function openSpecificImage(~,~,row)
                                          sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
                 xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]);
                 set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-                                        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+                                        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
             end
         case 'alt' % right mouse button action
             im = get(gcbo,'cdata');
@@ -530,21 +534,21 @@ end
 
 % --- Helper function to update scatter plots
 function updateScatterPlots(pos,booleanOnOff)
-    GuiSampleHandle.selectedFrames(pos) = booleanOnOff;
-    GuiSampleHandle.selectedCells(sampleFeatures.ThumbNr == usedThumbs(pos)) = booleanOnOff;
-    rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-    rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-    rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+    selectedFrames(pos) = booleanOnOff;
+    selectedCells(sampleFeatures.ThumbNr == usedThumbs(pos)) = booleanOnOff;
+    rgbTriple(selectedCells,1) = 1;
+    rgbTriple(selectedCells,2) = 0.5;
+    rgbTriple(selectedCells,3) = 0;
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
     % update all scatter plots with new manual clustering
     set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     % update title for scatter panel showing clustering summary
     set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
 end
 
 
@@ -568,42 +572,51 @@ function gate_scatter(handle,~,plotnr)
          
     pos = getPosition(h);
     [in,~] = inpolygon(xtest,ytest,pos(:,1),pos(:,2));
-    GuiSampleHandle.selectedCells(in) = 1;
-    GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1; 
-    rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-    rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-    rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+    selectedCells(in) = 1;
+    selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
+    rgbTriple(selectedCells,1) = 1;
+    rgbTriple(selectedCells,2) = 0.5;
+    rgbTriple(selectedCells,3) = 0;
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
     % update all scatter plots with new manual clustering
     set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     delete(h);
     set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
     % update view to selected thumbnail closest to current view
-    val = round(get(GuiSampleHandle.slider, 'Value'));
-    [~, index] = min(abs((-find(GuiSampleHandle.selectedFrames))-val));
-    selectedFrames = find(GuiSampleHandle.selectedFrames);
-    closestValue = selectedFrames(index(1)); 
-    plot_thumbnails(closestValue);
-    set(GuiSampleHandle.slider, 'Value',-closestValue);
+    val = round(get(GuiSampleHandle.slider, 'Value'));    
+    if isequal(currPos,linspace(1,nrUsedThumbs,nrUsedThumbs))
+        selectedFrames_nr = find(selectedFrames);
+        [~, index] = min(abs(-selectedFrames_nr-val));       
+        closestValue = selectedFrames_nr(index(1)); 
+        plot_thumbnails(closestValue);
+        set(GuiSampleHandle.slider, 'Value',-closestValue);
+    else
+        selectedFrames_nr = find(ismember(currPos,find(selectedFrames)));
+        [~, index] = min(abs(-selectedFrames_nr-val));        
+        closestValue = selectedFrames_nr(index(1)); 
+        plot_thumbnails(closestValue);
+        set(GuiSampleHandle.slider, 'Value',-closestValue);
+    end
     set(handle,'backg',color)
 end
 
 function clear_selection(~,~)
-    GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
-    GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
-    rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+    selectedCells = false(size(selectedCells));
+    selectedFrames = false(size(selectedFrames));
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
     set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-    num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+    num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+    currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
     val = round(get(GuiSampleHandle.slider, 'Value'));
     plot_thumbnails(-val);
 end
@@ -635,48 +648,60 @@ function select_event(handle,~,plotnr)
         [~,index] = min((xtest(in) - pos(1)).^2 + (ytest(in) - pos(2)).^2);
         in(indices(indices ~= indices(index))) = 0;
     end
-    if GuiSampleHandle.selectedCells(in) == 0
-        GuiSampleHandle.selectedCells(in) = 1;
-        GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1; 
-        rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-        rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-        rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+    if selectedCells(in) == 0
+        selectedCells(in) = 1;
+        selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
         % update all scatter plots with new manual clustering
         set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
         delete(h);
         set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-            num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+            num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update view to selected thumbnail
         plot_thumbnails(find(usedThumbs == sampleFeatures.ThumbNr(in)));
         set(GuiSampleHandle.slider, 'Value',-sampleFeatures.ThumbNr(in));
     else
-        GuiSampleHandle.selectedCells(in) = 0;
-        if ~isempty(GuiSampleHandle.selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells) == sampleFeatures.ThumbNr(in), 1))
-            GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0; 
+        selectedCells(in) = 0;
+        if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(selectedCells) == sampleFeatures.ThumbNr(in), 1))
+            selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0;
         end
-        rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-        rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-        rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
         % update all scatter plots with new manual clustering
         set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
         delete(h);
         set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-            num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+            num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update currentview
         val = round(get(GuiSampleHandle.slider, 'Value'));
         plot_thumbnails(-val);
     end
     set(handle,'backg',color)
+end
+
+function sort_cells(~,~)
+    currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
+    plot_thumbnails(3); 
+    set(GuiSampleHandle.slider, 'Value',-3);
+end
+
+function resort_cells(~,~)
+    currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
+    val = round(get(GuiSampleHandle.slider, 'Value'));
+    plot_thumbnails(-val); 
 end
 
 function export_gates(handle,~)
@@ -704,7 +729,7 @@ function export_gates(handle,~)
         end
     end
     if ~isempty(name)
-        currentSample.results.classification = [currentSample.results.classification array2table(GuiSampleHandle.selectedCells,'VariableNames',{name{1}})];
+        currentSample.results.classification = [currentSample.results.classification array2table(selectedCells,'VariableNames',{name{1}})];
         base.io.save_sample(currentSample);
         base.io.save_results_as_xls(currentSample)
     end
@@ -720,21 +745,21 @@ function load_gates(handle,~)
     if isempty(classes)
         msgbox('No prior selection avaliable.')
     elseif size(classes,2)==1
-        GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
-        GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
-        GuiSampleHandle.selectedCells = currentSample.results.classification{:,1};
-        GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells))) = 1; 
-        rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-        rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-        rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+        selectedCells = false(size(selectedCells));
+        selectedFrames = false(size(selectedFrames));
+        selectedCells = currentSample.results.classification{:,1};
+        selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(selectedCells))) = 1; 
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
         set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
         set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         val = round(get(GuiSampleHandle.slider, 'Value'));
         plot_thumbnails(-val);      
     else
@@ -742,21 +767,21 @@ function load_gates(handle,~)
                 'SelectionMode','single',...
                 'ListString',classes,'ListSize',[250,150]);
         if v == 1
-            GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
-            GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
-            GuiSampleHandle.selectedCells = currentSample.results.classification{:,s};
-            GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells))) = 1; 
-            rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-            rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-            rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-            rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-            rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-            rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+            selectedCells = false(size(selectedCells));
+            selectedFrames = false(size(selectedFrames));
+            selectedCells = currentSample.results.classification{:,s};
+            selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(selectedCells))) = 1; 
+            rgbTriple(selectedCells,1) = 1;
+            rgbTriple(selectedCells,2) = 0.5;
+            rgbTriple(selectedCells,3) = 0;
+            rgbTriple(~selectedCells,1) = 0;
+            rgbTriple(~selectedCells,2) = 0;
+            rgbTriple(~selectedCells,3) = 1;
             set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
             set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
             set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
             set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-            num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+            num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
             val = round(get(GuiSampleHandle.slider, 'Value'));
             plot_thumbnails(-val); 
         end
