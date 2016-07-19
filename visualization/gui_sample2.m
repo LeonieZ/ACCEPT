@@ -3,7 +3,7 @@ function GuiSampleHandle = gui_sample(base,currentSample)
 % Main figure: create and set properies (relative size, color)
 set(0,'units','characters');  
 screensz = get(0,'screensize');
-GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-220)/2 8 225 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
+GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-225)/2 (screensz(4)-65)/2 225 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off');
 
 %% Set maximum intensity
