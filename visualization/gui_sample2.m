@@ -25,7 +25,7 @@ nrUsedThumbs = size(usedThumbs,2);
 sampleFeatures = currentSample.results.features;
 sampleFeatures_noNaN = sampleFeatures{:,:};
 sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
-sampleFeatures{:,:} = sampleFeatures_noNaN;
+sampleFeatures{:,:} = sampleFeatures_noNaN; 
 %handle selections
 selectedFrames = false(nrUsedThumbs,1);
 currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
@@ -355,44 +355,44 @@ end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)
 function popupFeatureTopIndex1_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterTop,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    xlim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    topFeatureIndex1 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterTop,'XData',sampleFeatures.(topFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in topFeatureIndex2 (y-axis)
 function popupFeatureTopIndex2_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterTop,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    ylim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    topFeatureIndex2 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterTop,'YData',sampleFeatures.(topFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex1 (x-axis)
 function popupFeatureMiddleIndex1_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterMiddle,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    middleFeatureIndex1 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterMiddle,'XData',sampleFeatures.(middleFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex2 (y-axis)
 function popupFeatureMiddleIndex2_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterMiddle,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    middleFeatureIndex2 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterMiddle,'YData',sampleFeatures.(middleFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex1 (x-axis)
 function popupFeatureBottomIndex1_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterBottom,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    xlim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    bottomFeatureIndex1 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterBottom,'XData',sampleFeatures.(bottomFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex2 (y-axis)
 function popupFeatureBottomIndex2_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterBottom,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    ylim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    bottomFeatureIndex2 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterBottom,'YData',sampleFeatures.(bottomFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on slider movement.
@@ -404,10 +404,9 @@ end
 % --- Plot thumbnails around index i
 function plot_thumbnails(val)
     %numberOfThumbs=size(currentSample.priorLocations,1);
-    numberOfThumbs = nrUsedThumbs;
     thumbIndex=[val-2:1:val+2];
     thumbIndex(thumbIndex<1)=[];
-    thumbIndex(thumbIndex>numberOfThumbs)=[];
+    thumbIndex(thumbIndex>nrUsedThumbs)=[];
     if ~isempty(thumbIndex)
         for j=1:numel(thumbIndex)
             thumbInd=thumbIndex(j);
@@ -501,13 +500,16 @@ function openSpecificImage(~,~,row)
         case 'extend' % shift & left mouse button action
             if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
                 pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
-                posToDelete = sampleFeatures.ThumbNr == pos;
-                sampleFeatures(posToDelete,:) = [];
-                rgbTriple(posToDelete,:) = [];
-                selectedFrames(pos) = [];
-                selectedCells(posToDelete) = [];
-                usedThumbs(pos) = [];
-                plot_thumbnails(pos);
+                posToDelete = sampleFeatures.ThumbNr == usedThumbs(currPos(pos));
+                sampleFeatures{posToDelete,:} = NaN;
+                rgbTriple(posToDelete,:) = [0 0 1];
+                selectedFrames(currPos(pos)) = [];
+                selectedCells(posToDelete) = 0;
+                usedThumbs(currPos(pos)) = [];
+                nrUsedThumbs = size(usedThumbs,2);
+                set(GuiSampleHandle.slider,'Min',-nrUsedThumbs+2,'SliderStep', [1, 1] / (nrUsedThumbs - 5));
+                currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
+                plot_thumbnails(-get(GuiSampleHandle.slider,'Value'));
                 
                 axes(GuiSampleHandle.axesTop)
                 GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
