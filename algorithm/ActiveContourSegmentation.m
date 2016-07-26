@@ -107,11 +107,26 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     cvInit = [];
                 end
 
-                for i = 1:inputFrame.nrChannels
-                    if any(this.maskForChannels == i)
-                        tmp = bregman_cv(this, inputFrame, i, cvInit);
-                        tmp = bwareaopen(tmp, 10);
-                        returnFrame.segmentedImage(:,:,i) = tmp;
+                % Parallelize among channels if multiple channels are available,
+                % otherwise use openMP if only one channel is processed
+                chMask = this.maskForChannels;
+                nbrChSeg = size(this.maskForChannels,2);
+                if nbrChSeg > 1
+                    % parallelize in Matlab and do not use openMP in C-code
+                    this.use_openMP = 0;
+                    segmentedImages = cell(nbrChSeg,1);
+                    parfor i = 1:nbrChSeg
+                        segmentedImages{i} = bwareaopen(bregman_cv(this,inputFrame,chMask(i),cvInit),10);
+                    end
+                    for i = 1:nbrChSeg
+                        returnFrame.segmentedImage(:,:,chMask(i)) = segmentedImages{i};
+                    end
+                else
+                    % only one channel, hence no parallelization in Matlab
+                    % parallelize in C-code using openMP instead
+                    % (problematic on Windows at the moment, no executable available)
+                    for i = 1:nbrChSeg
+                        returnFrame.segmentedImage(:,:,chMask(i)) = bwareaopen(bregman_cv(this,inputFrame,chMask(i),cvInit),10);
                     end
                 end
 

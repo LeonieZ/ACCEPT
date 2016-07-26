@@ -29,7 +29,7 @@ classdef TMP_Detection < SampleProcessor
             breg_it         = 1;
             init            = {'triangle','global', inputSample.histogram_down};
             maskForChannels = [];
-            single_ch       = 3;
+            single_ch       = []; %3;
             use_openMP      = true;
             ac = ActiveContourSegmentation(lambda,inner_it,breg_it,init,...
                                            maskForChannels,single_ch,use_openMP);
