@@ -4,7 +4,8 @@ clear all;
 if ispc
     % compare xml minGW gcc compiler properties set in xml file
     % USER\AppData\Roaming\MathWorks\MATLAB\R2016a
-    mex bregman_cv_core_mex.c COPTIMFLAGS='-O3'; 
+    mex -output bregman_cv_core_mex_openMP bregman_cv_core_mex.c -v COPTIMFLAGS="-O3" CXXFLAGS="$CXXFLAGS -fopenmp" LDFLAGS="$LDFLAGS -fopenmp";
+    mex bregman_cv_core_mex.c COPTIMFLAGS='-O3';
 end
 
 % Works on Mac with clang and gcc (6.1, incl. openMP).

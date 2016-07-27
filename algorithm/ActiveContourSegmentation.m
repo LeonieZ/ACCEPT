@@ -109,8 +109,8 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                 % Parallelize among channels if multiple channels are available,
                 % otherwise use openMP if only one channel is processed
-                chMask = this.maskForChannels;
-                nbrChSeg = size(this.maskForChannels,2);
+                chMask = this.maskForChannels(this.maskForChannels ~= 0); % indices of channels to be analyzed
+                nbrChSeg = size(chMask,2);
                 if nbrChSeg > 1
                     % parallelize in Matlab and do not use openMP in C-code
                     this.use_openMP = 0;
