@@ -1,4 +1,4 @@
-classdef TMP_Detection < SampleProcessor
+classdef Full_Detection < SampleProcessor
     %CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
     % Acts on preselected thumbnails, does segmentation (otsu thresholding)
     % an extracts features for every cell. No classification!
@@ -7,8 +7,8 @@ classdef TMP_Detection < SampleProcessor
     end
     
     methods 
-        function this = TMP_Detection()
-            this.name = 'TMP Detection';
+        function this = Full_Detection()
+            this.name = 'Full Detection';
             this.version = '0.1';
             this.io = IO();  
             this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');

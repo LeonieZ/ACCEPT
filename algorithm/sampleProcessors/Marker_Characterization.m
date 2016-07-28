@@ -19,7 +19,7 @@ classdef Marker_Characterization < SampleProcessor
             this.dataframeProcessor = DataframeProcessor('Thumbnail_Analysis', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
             this.pipeline{1}.run(inputSample);
-            ac = ActiveContourSegmentation('adaptive', 500, 1,{'triangle','global', inputSample.histogram});
+            ac = ActiveContourSegmentation({'adaptive',0.001,0.005}, 200, 1,{'triangle','global', inputSample.histogram});
             ac.clear_border = 1;
             this.dataframeProcessor.pipeline{1} = ac;
  

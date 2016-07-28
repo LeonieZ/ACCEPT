@@ -82,9 +82,9 @@ classdef FeatureCollection < SampleProcessorObject
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
 
                 if strcmp(inputSample.type,'ThumbnailLoader')
-                    nPriorLoc = inputSample.nrOfFrames;
+                    nPriorLoc = inputSample.nrOfFrames
                 else 
-                    nPriorLoc = size(inputSample.priorLocations,1);
+                    nPriorLoc = size(inputSample.priorLocations,1)
                 end
                 thumbFramesProcessed = cell(nPriorLoc,1);
                 featureTables = cell(nPriorLoc,1);
