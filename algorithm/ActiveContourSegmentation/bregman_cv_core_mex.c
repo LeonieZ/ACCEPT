@@ -59,6 +59,7 @@ float Bregman_update(float *f,float *mus,float *b,int nx,int ny,float lambda);
 float Binary_result(float *u,int nx,int ny,float thresh);
 float Copy_array(float *u, float *u_old, int size);
 float Relative_error(float *stat_u, float *u, float *u_old, int nx, int ny);
+float ConvParam_update(float *conv);
 
 void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){    
     
@@ -68,7 +69,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
     
     /* output and temporary variable declarations */
     int i, j;
-    float *u, *u_old, *p1, *p2, *b, *mus, sigma, tau, theta, *stat_u;
+    float *u, *u_old, *p1, *p2, *b, *mus, sigma, tau, theta, *stat_u, *conv;
 
     /* handling Matlab INPUT parameters */
     f         = (float *)   mxGetData(prhs[0]);  /* vectorized input image */
@@ -114,6 +115,10 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
     mus[0] = mu0; mus[1] = mu1; /* use mu parameters being transfered here */
     /*mexPrintf("\n mus[0]= %e, mus[1]= %e \n",mus[0],mus[1]);*/
     
+    /* convergence parameters */
+    conv = (float*) calloc(1,sizeof(float));
+    conv[0] = theta; conv[1] = sigma; conv[2] = tau;
+    
     /* Bregman inner_itations */
     for (i = 0; i < breg_it; i++){
     
@@ -122,7 +127,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
         
         /* main primal-dual inner_itation */
         j = 0;
-        while ( j < inner_it ){/* && stat_u[0] >= tol){ */
+        while ( j < inner_it && stat_u[0] >= tol){
         /*for (j = 0; j < inner_it; j++){*/
             /* mexPrintf("\nInner inner_itation: %d\n",j+1); */
 
@@ -131,7 +136,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
              * more precisely:
              * p_(j+1) = (p_j + sigma grad(u_bar_j)) / max(1,|p_j + sigma grad(u_bar_j)|)
              */
-            Projection_dual_lq_ball(u_bar,p1,p2,nx,ny,sigma);
+            Projection_dual_lq_ball(u_bar,p1,p2,nx,ny,conv[1]);
 
             /* store old inner_itate: u_old = u */
             Copy_array(u,u_old,nx*ny);
@@ -141,7 +146,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
              * more precisely:
              * u_(j+1) = max(0,min(1,u_j+tau*div(p_(j+1))-tau/lambda*((f-mu1)^2-(f-mu0)^2-lambda*b_i)))
              */
-            Projection_data_fidelity(u,p1,p2,b,f,mus,nx,ny,tau,lambda);
+            Projection_data_fidelity(u,p1,p2,b,f,mus,nx,ny,conv[2],lambda);
             
             /* Track relative error of u iterates for stopping criterion 
              * stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2));
@@ -149,17 +154,23 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
             Relative_error(stat_u,u,u_old,nx,ny);
             /*mexPrintf("\n stat_u = %e \n",stat_u[0]);*/
             
-            /* STEP 3: update u_bar according to
+            /* STEP 3: update theta, sigma, tau according to
+             * Chambolle-Pock paper Alg. 2
+             */
+            ConvParam_update(conv);
+            /*mexPrintf("\n theta= %e, sigma= %e, tau= %e \n",conv[0],conv[1],conv[2]);*/
+            
+            /* STEP 4: update u_bar according to
              * u_bar_(j+1) = u_(j+1)+ theta * (u_(j+1) - u_j)
              */
-            Primal_update(u_bar,u,u_old,nx,ny,theta);
+            Primal_update(u_bar,u,u_old,nx,ny,conv[0]);
           
             /* Update mu values (mu0 and mu1) */
             /* Note: There is no mu update used here */
             
             j = j+1;
         }
-        
+
         /* update b (outer Bregman update)
          * b = b + 1/lambda * ((f-mu0)^2 - (f-mu1)^2)
          */
@@ -324,6 +335,17 @@ float Relative_error(float *stat_u, float *u, float *u_old, int nx, int ny){
     stat_u[0] = norm_u_res/(norm_uold*nx*ny);
     return *stat_u;
 }
+
+/* update theta, sigma, tau according to
+* Chambolle-Pock paper Alg. 2
+*/
+float ConvParam_update(float *conv){
+    conv[0] = 1/pow(1+2*conv[2],0.5); 
+    conv[2] = conv[0] * conv[2]; 
+    conv[1] = conv[1]/conv[0]; 
+    return *conv;
+}
+ 
 
 /* Primal solution update
  * u_bar_(j+1) = u_(j+1) + theta * (u_(j+1) - u_j)

@@ -18,12 +18,12 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
     properties
         clear_border = 0;
-        tol   = 1e-10;
+        tol   = 1e-13;
     end
 
     properties (Constant)
-        sigma = 0.1;
-        tau   = 0.1;
+        sigma = 1/2.9; %0.1
+        tau   = 1/2.9; %0.1
         theta = 0.5;
     end
 
@@ -326,7 +326,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                     if go_on == 1
                         i = 1; j = 1;
-                        lambda = lambda + this.adaptive_step;
+                        lambda = lambda + this.adaptive_step; %#ok<PROPLC>
                         %p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
                         %b = zeros(nx,ny); % dims: nx x ny , bregman variable
 

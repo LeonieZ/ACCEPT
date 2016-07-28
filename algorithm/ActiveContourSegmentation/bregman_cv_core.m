@@ -7,13 +7,14 @@ function u = bregman_cv_core(f,nx,ny,lambda,breg_it,inner_it,...
     
     i = 1; j = 1;
     while i <= breg_it % Bregman iteration steps
-        stat_u = []; 
-        while j <= inner_it %&& (isempty(stat_u) || ~isempty(stat_u) && stat_u(end) >= tol) % inner TV iteration steps
+        stat_u = []; %stat_p = [];stat_primal = [];stat_dual = [];primal_dual_gap = [];
+        while j <= inner_it && (isempty(stat_u) || ~isempty(stat_u) && stat_u(end) >= tol) % inner TV iteration steps
             
             %%% step 1 : update p according to 
             %%% p_(n+1) = (I+delta F*)^(-1)(p_n + sigma K u_bar_n)
             % update dual p
             arg1 = p + sigma * grad(u_bar,'shift');
+            %p_old = p;
             p = arg1 ./ max(1,repmat(sqrt(sum(arg1.^2,3)),[1 1 dim])); %different for aniso TV
             
             %%% step 2: update u according to
@@ -21,9 +22,15 @@ function u = bregman_cv_core(f,nx,ny,lambda,breg_it,inner_it,...
             u_old = u;
             arg2 =  (u + tau * div(p,'shift')) - tau/lambda * ((f - mu1).^2 - (f - mu0).^2 - lambda * b);
             u = max(0, min(1,arg2));
-            stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2));       
+            stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2)); %#ok<AGROW>
+%             stat_p(j) = (nx*ny)^(-1) * (sum((p(:) - p_old(:)).^2)/sum(p_old(:).^2));
+%             stat_primal(j) = (nx*ny)^(-1) * sum(u(:) .* (((f(:) - mu1).^2 - (f(:) - mu0).^2) - lambda *b(:))) + lambda*(nx*ny*2)^(-1)*(sum(sum(sum(abs(grad(u,'shift'))))));
+% 			stat_dual(j) = (nx*ny)^(-1) * sum(sum(-div(p,'shift')+1/lambda*f));
+%             primal_dual_gap(j) = stat_primal(j) - stat_dual(j);
+			%%% step 3: update theta, sigma, tau (CP Alg 2) 
+			theta = 1/((1+2*tau)^(1/2)); tau = theta * tau; sigma = sigma/theta;     
             
-            %%% step 3: update u_bar according to
+            %%% step 4: update u_bar according to
             %%% u_bar_(n+1) = u_(n+1)+ theta * (u_(n+1) - u_n)
             u_bar = u + theta * (u - u_old);
 
@@ -49,14 +56,15 @@ function u = bregman_cv_core(f,nx,ny,lambda,breg_it,inner_it,...
             j = j + 1;
             
         end
-        j
 
         % update b (outer bregman update)
         b = b + 1/lambda * ((f - mu0).^2 - (f - mu1).^2);
 
         % update outer index
         i = i + 1; j = 1;
+       
     end
+    
     
     %----------
     
