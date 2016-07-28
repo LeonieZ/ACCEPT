@@ -7,3 +7,4 @@ examples/results/*
 examples/test_images/*
 Executables/*
 ACCEPT_resources/*
+data/results/*
