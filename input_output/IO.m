@@ -293,6 +293,9 @@ classdef IO < handle
                                    
         function save_results_as_xls(this,currentSample)
             tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
+            if isempty(tempTable)
+                tempTable.events='no events in sample';
+            end
             if ispc
                 writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xls']);
             else
