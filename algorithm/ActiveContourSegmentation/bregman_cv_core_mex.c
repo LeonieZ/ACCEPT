@@ -116,7 +116,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray*prhs[]){
     /*mexPrintf("\n mus[0]= %e, mus[1]= %e \n",mus[0],mus[1]);*/
     
     /* convergence parameters */
-    conv = (float*) calloc(1,sizeof(float));
+    conv = (float*) calloc(3,sizeof(float));
     conv[0] = theta; conv[1] = sigma; conv[2] = tau;
     
     /* Bregman inner_itations */
