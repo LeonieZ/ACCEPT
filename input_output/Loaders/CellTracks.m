@@ -274,51 +274,27 @@ classdef CellTracks < Loader
                 this.xmlData.frameNr=[];
                 this.xmlData.camYSize=1384;
                 this.xmlData.camXSize=1036;
-                if isfield(this.xmlData,'archive')
-                    this.xmlData.num_events = size(this.xmlData.archive{2}.events.record,2);
-                    this.xmlData.CellSearchIds = zeros(this.xmlData.num_events,1);
-                    this.xmlData.locations = zeros(this.xmlData.num_events,4);
-                    this.xmlData.score=zeros(this.xmlData.num_events,1);
-                    this.xmlData.frameNr=zeros(this.xmlData.num_events,1);
-                    for i=1:this.xmlData.num_events
-                        this.xmlData.CellSearchIds(i)=str2num(this.xmlData.archive{2}.events.record{i}.eventnum.Text); %#ok<*ST2NM>
-                        this.xmlData.score(i)=str2num(this.xmlData.archive{2}.events.record{i}.numselected.Text);                    
-                        this.xmlData.frameNr(i)=str2num(this.xmlData.archive{2}.events.record{i}.framenum.Text);
-                        tempstr=this.xmlData.archive{2}.events.record{i}.location.Text;
-                        start=strfind(tempstr,'(');
-                        finish=strfind(tempstr,')');
-                        to=str2num(tempstr(start(1)+1:finish(1)-1));
-                        from=str2num(tempstr(start(2)+1:finish(2)-1));
-                        this.xmlData.locations(i,:)=[from,to];
-                    end
-                    this.sample.columns=str2num(this.xmlData.archive{2}.runs.record.numcols.Text);
-                    this.sample.rows=str2num(this.xmlData.archive{2}.runs.record.numrows.Text);
-                    this.xmlData.camYSize=str2num(this.xmlData.archive{2}.runs.record.camysize.Text);
-                    this.xmlData.camXSize=str2num(this.xmlData.archive{2}.runs.record.camxsize.Text);
-           
-                    
-                elseif isfield(this.xmlData, 'export')
-                    this.xmlData.num_events = size(this.xmlData.export{2}.events.record,2);
-                    this.xmlData.CellSearchIds = zeros(this.xmlData.num_events,1);
-                    this.xmlData.locations = zeros(this.xmlData.num_events,4);
-                    this.xmlData.score=zeros(this.xmlData.num_events,1);
-                    this.xmlData.frameNr=zeros(this.xmlData.num_events,1);
-                    for i=1:this.xmlData.num_events
-                        this.xmlData.CellSearchIds(i)=str2num(this.xmlData.export{2}.events.record{i}.eventnum.Text);
-                        this.xmlData.score(i)=str2num(this.xmlData.export{2}.events.record{i}.numselected.Text);                    
-                        this.xmlData.frameNr(i)=str2num(this.xmlData.export{2}.events.record{i}.framenum.Text);
-                        tempstr=this.xmlData.export{2}.events.record{i}.location.Text;
-                        start=strfind(tempstr,'(');
-                        finish=strfind(tempstr,')');
-                        to=str2num(tempstr(start(1)+1:finish(1)-1));
-                        from=str2num(tempstr(start(2)+1:finish(2)-1));
-                        this.xmlData.locations(i,:)=[from,to];
-                    end
-                    this.sample.columns=str2num(this.xmlData.export{2}.runs.record.numcols.Text);
-                    this.sample.rows=str2num(this.xmlData.export{2}.runs.record.numrows.Text);
-                    this.xmlData.camYSize=str2num(this.xmlData.export{2}.runs.record.camysize.Text);
-                    this.xmlData.camXSize=str2num(this.xmlData.export{2}.runs.record.camxsize.Text);
+
+                this.xmlData.num_events = size(this.xmlData.events.record,2);
+                this.xmlData.CellSearchIds = zeros(this.xmlData.num_events,1);
+                this.xmlData.locations = zeros(this.xmlData.num_events,4);
+                this.xmlData.score=zeros(this.xmlData.num_events,1);
+                this.xmlData.frameNr=zeros(this.xmlData.num_events,1);
+                for i=1:this.xmlData.num_events
+                    this.xmlData.CellSearchIds(i)=str2num(this.xmlData.events.record(i).eventnum); %#ok<*ST2NM>
+                    this.xmlData.score(i)=str2num(this.xmlData.events.record(i).numselected);                    
+                    this.xmlData.frameNr(i)=str2num(this.xmlData.events.record(i).framenum);
+                    tempstr=this.xmlData.events.record(i).location;
+                    start=strfind(tempstr,'(');
+                    finish=strfind(tempstr,')');
+                    to=str2num(tempstr(start(1)+1:finish(1)-1));
+                    from=str2num(tempstr(start(2)+1:finish(2)-1));
+                    this.xmlData.locations(i,:)=[from,to];
                 end
+                this.sample.columns=str2num(this.xmlData.runs.record.numcols);
+                this.sample.rows=str2num(this.xmlData.runs.record.numrows);
+                this.xmlData.camYSize=str2num(this.xmlData.runs.record.camysize);
+                this.xmlData.camXSize=str2num(this.xmlData.runs.record.camxsize);
             else
                     %notify(this,'logMessage',logmessage(2,['unable to read xml']));
                     %setting row and colums based on nrOfImages
