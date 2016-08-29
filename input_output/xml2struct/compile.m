@@ -3,4 +3,8 @@
 %compilation was done with boost 1.61.0 /g will mail the author to ask
 %about the software license. 
 
-mex -I'./rapidxml' -I'C:\Data\libraries\boost_1_61_0\boost_1_61_0\' xml2struct.cc;
+if ismac
+    mex -I'./rapidxml' -I'/Applications/Boost/boost_1_61_0/' xml2struct.cc;
+elseif ispc
+    mex -I'./rapidxml' -I'C:\Data\libraries\boost_1_61_0\boost_1_61_0\' xml2struct.cc;
+end
