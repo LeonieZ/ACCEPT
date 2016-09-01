@@ -36,6 +36,7 @@ classdef IO < handle
         function outputSample=load_sample(this,sampleList,sampleNr)
             if exist(this.saved_sample_path(sampleList,sampleNr),'file');
                 load(this.saved_sample_path(sampleList,sampleNr));
+                currentSample.savePath=sampleList.save_path;
                 outputSample=currentSample;
             else
                 loader=sampleList.loaderToBeUsed{sampleNr};
@@ -292,15 +293,16 @@ classdef IO < handle
         end
                                    
         function save_results_as_xls(this,currentSample)
-            tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
-            if isempty(tempTable)
-                tempTable.events='no events in sample';
-            end
-            if ispc
-                writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xls']);
-            else
-                writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.csv']);
-            end
+             tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
+%             if isempty(tempTable)
+%                 tempTable=table();
+%             end
+            % Test if csv is able to deal with large tables (>17k events)
+            % if ispc
+            %                writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xls']);
+            % else
+             writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.csv']);
+            % end
         end
         
         function update_results(this,sampleList)
@@ -444,6 +446,30 @@ classdef IO < handle
             location=[sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr),'.mat'];
         end
                       
+    end
+    
+    methods(Static)
+        function size=sample_pixel_size(inputSample)
+            %calculate total image size to plot locations
+            size(1)=inputSample.imagesize(1)*inputSample.rows;
+            size(2)=inputSample.imageSize(2)*inputSample.columns;
+        end
+        
+        function location=calculate_overview_location(inputSample,priorLocationNr)
+            x=mean(inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr));
+            y=mean(inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr));
+            [rows,columns]=find(inputSample.priorLocations.frameNr(priorLocationNr)==inputSample.frameOrder);
+            smallImageSize=ceil(inputSample.imageSize/8);
+            location(1)=smallImageSize(1)*rows+round(y/8);
+            location(2)=smallImageSize(2)*columns+round(x/8);
+        end
+        function location=calculate_location(inputSample,priorLocationNr)
+            x=mean(inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr));
+            y=mean(inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr));
+            [rows,columns]=find(inputSample.priorLocations.frameNr(priorLocationNr)==inputSample.frameOrder);
+            location(1)=(inputSample.imageSize(1)*rows+y)*0.645;
+            location(2)=(inputSample.imageSize(2)*columns+x)*0.645;
+        end
     end
 end
  

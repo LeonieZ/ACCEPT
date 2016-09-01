@@ -35,7 +35,7 @@ function uiHandle=ACCEPT(varargin)
             path = strsplit(parser.Results.outputFolder,'ACCEPT');
             base.sampleList.resultPath = [installDir path{2}];
         else
-            base.sampleList.resultPath = parser.Results.inputFolder;
+            base.sampleList.resultPath = parser.Results.outputFolder;
         end
         base.io.update_sample_list(base.sampleList)
         if isempty(parser.Results.sampleName)

@@ -49,6 +49,7 @@ classdef CellTracks < Loader
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
             this.processXML();
             this.sample.priorLocations = this.prior_locations_in_sample;
+            this.sample.frameOrder=this.calculate_frame_nr_order;
             this.sample.results = Result();
             this.sample.overviewImage = [];
             this.sample.histogram = [];
@@ -275,7 +276,7 @@ classdef CellTracks < Loader
                 this.xmlData.camYSize=1384;
                 this.xmlData.camXSize=1036;
 
-                this.xmlData.num_events = size(this.xmlData.events.record,2);
+                this.xmlData.num_events = size(this.xmlData.events.record,1);
                 this.xmlData.CellSearchIds = zeros(this.xmlData.num_events,1);
                 this.xmlData.locations = zeros(this.xmlData.num_events,4);
                 this.xmlData.score=zeros(this.xmlData.num_events,1);
@@ -352,7 +353,9 @@ classdef CellTracks < Loader
             yBottomLeft=max(this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row-10,1);
             xTopRight=min(this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col+10,this.xmlData.camXSize);
             yTopRight=min(this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row+10,this.xmlData.camYSize);
-            locations=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
+            xLocation=min(this.xmlData.locations(eventNr,3));
+            yLocation=min(this.xmlData.locations(eventNr,4));
+            locations=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight,xLocation,yLocation);
         end
         
         function [row, col]=frameNr_to_row_col(this,imgNr)

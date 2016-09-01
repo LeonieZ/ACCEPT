@@ -61,7 +61,7 @@ classdef MCBP < Loader & IcyPluginData
             this.channelEdgeRemoval,...
             this.read_im(frameNr,varargin{:}));
             if ~isempty(this.sample.mask)
-                [row, col] = this.frameNr_to_row_col(frameNr);
+                [row, col] = find(this.sample.frameOrder==frameNr);
                 [size_x_mask, size_y_mask] = size(this.sample.mask);
                 size_x_small = round(size_x_mask / this.sample.rows);
                 size_y_small = round(size_y_mask / this.sample.columns);
