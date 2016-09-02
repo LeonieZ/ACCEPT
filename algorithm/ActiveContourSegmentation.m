@@ -70,7 +70,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                 if isempty(this.maskForChannels) && isempty(this.single_channel)
                     this.maskForChannels = 1:1:inputFrame.nrChannels;
-                elseif ~isempty(this.single_channel)
+                elseif isempty(this.maskForChannels) && ~isempty(this.single_channel)
                     this.maskForChannels = zeros(1,inputFrame.nrChannels);
                     this.maskForChannels(this.single_channel) = this.single_channel;
                 elseif size(this.maskForChannels,2) == 1
@@ -130,12 +130,12 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     end
                 end
 
-                if isempty(this.single_channel) && isa(inputFrame,'Dataframe')
+                if sum(ismember(this.maskForChannels,0))==0 && isa(inputFrame,'Dataframe')
                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 end
 
                 sumImage = sum(returnFrame.segmentedImage,3);
-                labels = repmat(bwlabel(sumImage,8),1,1,size(returnFrame.segmentedImage,3));
+                labels = repmat(bwlabel(sumImage,4),1,1,size(returnFrame.segmentedImage,3));
                 returnFrame.labelImage = labels.*returnFrame.segmentedImage;
 
             % Segmentation on double array: this case can be used for separate image segmentation and testing purposes
