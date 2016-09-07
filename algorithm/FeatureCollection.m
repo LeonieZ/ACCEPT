@@ -91,23 +91,51 @@ classdef FeatureCollection < SampleProcessorObject
         
                 % parallelized
                 
-                parfor i = 1:nPriorLoc
-                    if strcmp(inputSample.type,'ThumbnailLoader')
-                        thumbFrame = this.io.load_data_frame(inputSample,i);
-                    else
-                        thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
-                    end
-                    this.dataProcessor.run(thumbFrame);
-                    % for the parallel version we need an explicit update
-                    % of the i-th dataFrame called thumbFrames{i}
-                    thumbFramesProcessed{i} = thumbFrame;
-                    objectsfound = size(thumbFrame.features,1);
-                    if objectsfound > 0
-                        thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
-                        featureTables{i} = [thumbNr thumbFrame.features];
-                    end
+%                 parfor i = 1:nPriorLoc
+%                     if strcmp(inputSample.type,'ThumbnailLoader')
+%                         thumbFrame = this.io.load_data_frame(inputSample,i);
+%                     else
+%                         thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior'); 
+%                     end
+%                     this.dataProcessor.run(thumbFrame);
+%                     % for the parallel version we need an explicit update
+%                     % of the i-th dataFrame called thumbFrames{i}
+%                     thumbFramesProcessed{i} = thumbFrame;
+%                     objectsfound = size(thumbFrame.features,1);
+%                     if objectsfound > 0
+%                         thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
+%                         featureTables{i} = [thumbNr thumbFrame.features];
+%                     end
+%                 end
+                if strcmp(inputSample.type,'ThumbnailLoader')
+                    for i = 1:nPriorLoc
+                        thumbFrame = this.io.load_data_frame(inputSample,i);                
+                        this.dataProcessor.run(thumbFrame);
+                        % for the parallel version we need an explicit update
+                        % of the i-th dataFrame called thumbFrames{i}
+                        thumbFramesProcessed{i} = thumbFrame;
+                        objectsfound = size(thumbFrame.features,1);
+                        if objectsfound > 0
+                            thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
+                            featureTables{i} = [thumbNr thumbFrame.features];
+                        end
+                    end         
+                else
+                   parfor i = 1:nPriorLoc
+                        thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior');                 
+                        this.dataProcessor.run(thumbFrame);
+                        % for the parallel version we need an explicit update
+                        % of the i-th dataFrame called thumbFrames{i}
+                        thumbFramesProcessed{i} = thumbFrame;
+                        objectsfound = size(thumbFrame.features,1);
+                        if objectsfound > 0
+                            thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
+                            featureTables{i} = [thumbNr thumbFrame.features];
+                        end
+                    end 
+                        
                 end
-                
+              
                 for k = 1:nPriorLoc
                     % add extracted features to current sample result
                     if ~strcmp(inputSample.type,'ThumbnailLoader')
