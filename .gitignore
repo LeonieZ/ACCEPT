@@ -9,3 +9,5 @@ Executables/*
 ACCEPT_resources/*
 data/results/*
 *.prj
+
+input_output/LatestSettings.mat

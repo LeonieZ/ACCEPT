@@ -1,14 +1,9 @@
 function GuiSampleHandle = gui_sample(base,currentSample)
 
 % Main figure: create and set properies (relative size, color)
-screensize = get(0,'Screensize');
-rel = (screensize(3))/(screensize(4)); % relative screen size
-maxRelHeight = 0.8;
-posx = 0.2;
-posy = 0.1;
-width = ((16/12)/rel)*maxRelHeight; % use 16/12 window ratio on all computer screens
-height = maxRelHeight;
-GuiSampleHandle.fig_main = figure('Units','normalized','Position',[posx posy width height],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
+set(0,'units','characters');  
+screensz = get(0,'screensize');
+GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-225)/2 (screensz(4)-65)/2 225 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off');
 
 %% Set maximum intensity
@@ -22,10 +17,6 @@ else
     maxi = 4095;
 end
 
-% if sc_gui.maxi == 65535 && max(cellfun(@(x)max(max(max(x))),sc_gui.thumbs(1,:))) <= 4095
-%     sc_gui.maxi = 4095;
-% end
-
 %handle empty thumbs
 usedThumbs = find(ismember(linspace(1,size(currentSample.results.thumbnail_images,2),size(currentSample.results.thumbnail_images,2)),currentSample.results.features{:,1}));
 nrUsedThumbs = size(usedThumbs,2);
@@ -34,36 +25,37 @@ nrUsedThumbs = size(usedThumbs,2);
 sampleFeatures = currentSample.results.features;
 sampleFeatures_noNaN = sampleFeatures{:,:};
 sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
-sampleFeatures{:,:} = sampleFeatures_noNaN;
+sampleFeatures{:,:} = sampleFeatures_noNaN; 
 %handle selections
-GuiSampleHandle.selectedFrames = false(nrUsedThumbs,1);
-GuiSampleHandle.selectedCells = false(size(sampleFeatures,1),1);
+selectedFrames = false(nrUsedThumbs,1);
+currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
+selectedCells = false(size(sampleFeatures,1),1);
 rgbTriple = repmat([0 0 1],[size(sampleFeatures,1),1]);
 %% Main title
-GuiSampleHandle.title_axes = axes('Units','normalized','Position',[0.5 0.95 0.18 0.04]); axis off;
-GuiSampleHandle.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} Sample Visualizer','Units','normalized','FontUnits','normalized','FontSize',0.8,'verticalAlignment','base','horizontalAlignment','center');
+GuiSampleHandle.title_axes = axes('Units','characters','Position',[110 61.8 39.6 2.6]); axis off;
+GuiSampleHandle.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} Sample Visualizer','FontUnits','normalized','FontSize',0.8,'verticalAlignment','base','horizontalAlignment','center');
 
 
 %% Main panels
 % create panel for overview (top-left)
 GuiSampleHandle.uiPanelOverview = uipanel('Parent',GuiSampleHandle.fig_main,...
-                                     'Position',[0.023 0.712 0.689 0.222],...
+                                     'Units','characters','Position',[5.1 45.6 151.6 15.5],...
                                      'Title','Overview','TitlePosition','CenterTop',...
-                                     'Units','normalized','FontUnits','normalized','FontSize',0.1,...
+                                     'FontUnits','normalized','FontSize',0.1,...
                                      'BackgroundColor',[1 1 1]);
 
 % create panel for thumbnail gallery (bottom-left)
 GuiSampleHandle.uiPanelGallery = uipanel('Parent',GuiSampleHandle.fig_main,...
-                                    'Position',[0.023 0.021 0.689 0.669],...
+                                    'Units','characters','Position',[5.1 1.3 151.6 42.1],...
                                      'Title','Cell Gallery','TitlePosition','CenterTop',...
-                                     'Units','normalized','FontUnits','normalized','FontSize',0.033,...
+                                     'FontUnits','normalized','FontSize',0.033,...
                                      'BackgroundColor',[1 1 1]);
 
 % create panel for scatter plots (right)
 GuiSampleHandle.uiPanelScatter = uipanel('Parent',GuiSampleHandle.fig_main,...
-                                    'Position',[0.731 0.021 0.245 0.913],...
-                                     'Title','Marker Characterization','TitlePosition','CenterTop',...
-                                     'Units','normalized','FontUnits','normalized','FontSize',0.023,...
+                                    'Units','characters','Position',[160.8 1.3 58.9 59.7],...
+                                     'Title','Selected Events','TitlePosition','CenterTop',...
+                                     'FontUnits','normalized','FontSize',0.023,...
                                      'BackgroundColor',[1 1 1]);
 
                                  
@@ -85,25 +77,21 @@ dat{6} = size(currentSample.results.features,1);
 entry{6} = [rnames{6}, ': ',num2str(dat{6})];
 
 GuiSampleHandle.uiPanelTable = uipanel('Parent',GuiSampleHandle.uiPanelOverview,...
-                                     'Position',[0.01 0.1 0.25 0.9],...
+                                     'Units','characters','Position',[1.5 1.4 39 12],...
                                      'Title','Sample Information','TitlePosition','CenterTop',...
-                                     'Units','normalized','BackgroundColor',[1 1 1]);
-
+                                     'BackgroundColor',[1 1 1]);
+                                      
 GuiSampleHandle.tableDetails = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelTable,...
-                                  'Units','normalized','Position',[0 0 1 1],...
-                                  'String',entry,'FontUnits','normalized', 'FontSize',0.6*(1/size(entry,1)),'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
+                                  'Units','characters','Position',[0.2 .5 38.8 9],...
+                                  'String',entry,'FontUnits','normalized', 'FontSize',0.11,'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
 
-% tabExtend = get(GuiSampleHandle.tableDetails,'Extent');
 tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
-%panelPosition = get(GuiSampleHandle.uiPanelOverview,'Position');
-%tabPosition(4) = tabExtend(4).*tabPosition(4);
-%tabPosition(3) = tabExtend(3).*tabPosition(3);
-%set(GuiSampleHandle.uiPanelTable,'Position',tabPosition);
+
 
 if ~isempty(currentSample.overviewImage) 
     % % create overview image per channel
      GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
-                                    'Units','normalized','Position',[tabPosition(1)+tabPosition(3)+0.01 0.07 1-(tabPosition(1)+tabPosition(3)+0.02) 0.82]);
+                                    'Units','characters','Position',[tabPosition(1)+tabPosition(3)+1.5 1 151.6-(tabPosition(1)+tabPosition(3)+3) 12.7]);
     %                            
      defCh = 2; % default channel for overview when starting the sample visualizer
 
@@ -116,8 +104,8 @@ if ~isempty(currentSample.overviewImage)
 
     % % create choose button to switch color channel
      GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
-                                         'Units','normalized','Position',[0.4 -0.09 0.08 0.85],...
-                                         'FontUnits','normalized','FontSize',0.02,...
+                                         'Units','characters','Position',[88 40 17.6 8.7],...
+                                         'FontUnits','normalized','FontSize',0.12,...
                                          'Value',defCh,...
                                          'Callback',{@popupChannel_callback});
 end
@@ -128,62 +116,48 @@ gui_sample_color = [1 1 1];
 
 
 % create column names for gallery
-columnTextSize = 0.55;
-GuiSampleHandle.textCol1 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.04 0.94 0.1 0.05],...
-                                'String','Overlay','HorizontalAlignment','center',...
-                                'FontUnits', 'normalized','FontSize',columnTextSize,...
-                                'BackgroundColor',gui_sample_color);
-                            
-GuiSampleHandle.textCol2 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.23 0.94 0.1 0.05],...
-                                'String',currentSample.channelNames{1},'HorizontalAlignment','center',...
-                                'FontUnits', 'normalized','FontSize',columnTextSize,...
-                                'BackgroundColor',gui_sample_color);
-
-GuiSampleHandle.textCol3 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.43 0.94 0.1 0.05],...
-                                'String',currentSample.channelNames{2},'HorizontalAlignment','center',...
-                                'FontUnits', 'normalized','FontSize',columnTextSize,...
-                                'BackgroundColor',gui_sample_color);
-
-GuiSampleHandle.textCol4 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.62 0.94 0.1 0.05],...
-                                'String',currentSample.channelNames{3},'HorizontalAlignment','center',...
-                                'FontUnits', 'normalized','FontSize',columnTextSize,...
-                                'BackgroundColor',gui_sample_color);
-                            
-GuiSampleHandle.textCol5 = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
-                                'Units','normalized','Position',[0.81 0.94 0.1 0.05],...
-                                'String',currentSample.channelNames{4},'HorizontalAlignment','center',...
-                                'FontUnits', 'normalized','FontSize',columnTextSize,...
-                                'BackgroundColor',gui_sample_color);
+columnTextSize = 0.68;
                        
 % create panel for thumbnails next to slider                          
 GuiSampleHandle.uiPanelThumbsOuter = uipanel('Parent',GuiSampleHandle.uiPanelGallery,...
-                                        'Position',[0 0 0.98 0.94],...
+                                        'Units','characters','Position',[0 0 147 38.3],...
                                         'BackgroundColor',gui_sample_color);
                                    
 % create slider for gallery
 GuiSampleHandle.slider = uicontrol('Style','Slider','Parent',GuiSampleHandle.uiPanelGallery,...
-                              'Units','normalized','Position',[0.98 0 0.02 0.94],...
+                              'Units','characters','Position',[147.3 0 3 38.3],...
                               'Callback',{@slider_callback});
                                     
 % compute relative dimension of the thumbnail grid
 nbrAvailableRows = 5;
-nbrColorChannels = 4; 
+nbrColorChannels = currentSample.nrOfChannels; 
 nbrImages        = nbrAvailableRows * (nbrColorChannels+1);
-maxNumCols       = 5; % design decision, % maxNumCols = 1 (overlay) + nbrChannels
-
-cols  = maxNumCols;
+maxNumCols       = 7; % design decision, % maxNumCols = 1 (overlay) + nbrChannels                            
+cols  = min(maxNumCols,nbrColorChannels+1);
 rows  = nbrAvailableRows;
+space = (144.1 - cols *15.1)/(2*cols);
+for i = 1:cols
+    if i == 1
+        GuiSampleHandle.textCol(i) = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
+                                    'Units','characters','Position',[space 38.5 15.1 1.7],...
+                                    'String','Overlay','HorizontalAlignment','center',...
+                                    'FontUnits', 'normalized','FontSize',columnTextSize,...
+                                    'BackgroundColor',gui_sample_color);
+    else
+        GuiSampleHandle.textCol(i) = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelGallery,...
+                                    'Units','characters','Position',[(2*(i-1)+1)*space+(i-1)*15.1 38.5 15.1 1.7],...
+                                    'String',currentSample.channelNames{i-1},'HorizontalAlignment','center',...
+                                    'FontUnits', 'normalized','FontSize',columnTextSize,...
+                                    'BackgroundColor',gui_sample_color);
+    end
+end
 
 % pitch (box for axis) height and width
-rPitch  = 0.98/rows;
-cPitch  = 0.98/cols;
+rPitch  = 37/rows;
+cPitch  = 144.1/cols;
 % axis height and width
-axHight = 0.9/rows;
-axWidth = 0.9/cols;
+axHeight = 34.4/rows;
+axWidth = 132.3/cols;
 
 %-----
 hAxes   = zeros(nbrImages,1);
@@ -206,18 +180,18 @@ map(end+1,:) = [1,0,0];
 
 for i=1:rows
     % specify row location for all columns
-    y = 1-i*rPitch;
+    y = 37.8-i*rPitch;
     % plot overlay image in first column
     x = 0;
-    ind = (i-1)*(maxNumCols) + 1; % 5,10,15... index for first column element
-    hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
+    ind = (i-1)*(cols) + 1; % 5,10,15... index for first column element
+    hAxes(ind) = axes(axesProp,axesVal,'Units','characters','Position',[x y axWidth axHeight]);
     hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
     set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
     % plot image for each color channel in column 2 till nbrChannels
-    for ch = 1:nbrColorChannels
+    for ch = 1:cols-1
         x = (ch)*cPitch;
-        ind = ((i-1)*maxNumCols + ch +1); % 1-4,6-9,... index for four color channels
-        hAxes(ind) = axes('Position',[x y axWidth axHight],axesProp,axesVal);
+        ind = ((i-1)*cols + ch +1); % 1-4,6-9,... index for four color channels
+        hAxes(ind) = axes(axesProp,axesVal,'Units','characters','Position',[x y axWidth axHeight]);
         hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
         set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
         colormap(hAxes(ind),map);
@@ -231,19 +205,28 @@ else
     set(GuiSampleHandle.slider,'enable','off');
 end
 
+GuiSampleHandle.sortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.55,'String', 'Selected cells to top.','Position', [130.7 43.45 26 1.65],'Callback', @sort_cells); 
+GuiSampleHandle.resortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.55,'String', 'Original sorting.','Position', [108 43.45 22 1.65],'Callback', @resort_cells); 
+
 % go through all thumbnails (resp. dataframes)
 plot_thumbnails(3);
 
 
+
 %% Fill uiPanelScatter
 
-marker_size = 30;
+marker_size = 20;
 % create data for scatter plot at the top
-GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.72 0.75 0.23]); %[left bottom width height]
-topFeatureIndex1 = 9; topFeatureIndex2 = 17;
-gca; GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
-                                      sampleFeatures.(topFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
-xlim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2+1))),1)]);
+GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 42.2 40.4 13.1]); %[left bottom width height]
+
+topFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
+topFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_2_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
+% topFeatureIndex1 = 9; topFeatureIndex2 = 17;
+gca; GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1),...    % +1 because first column in feature table is index (thumbNumber)
+                                      sampleFeatures.(topFeatureIndex2),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2))),1)]);
 % GuiSampleHandle.pointsTop=get(GuiSampleHandle.axesScatterTop,'Children');
 % for i=1:numel(GuiSampleHandle.pointsTop)
 % set(GuiSampleHandle.pointsTop(i),'HitTest','on','ButtonDownFcn',@(handle,event,pointNr)click_point(handle,event,i));
@@ -267,95 +250,109 @@ if size(currentSample.channelNames,2) > 4
 end
 
 % create choose button to switch feature index1 (x-axis)
-GuiSampleHandle.popupFeatureSelectTopIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectTopIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','characters',...
             'String',feature_names(2:end),...
-            'Position',[0.39 0.675 0.6 0.015],...
+            'Position',[25 39.5 32.3 0.9],...
             'FontUnits', 'normalized',...
             'FontSize',1,...
-            'Value',topFeatureIndex1,...
+            'Value',topFeatureIndex1-1,...
             'Callback',{@popupFeatureTopIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-GuiSampleHandle.popupFeatureSelectTopIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectTopIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','characters',...
             'String',feature_names(2:end),...
-            'Position',[-0.01 0.975 0.6 0.015],...
+            'Position',[1.5 56.9 32.3 0.9],...
             'FontUnits', 'normalized',...
             'FontSize',1,...
-            'Value',topFeatureIndex2,...
+            'Value',topFeatureIndex2-1,...
             'Callback',{@popupFeatureTopIndex2_Callback});
         % Create push button
-GuiSampleHandle.gateScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.255 0.663 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,1)); 
-GuiSampleHandle.clearScatter = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Clear Selection','Position', [0.67 0.9635 0.3 0.03],'Callback', @clear_selection); 
-GuiSampleHandle.selectSingleScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.663 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,1));         
+GuiSampleHandle.gateScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.4,'String', 'Gate','Position', [15.5 38.6 8.1 1.8],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,1)); 
+GuiSampleHandle.clearScatter = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.4,'String', 'Clear Selection','Position', [41.1 56 16.2 1.8],'Callback', @clear_selection); 
+GuiSampleHandle.selectSingleScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.4,'String', 'Select Event','Position', [1.5 38.6 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,1));         
 
 
 %----
 % create data for scatter plot in the middle
-GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.39 0.75 0.23]); %[left bottom width height]
-middleFeatureIndex1 = 9; middleFeatureIndex2 = 17;
-gca; GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
-                                         sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
-xlim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);
+GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 23 40.4 13.1]); %[left bottom width height]
+middleFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
+middleFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_1_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
+% middleFeatureIndex1 = 9; middleFeatureIndex2 = 17;
+gca; GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(middleFeatureIndex2),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2))),1)]);
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
-GuiSampleHandle.popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','characters',...
             'String',feature_names(2:end),...
-            'Position',[0.39 0.345 0.6 0.015],...
+            'Position',[25 20.2 32.3 0.9],...
             'FontUnits', 'normalized',...
             'FontSize',1,...
-            'Value',middleFeatureIndex1,...
+            'Value',middleFeatureIndex1-1,...
             'Callback',{@popupFeatureMiddleIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-GuiSampleHandle.popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','characters',...
             'String',feature_names(2:end),...
-            'Position',[-0.01 0.645 0.6 0.015],...
+            'Position',[1.5 37.7 32.3 0.9],...
             'FontUnits', 'normalized',...
             'FontSize',1,...
-            'Value',middleFeatureIndex2,...
+            'Value',middleFeatureIndex2-1,...
             'Callback',{@popupFeatureMiddleIndex2_Callback});
 % create push button
-GuiSampleHandle.gateScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.255 0.333 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,2)); 
-GuiSampleHandle.selectSingleScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.333 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,2));         
+GuiSampleHandle.gateScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.4,'String', 'Gate','Position', [15.5 19.3 8.1 1.8],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,2)); 
+GuiSampleHandle.selectSingleScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.4,'String', 'Select Event','Position', [1.5 19.3 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,2));         
 
 %----
 % create scatter plot at the bottom
-GuiSampleHandle.axesBottom = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','normalized','Position',[0.17 0.06 0.75 0.23]); %[left bottom width height]
-bottomFeatureIndex1 = 9; bottomFeatureIndex2 = 17;
-gca; GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
-                                         sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
-xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]);
+GuiSampleHandle.axesBottom = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 3.7 40.4 13.1]); %[left bottom width height]
+bottomFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
+bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_4_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
+if isempty(bottomFeatureIndex2)
+    bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_3_Area', s)), sampleFeatures.Properties.VariableNames));
+end
+% bottomFeatureIndex1 = 9; bottomFeatureIndex2 = 17;
+gca; GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(bottomFeatureIndex2),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
-GuiSampleHandle.popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','characters',...
             'String',feature_names(2:end),...
-            'Position',[0.39 0.015 0.6 0.015],...
+            'Position',[25 1.0 32.3 0.9],...
             'FontUnits', 'normalized',...
             'FontSize',1,...
-            'Value',bottomFeatureIndex1,...
+            'Value',bottomFeatureIndex1-1,...
             'Callback',{@popupFeatureBottomIndex1_Callback});
 % create choose button to switch feature index2 (y-axis)
-GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','normalized',...
+GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','characters',...
             'String',feature_names(2:end),...
-            'Position',[-0.01 0.315 0.6 0.015],...
+            'Position',[1.5 18.4 32.3 0.9],...
             'FontUnits', 'normalized',...
             'FontSize',1,...
-            'Value',bottomFeatureIndex2,...
+            'Value',bottomFeatureIndex2-1,...
             'Callback',{@popupFeatureBottomIndex2_Callback});
 % create push button
-GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Gate','Position', [0.255 0.003 0.15 0.03],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,3)); 
-GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','normalized','String', 'Select Event','Position', [0.01 0.003 0.25 0.03],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
+GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.4, 'String', 'Gate','Position', [15.5 0.1 8.1 1.8],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,3)); 
+GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.4,'String', 'Select Event','Position', [1.5 0.1 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
         
 
 %% Create export/load buttons----
 % export gates as manual classification
-GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Export Selection','FontUnits', 'normalized',...
-            'FontSize',.5,'Position', [0.023 0.94 0.125 0.04],'Callback', {@export_gates}); 
+GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Export Selection','FontUnits', 'normalized',...
+            'FontSize',.5,'Position', [5.1 61.2 27.5 2.6],'Callback', {@export_gates}); 
 % load gates as manual classification
-GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Load Selection','FontUnits', 'normalized',...
-            'FontSize',.5,'Position', [0.15 0.94 0.12 0.04],'Callback', {@load_gates}); 
+GuiSampleHandle.load_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Load Selection','FontUnits', 'normalized',...
+            'FontSize',.5,'Position', [33 61.2 26.4 2.6],'Callback', {@load_gates}); 
         
 % export thumbnails
-GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','normalized','String', 'Export Thumbnails','FontUnits', 'normalized',...
-            'FontSize',.5,'Position', [0.826 0.94 0.15 0.04],'Callback', {@export_thumbs}); 
+GuiSampleHandle.export_thumbs = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Export Thumbnails','FontUnits', 'normalized',...
+            'FontSize',.5,'Position', [186.7 61.2 33 2.6],'Callback', {@export_thumbs}); 
                                 
 %% Callback and helper functions
 
@@ -368,44 +365,44 @@ end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)
 function popupFeatureTopIndex1_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterTop,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    xlim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    topFeatureIndex1 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterTop,'XData',sampleFeatures.(topFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in topFeatureIndex2 (y-axis)
 function popupFeatureTopIndex2_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterTop,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    ylim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    topFeatureIndex2 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterTop,'YData',sampleFeatures.(topFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex1 (x-axis)
 function popupFeatureMiddleIndex1_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterMiddle,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    middleFeatureIndex1 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterMiddle,'XData',sampleFeatures.(middleFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex2 (y-axis)
 function popupFeatureMiddleIndex2_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterMiddle,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    middleFeatureIndex2 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterMiddle,'YData',sampleFeatures.(middleFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex1 (x-axis)
 function popupFeatureBottomIndex1_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterBottom,'XData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    xlim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    bottomFeatureIndex1 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterBottom,'XData',sampleFeatures.(bottomFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex2 (y-axis)
 function popupFeatureBottomIndex2_Callback(hObject,~,~)
-    selectedFeature = get(hObject,'Value');
-    set(GuiSampleHandle.axesScatterBottom,'YData',sampleFeatures.(selectedFeature+1)); % +1 because first column in feature table is index (thumbNumber)
-    ylim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(selectedFeature+1))),1)]);
+    bottomFeatureIndex2 = get(hObject,'Value');
+    set(GuiSampleHandle.axesScatterBottom,'YData',sampleFeatures.(bottomFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on slider movement.
@@ -417,27 +414,24 @@ end
 % --- Plot thumbnails around index i
 function plot_thumbnails(val)
     %numberOfThumbs=size(currentSample.priorLocations,1);
-    numberOfThumbs = nrUsedThumbs;
     thumbIndex=[val-2:1:val+2];
     thumbIndex(thumbIndex<1)=[];
-    thumbIndex(thumbIndex>numberOfThumbs)=[];
+    thumbIndex(thumbIndex>nrUsedThumbs)=[];
     if ~isempty(thumbIndex)
         for j=1:numel(thumbIndex)
             thumbInd=thumbIndex(j);
-            % obtain dataFrame from io
-%             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd,'prior');
-%             dataFrame = base.io.load_thumbnail_frame(currentSample,thumbInd);
-%             rawImage = currentSample.results.thumbnail_images{thumbInd};
-%             segmentedImage = currentSample.results.segmentation{thumbInd};
-            rawImage = currentSample.results.thumbnail_images{usedThumbs(thumbInd)};
-            segmentedImage = currentSample.results.segmentation{usedThumbs(thumbInd)};
-            k = (j-1)*maxNumCols + 1; % k indicates indices 1,6,11,...
+%             rawImage = currentSample.results.thumbnail_images{usedThumbs(thumbInd)};
+%             segmentedImage = currentSample.results.segmentation{usedThumbs(thumbInd)};
+            rawImage = currentSample.results.thumbnail_images{usedThumbs(currPos(thumbInd))};
+            segmentedImage = currentSample.results.segmentation{usedThumbs(currPos(thumbInd))};
+            k = (j-1)*cols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
 %             plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
             plotImInAxis(rawImage,[],hAxes(k),hImages(k));
             
             % update visual selection dependent on selectedFrames array
-            if GuiSampleHandle.selectedFrames(thumbInd) == 1
+%             if selectedFrames(thumbInd) == 1
+            if selectedFrames(currPos(thumbInd)) == 1
 %                 set(hImages(k),'Selected','on');
                 set(hAxes(k),'XTick',[]);
                 set(hAxes(k),'yTick',[]);
@@ -450,8 +444,8 @@ function plot_thumbnails(val)
                 set(hAxes(k),'Visible','off');
             end
             % plot image for each color channel in column 2 till nbrChannels
-            for chan = 1:nbrColorChannels
-                l = ((j-1)*maxNumCols + chan + 1); 
+            for chan = 1:cols-1
+                l = ((j-1)*cols + chan + 1);
 %                 plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
                 plotImInAxis(rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
             end
@@ -504,17 +498,47 @@ function openSpecificImage(~,~,row)
                     set(surroundingAx,'LineWidth',3);
                     set(surroundingAx,'Visible','on');
                     pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
-                    updateScatterPlots(pos,1);
+                    updateScatterPlots(currPos(pos),1);
                 else
 %                     set(gcbo,'Selected','off');
                     surroundingAx = get(gcbo,'Parent');
                     set(surroundingAx,'Visible','off');
                     pos = max(-round(get(GuiSampleHandle.slider,'Value'))-3+row,1);
-                    updateScatterPlots(pos,0);
+                    updateScatterPlots(currPos(pos),0);
                 end
             end
         case 'extend' % shift & left mouse button action
-        case 'alt' % alt & left mouse button action
+            if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
+                pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
+                posToDelete = sampleFeatures.ThumbNr == usedThumbs(currPos(pos));
+                sampleFeatures{posToDelete,:} = NaN;
+                rgbTriple(posToDelete,:) = [0 0 1];
+                selectedFrames(currPos(pos)) = [];
+                selectedCells(posToDelete) = 0;
+                usedThumbs(currPos(pos)) = [];
+                nrUsedThumbs = size(usedThumbs,2);
+                set(GuiSampleHandle.slider,'Min',-nrUsedThumbs+2,'SliderStep', [1, 1] / (nrUsedThumbs - 5));
+                currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
+                plot_thumbnails(-get(GuiSampleHandle.slider,'Value'));
+                
+                axes(GuiSampleHandle.axesTop)
+                GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                                      sampleFeatures.(topFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+                xlim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2+1))),1)]);
+                
+                axes(GuiSampleHandle.axesMiddle) 
+                GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                                         sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+                xlim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);
+                
+                axes(GuiSampleHandle.axesBottom)
+                GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+                xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]);
+                set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+                                        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+            end
+        case 'alt' % right mouse button action
             im = get(gcbo,'cdata');
             figure; imagesc(im,[0,max(max(im(im<1)))]); axis equal; axis off;
     end
@@ -522,21 +546,21 @@ end
 
 % --- Helper function to update scatter plots
 function updateScatterPlots(pos,booleanOnOff)
-    GuiSampleHandle.selectedFrames(pos) = booleanOnOff;
-    GuiSampleHandle.selectedCells(sampleFeatures.ThumbNr == usedThumbs(pos)) = booleanOnOff;
-    rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-    rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-    rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+    selectedFrames(pos) = booleanOnOff;
+    selectedCells(sampleFeatures.ThumbNr == usedThumbs(pos)) = booleanOnOff;
+    rgbTriple(selectedCells,1) = 1;
+    rgbTriple(selectedCells,2) = 0.5;
+    rgbTriple(selectedCells,3) = 0;
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
     % update all scatter plots with new manual clustering
     set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     % update title for scatter panel showing clustering summary
-    set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+    set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
 end
 
 
@@ -560,42 +584,51 @@ function gate_scatter(handle,~,plotnr)
          
     pos = getPosition(h);
     [in,~] = inpolygon(xtest,ytest,pos(:,1),pos(:,2));
-    GuiSampleHandle.selectedCells(in) = 1;
-    GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1; 
-    rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-    rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-    rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+    selectedCells(in) = 1;
+    selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
+    rgbTriple(selectedCells,1) = 1;
+    rgbTriple(selectedCells,2) = 0.5;
+    rgbTriple(selectedCells,3) = 0;
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
     % update all scatter plots with new manual clustering
     set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     delete(h);
-    set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+    set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
     % update view to selected thumbnail closest to current view
-    val = round(get(GuiSampleHandle.slider, 'Value'));
-    [~, index] = min(abs((-find(GuiSampleHandle.selectedFrames))-val));
-    selectedFrames = find(GuiSampleHandle.selectedFrames);
-    closestValue = selectedFrames(index(1)); 
-    plot_thumbnails(closestValue);
-    set(GuiSampleHandle.slider, 'Value',-closestValue);
+    val = round(get(GuiSampleHandle.slider, 'Value'));    
+    if isequal(currPos,linspace(1,nrUsedThumbs,nrUsedThumbs))
+        selectedFrames_nr = find(selectedFrames);
+        [~, index] = min(abs(-selectedFrames_nr-val));       
+        closestValue = selectedFrames_nr(index(1)); 
+        plot_thumbnails(closestValue);
+        set(GuiSampleHandle.slider, 'Value',-closestValue);
+    else
+        selectedFrames_nr = find(ismember(currPos,find(selectedFrames)));
+        [~, index] = min(abs(-selectedFrames_nr-val));        
+        closestValue = selectedFrames_nr(index(1)); 
+        plot_thumbnails(closestValue);
+        set(GuiSampleHandle.slider, 'Value',-closestValue);
+    end
     set(handle,'backg',color)
 end
 
 function clear_selection(~,~)
-    GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
-    GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
-    rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-    rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+    selectedCells = false(size(selectedCells));
+    selectedFrames = false(size(selectedFrames));
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
     set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
     set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
-    set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-    num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+    set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+    num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+    currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
     val = round(get(GuiSampleHandle.slider, 'Value'));
     plot_thumbnails(-val);
 end
@@ -627,48 +660,60 @@ function select_event(handle,~,plotnr)
         [~,index] = min((xtest(in) - pos(1)).^2 + (ytest(in) - pos(2)).^2);
         in(indices(indices ~= indices(index))) = 0;
     end
-    if GuiSampleHandle.selectedCells(in) == 0
-        GuiSampleHandle.selectedCells(in) = 1;
-        GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1; 
-        rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-        rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-        rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+    if selectedCells(in) == 0
+        selectedCells(in) = 1;
+        selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
         % update all scatter plots with new manual clustering
         set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
         delete(h);
-        set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-            num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+        set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+            num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update view to selected thumbnail
         plot_thumbnails(find(usedThumbs == sampleFeatures.ThumbNr(in)));
         set(GuiSampleHandle.slider, 'Value',-sampleFeatures.ThumbNr(in));
     else
-        GuiSampleHandle.selectedCells(in) = 0;
-        if ~isempty(GuiSampleHandle.selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells) == sampleFeatures.ThumbNr(in), 1))
-            GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0; 
+        selectedCells(in) = 0;
+        if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(selectedCells) == sampleFeatures.ThumbNr(in), 1))
+            selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0;
         end
-        rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-        rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-        rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
         % update all scatter plots with new manual clustering
         set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
         delete(h);
-        set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-            num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+        set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+            num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update currentview
         val = round(get(GuiSampleHandle.slider, 'Value'));
         plot_thumbnails(-val);
     end
     set(handle,'backg',color)
+end
+
+function sort_cells(~,~)
+    currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
+    plot_thumbnails(3); 
+    set(GuiSampleHandle.slider, 'Value',-3);
+end
+
+function resort_cells(~,~)
+    currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
+    val = round(get(GuiSampleHandle.slider, 'Value'));
+    plot_thumbnails(-val); 
 end
 
 function export_gates(handle,~)
@@ -696,7 +741,7 @@ function export_gates(handle,~)
         end
     end
     if ~isempty(name)
-        currentSample.results.classification = [currentSample.results.classification array2table(GuiSampleHandle.selectedCells,'VariableNames',{name{1}})];
+        currentSample.results.classification = [currentSample.results.classification array2table(selectedCells,'VariableNames',{name{1}})];
         base.io.save_sample(currentSample);
         base.io.save_results_as_xls(currentSample)
     end
@@ -712,21 +757,21 @@ function load_gates(handle,~)
     if isempty(classes)
         msgbox('No prior selection avaliable.')
     elseif size(classes,2)==1
-        GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
-        GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
-        GuiSampleHandle.selectedCells = currentSample.results.classification{:,1};
-        GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells))) = 1; 
-        rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-        rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-        rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-        rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+        selectedCells = false(size(selectedCells));
+        selectedFrames = false(size(selectedFrames));
+        selectedCells = currentSample.results.classification{:,1};
+        selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(selectedCells))) = 1; 
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
         set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
         set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
-        set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-        num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+        set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         val = round(get(GuiSampleHandle.slider, 'Value'));
         plot_thumbnails(-val);      
     else
@@ -734,21 +779,21 @@ function load_gates(handle,~)
                 'SelectionMode','single',...
                 'ListString',classes,'ListSize',[250,150]);
         if v == 1
-            GuiSampleHandle.selectedCells = false(size(GuiSampleHandle.selectedCells));
-            GuiSampleHandle.selectedFrames = false(size(GuiSampleHandle.selectedFrames));
-            GuiSampleHandle.selectedCells = currentSample.results.classification{:,s};
-            GuiSampleHandle.selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(GuiSampleHandle.selectedCells))) = 1; 
-            rgbTriple(GuiSampleHandle.selectedCells,1) = 1;
-            rgbTriple(GuiSampleHandle.selectedCells,2) = 0.5;
-            rgbTriple(GuiSampleHandle.selectedCells,3) = 0;
-            rgbTriple(~GuiSampleHandle.selectedCells,1) = 0;
-            rgbTriple(~GuiSampleHandle.selectedCells,2) = 0;
-            rgbTriple(~GuiSampleHandle.selectedCells,3) = 1;
+            selectedCells = false(size(selectedCells));
+            selectedFrames = false(size(selectedFrames));
+            selectedCells = currentSample.results.classification{:,s};
+            selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(selectedCells))) = 1; 
+            rgbTriple(selectedCells,1) = 1;
+            rgbTriple(selectedCells,2) = 0.5;
+            rgbTriple(selectedCells,3) = 0;
+            rgbTriple(~selectedCells,1) = 0;
+            rgbTriple(~selectedCells,2) = 0;
+            rgbTriple(~selectedCells,3) = 1;
             set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
             set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
             set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
-            set(GuiSampleHandle.uiPanelScatter,'Title',['Marker Characterization '...
-            num2str(sum(GuiSampleHandle.selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+            set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+            num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
             val = round(get(GuiSampleHandle.slider, 'Value'));
             plot_thumbnails(-val); 
         end

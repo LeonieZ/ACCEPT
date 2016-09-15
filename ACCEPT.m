@@ -23,7 +23,7 @@ function uiHandle=ACCEPT(varargin)
     parser = gen_input_parser(base);
     parse(parser,varargin{:});
     if parser.Results.noGui==false
-        uiHandle = gui_main3(base);
+        uiHandle = gui_main(base,installDir);
     elseif parser.Results.noGui==true && ~isempty(parser.Results.inputFolder) && ~isempty(parser.Results.outputFolder)
         if strfind(parser.Results.inputFolder,'ACCEPT') == 1
             path = strsplit(parser.Results.inputFolder,'ACCEPT');
