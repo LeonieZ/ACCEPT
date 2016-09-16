@@ -678,7 +678,7 @@ function select_event(handle,~,plotnr)
             num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update view to selected thumbnail
         plot_thumbnails(find(usedThumbs == sampleFeatures.ThumbNr(in)));
-        set(GuiSampleHandle.slider, 'Value',-sampleFeatures.ThumbNr(in));
+        set(GuiSampleHandle.slider, 'Value',-find(usedThumbs == sampleFeatures.ThumbNr(in)));
     else
         selectedCells(in) = 0;
         if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(selectedCells) == sampleFeatures.ThumbNr(in), 1))
