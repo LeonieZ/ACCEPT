@@ -111,29 +111,49 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 % otherwise use openMP if only one channel is processed
                 chMask = this.maskForChannels(this.maskForChannels ~= 0); % indices of channels to be analyzed
                 nbrChSeg = size(chMask,2);
+                chSeg_uni = unique(chMask);
+                nbrChSeg_uni = size(chSeg_uni,2);
                 if nbrChSeg > 1
                     % parallelize in Matlab and do not use openMP in C-code
                     this.use_openMP = 0;
-                    segmentedImages = cell(nbrChSeg,1);
-                    parfor i = 1:nbrChSeg
-                        segmentedImages{i} = bwareaopen(bregman_cv(this,inputFrame,chMask(i),cvInit),10);
+                    segmentedImages = cell(nbrChSeg_uni,1);
+                    for i = 1:nbrChSeg_uni
+%                         segmentedImages{i} = bwareaopen(bregman_cv(this,inputFrame,chMask(i),cvInit),10);
+                        tmp = bregman_cv(this,inputFrame,chMask(i),cvInit);
+                        boundary = bwperim(tmp);
+                        tmp_cleared = bwareaopen(tmp - boundary,10);
+                        tmp = bwmorph(tmp_cleared,'thicken',1);
+                        boundary = bwperim(tmp);
+                        tmp_cleared = bwareaopen(tmp - boundary,10);
+                        segmentedImages{i} = bwmorph(tmp_cleared,'thicken',1);
                     end
-                    for i = 1:nbrChSeg
-                        returnFrame.segmentedImage(:,:,chMask(i)) = segmentedImages{i};
+                    
+
+%                     for i = 1:nbrChSeg
+                    for i = 1:inputFrame.nrChannels
+%                         returnFrame.segmentedImage(:,:,chMask(i)) = segmentedImages{i};
+                        if ismember(this.maskForChannels(i),chMask)
+                            returnFrame.segmentedImage(:,:,i) = segmentedImages{chSeg_uni==this.maskForChannels(i)};
+                        end
                     end
                 else
                     % only one channel, hence no parallelization in Matlab
                     % parallelize in C-code using openMP instead
-                    % (problematic on Windows at the moment, no executable available)
-                    for i = 1:nbrChSeg
-                        returnFrame.segmentedImage(:,:,chMask(i)) = bwareaopen(bregman_cv(this,inputFrame,chMask(i),cvInit),10);
-                    end
+                    % (problematic on Windows at the moment, no executable available) 
+                    tmp = bregman_cv(this,inputFrame,chMask,cvInit);
+                    boundary = bwperim(tmp);
+                    tmp_cleared = bwareaopen(tmp - boundary,10);
+                    tmp = bwmorph(tmp_cleared,'thicken',1);
+                    boundary = bwperim(tmp);
+                    tmp_cleared = bwareaopen(tmp - boundary,10);
+                    returnFrame.segmentedImage(:,:,this.maskForChannels==chMask) = bwmorph(tmp_cleared,'thicken',1);
+%                      returnFrame.segmentedImage(:,:,this.maskForChannels==chMask) = bwareaopen(bregman_cv(this,inputFrame,chMask,cvInit),10);                    
                 end
 
                 if sum(ismember(this.maskForChannels,0))==0 && isa(inputFrame,'Dataframe')
                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 end
-
+                
                 sumImage = sum(returnFrame.segmentedImage,3);
                 labels = repmat(bwlabel(sumImage,4),1,1,size(returnFrame.segmentedImage,3));
                 returnFrame.labelImage = labels.*returnFrame.segmentedImage;

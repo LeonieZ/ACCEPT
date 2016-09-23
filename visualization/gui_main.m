@@ -347,10 +347,6 @@ function close_fcn(~,~)
     resultPath = base.sampleList.resultPath;
     processor = base.sampleProcessor.name;
     save([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor');
-%     fprintf(fid, [base.sampleList.inputPath '\n']);
-%     fprintf(fid, [base.sampleList.resultPath '\n']);
-%     fprintf(fid, [base.sampleProcessor.name '\n\n']);
-%     fclose(fid);
     delete(gcf)
 end
 

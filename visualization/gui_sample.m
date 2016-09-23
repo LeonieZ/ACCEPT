@@ -1,10 +1,10 @@
 function GuiSampleHandle = gui_sample(base,currentSample)
-
+% profile on
 % Main figure: create and set properies (relative size, color)
 set(0,'units','characters');  
 screensz = get(0,'screensize');
 GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-225)/2 (screensz(4)-65)/2 225 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
-    'NumberTitle','off','Color',[1 1 1],'Resize','off');
+    'NumberTitle','off','Color',[1 1 1],'Resize','off','CloseRequestFcn',@close_fcn);
 
 %% Set maximum intensity
 if strcmp(currentSample.dataTypeOriginalImage,'uint8')
@@ -19,6 +19,7 @@ end
 
 %handle empty thumbs
 usedThumbs = find(ismember(linspace(1,size(currentSample.results.thumbnail_images,2),size(currentSample.results.thumbnail_images,2)),currentSample.results.features{:,1}));
+% usedThumbs = linspace(1,size(currentSample.results.thumbnail_images,2),size(currentSample.results.thumbnail_images,2));
 nrUsedThumbs = size(usedThumbs,2);
 
 %replace NaN values with zeros
@@ -457,18 +458,10 @@ end
 function plotImInAxis(im,segm,hAx,hIm)
     if size(im,3) > 1
         % create overlay image here
-        %plot_image(hAx,im,255,'fullscale_rgb');
         overlay(:,:,1) = im(:,:,2)/maxi; overlay(:,:,3) = im(:,:,2)/maxi; overlay(:,:,2) = im(:,:,3)/maxi;
-        %can we define Callback function somewhere else??
-%         imagesc(overlay,{'ButtonDownFcn'},{'openSpecificImage'},'parent',hAx);
-        %imshow(overlay,'parent',hAx,'InitialMagnification','fit'); 
+%         overlay(:,:,1) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,3) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,2) = im(:,:,3)/max(max(im(:,:,3)));
         set(hIm,'CData',overlay);
     else
-        %plot_image(hAx,im,255,'fullscale',{'ButtonDownFcn'},{'openSpecificImage(base)'});
-%         imagesc(im/maxi,'ButtonDownFcn',{'openSpecificImage'},'parent',hAx);
-        %can we define Callback function somewhere else??
-        %imshow(im/maxi,'parent',hAx,'InitialMagnification','fit');
-
         if ~isempty(segm)
             cont = bwperim(segm,4);
             im(im>maxi)= maxi;
@@ -652,7 +645,9 @@ function select_event(handle,~,plotnr)
     end
     pos = getPosition(h);
 %     pos_extended = [0.95*pos(1), 0.95*pos(2); 0.95*pos(1), 1.05*pos(2); 1.05*pos(1), 1.05*pos(2); 1.05*pos(1), 0.95*pos(2)];
-    pos_extended = [pos(1)-50, pos(2)-50; pos(1)-50, pos(2)+50; pos(1)+50, pos(2)+50; pos(1)+50, pos(2)-50];
+%     pos_extended = [pos(1)-50, pos(2)-50; pos(1)-50, pos(2)+50; pos(1)+50, pos(2)+50; pos(1)+50, pos(2)-50];
+    pos_extended = [pos(1)-max(20,0.5*pos(1)), pos(2)-max(20,0.5*pos(2)); pos(1)-max(20,0.5*pos(1)), pos(2)+max(20,0.5*pos(2));...
+        pos(1)+max(20,0.5*pos(1)), pos(2)+max(20,0.5*pos(2)); pos(1)+max(20,0.5*pos(1)), pos(2)-max(20,0.5*pos(2))];
     [in,~] = inpolygon(xtest,ytest,pos_extended(:,1),pos_extended(:,2));
     sum(in)
     if sum(in) > 1
@@ -808,4 +803,10 @@ function export_thumbs(handle,~)
     base.io.save_thumbnail(currentSample)
     set(handle,'backg',color)
 end
+
+function close_fcn(~,~) 
+%     profile off; profile viewer
+    delete(gcf)
+end
+
 end
