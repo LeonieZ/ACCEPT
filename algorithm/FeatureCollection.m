@@ -28,7 +28,6 @@ classdef FeatureCollection < SampleProcessorObject
             if this.use_thumbs == 0
                 for i = 1:inputSample.nrOfFrames
                     i
-                    %%%% CHECK IF CORRECT!!%%%%%
                     dataFrame = this.io.load_data_frame(inputSample,i);
                     this.dataProcessor.run(dataFrame);
                     objectsfoundearlier = size(inputSample.results.features,1);
@@ -40,10 +39,6 @@ classdef FeatureCollection < SampleProcessorObject
                         dataFrame.features = [thumbNr dataFrame.features]; %maybe change like below?!
                         inputSample.results.features=vertcat(inputSample.results.features, dataFrame.features);
                         bb = struct2cell(regionprops(dataFrame.labelImage,'BoundingBox'));
-%                         xBottomLeft = cellfun(@(x) max(floor(x(2)) - round(0.2*x(5)),1),bb);
-%                         yBottomLeft = cellfun(@(x) max(floor(x(1)) - round(0.2*x(4)),1),bb);
-%                         xTopRight = cellfun(@(x) min(floor(x(2)) + round(1.2*x(5)),size(dataFrame.rawImage,1)),bb);
-%                         yTopRight = cellfun(@(x) min(floor(x(1)) + round(1.2*x(4)),size(dataFrame.rawImage,2)),bb);
                         yBottomLeft = cellfun(@(x) min(max(floor(x(2)) - round(0.2*x(5)),1),size(dataFrame.rawImage,1)),bb);
                         xBottomLeft = cellfun(@(x) min(max(floor(x(1)) - round(0.2*x(4)),1),size(dataFrame.rawImage,2)),bb);
                         yTopRight = cellfun(@(x) min(floor(x(2)) + round(1.2*x(5)),size(dataFrame.rawImage,1)),bb);
@@ -64,10 +59,6 @@ classdef FeatureCollection < SampleProcessorObject
                         thumbnail_images = cell(1,size(dataFrame.features,1));
                         segmentation = cell(1,size(dataFrame.features,1));
                         for n = 1:size(xBottomLeft,2)
-%                             thumbnail_images{n} = dataFrame.rawImage(xBottomLeft(n):xTopRight(n),...
-%                                 yBottomLeft(n):yTopRight(n),:);
-%                             segmentation{n} = dataFrame.segmentedImage(xBottomLeft(n):xTopRight(n),...
-%                                 yBottomLeft(n):yTopRight(n),:);
                             thumbnail_images{n} = dataFrame.rawImage(yBottomLeft(n):yTopRight(n),...
                                 xBottomLeft(n):xTopRight(n),:);
                             segmentation{n} = dataFrame.segmentedImage(yBottomLeft(n):yTopRight(n),...
@@ -77,7 +68,6 @@ classdef FeatureCollection < SampleProcessorObject
                         returnSample.results.segmentation = horzcat(returnSample.results.segmentation, segmentation);
                     end
                 end
-            %------------------
             
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
 
