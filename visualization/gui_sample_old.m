@@ -1,4 +1,4 @@
-function GuiSampleHandle = gui_sample(base,currentSample)
+function GuiSampleHandle = gui_sample_old(base,currentSample)
 % profile on
 % Main figure: create and set properies (relative size, color)
 set(0,'units','characters');  
@@ -30,10 +30,8 @@ sampleFeatures{:,:} = sampleFeatures_noNaN;
 %handle selections
 selectedFrames = false(nrUsedThumbs,1);
 currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
-selectedCells = zeros(size(sampleFeatures,1),1);
-
-zoom_factor_x(1:3) = 1.1;
-zoom_factor_y(1:3) = 1.1;
+selectedCells = false(size(sampleFeatures,1),1);
+rgbTriple = repmat([0 0 1],[size(sampleFeatures,1),1]);
 %% Main title
 GuiSampleHandle.title_axes = axes('Units','characters','Position',[110 61.8 39.6 2.6]); axis off;
 GuiSampleHandle.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} Sample Visualizer','FontUnits','normalized','FontSize',0.8,'verticalAlignment','base','horizontalAlignment','center');
@@ -220,25 +218,23 @@ plot_thumbnails(3);
 
 %% Fill uiPanelScatter
 
-marker_size = 10;
+marker_size = 20;
 % create data for scatter plot at the top
 GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 42.2 40.4 13.1]); %[left bottom width height]
 
 topFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 topFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_2_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
-
-XData = sampleFeatures.(topFeatureIndex1);
-YData = sampleFeatures.(topFeatureIndex2);    
-    
-index = find(~isnan(XData+YData+selectedCells));
-if mod(length(index),2) == 1
-    index(end+1) = index(end);
-end
-index = reshape(index,2,[]);
-
-GuiSampleHandle.axesScatterTop = mesh(GuiSampleHandle.axesTop,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0 0 1]);
-xlim([0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
+% topFeatureIndex1 = 9; topFeatureIndex2 = 17;
+gca; GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1),...    % +1 because first column in feature table is index (thumbNumber)
+                                      sampleFeatures.(topFeatureIndex2),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2))),1)]);
+% GuiSampleHandle.pointsTop=get(GuiSampleHandle.axesScatterTop,'Children');
+% for i=1:numel(GuiSampleHandle.pointsTop)
+% set(GuiSampleHandle.pointsTop(i),'HitTest','on','ButtonDownFcn',@(handle,event,pointNr)click_point(handle,event,i));
+% end
+% % add callback to single scatter points
+% %points=get(GuiSampleHandle.axesScatterTop,'Children');
+% %set(points,'HitTest','on','ButtonDownFcn',{@clickScatterPoint});
                                   
 % initialize cell counter (scatter elements) in title
 set(GuiSampleHandle.uiPanelScatter,'Title',...
@@ -276,15 +272,7 @@ GuiSampleHandle.gateScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter
 GuiSampleHandle.clearScatter = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
             'FontSize',0.4,'String', 'Clear Selection','Position', [41.1 56 16.2 1.8],'Callback', @clear_selection); 
 GuiSampleHandle.selectSingleScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.4,'String', 'Select Event','Position', [1.5 38.6 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,1));  
-GuiSampleHandle.zoomIn1_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [51 43.5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,1,'x')); 
-GuiSampleHandle.zoomOut1_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [51 42.2 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,1,'x')); 
-GuiSampleHandle.zoomIn1_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [1 54.3 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,1,'y')); 
-GuiSampleHandle.zoomOut1_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [1 53 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,1,'y'));
+            'FontSize',0.4,'String', 'Select Event','Position', [1.5 38.6 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,1));         
 
 
 %----
@@ -292,20 +280,10 @@ GuiSampleHandle.zoomOut1_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 
 GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 23 40.4 13.1]); %[left bottom width height]
 middleFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 middleFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_1_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
-
-XData = sampleFeatures.(middleFeatureIndex1);
-YData = sampleFeatures.(middleFeatureIndex2);    
-    
-index = find(~isnan(XData+YData+selectedCells));
-if mod(length(index),2) == 1
-    index(end+1) = index(end);
-end
-index = reshape(index,2,[]);
-
-GuiSampleHandle.axesScatterMiddle = mesh(GuiSampleHandle.axesMiddle,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0 0 1]);
-xlim([0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
-
+% middleFeatureIndex1 = 9; middleFeatureIndex2 = 17;
+gca; GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(middleFeatureIndex2),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2))),1)]);
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
 GuiSampleHandle.popupFeatureSelectMiddleIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','characters',...
@@ -327,15 +305,7 @@ GuiSampleHandle.popupFeatureSelectMiddleIndex2 = uicontrol('Parent',GuiSampleHan
 GuiSampleHandle.gateScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
             'FontSize',0.4,'String', 'Gate','Position', [15.5 19.3 8.1 1.8],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,2)); 
 GuiSampleHandle.selectSingleScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.4,'String', 'Select Event','Position', [1.5 19.3 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,2)); 
-GuiSampleHandle.zoomIn2_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [51 24.3 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,2,'x')); 
-GuiSampleHandle.zoomOut2_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [51 23 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,2,'x')); 
-GuiSampleHandle.zoomIn2_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [1 35.1 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,2,'y')); 
-GuiSampleHandle.zoomOut2_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [1 33.8 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,2,'y'));
+            'FontSize',0.4,'String', 'Select Event','Position', [1.5 19.3 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,2));         
 
 %----
 % create scatter plot at the bottom
@@ -345,20 +315,10 @@ bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_4_MeanIntensity', s
 if isempty(bottomFeatureIndex2)
     bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_3_Area', s)), sampleFeatures.Properties.VariableNames));
 end
-
-XData = sampleFeatures.(bottomFeatureIndex1);
-YData = sampleFeatures.(bottomFeatureIndex2);    
-    
-index = find(~isnan(XData+YData+selectedCells));
-if mod(length(index),2) == 1
-    index(end+1) = index(end);
-end
-index = reshape(index,2,[]);
-
-GuiSampleHandle.axesScatterBottom = mesh(GuiSampleHandle.axesBottom,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0 0 1]);
-xlim([0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
-
+% bottomFeatureIndex1 = 9; bottomFeatureIndex2 = 17;
+gca; GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(bottomFeatureIndex2),marker_size,'filled','CData',rgbTriple);
+xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
 GuiSampleHandle.popupFeatureSelectBottomIndex1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter,'Style','popup','Units','characters',...
@@ -380,15 +340,7 @@ GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHan
 GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
             'FontSize',0.4, 'String', 'Gate','Position', [15.5 0.1 8.1 1.8],'Callback', @(handle,event,plotnr)gate_scatter(handle,event,3)); 
 GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.4,'String', 'Select Event','Position', [1.5 0.1 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,3));   
-GuiSampleHandle.zoomIn3_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [51 5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,3,'x')); 
-GuiSampleHandle.zoomOut3_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [51 3.7 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,3,'x')); 
-GuiSampleHandle.zoomIn3_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [1 15.8 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,3,'y')); 
-GuiSampleHandle.zoomOut3_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [1 14.5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,3,'y'));
+            'FontSize',0.4,'String', 'Select Event','Position', [1.5 0.1 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,3));         
         
 
 %% Create export/load buttons----
@@ -415,85 +367,43 @@ end
 % --- Executes on selection in topFeatureIndex1 (x-axis)
 function popupFeatureTopIndex1_Callback(hObject,~,~)
     topFeatureIndex1 = get(hObject,'Value');
-    newXData = sampleFeatures.(topFeatureIndex1+1); % +1 because first column in feature table is index (thumbNumber)
-    index = find(~isnan(newXData));
-    if mod(length(index),2) == 1
-        index(end+1) = index(end);
-    end
-    index = reshape(index,2,[]);
-    zoom_factor_x(1) = 1.1;
-    set(GuiSampleHandle.axesScatterTop,'XData',newXData(index)); 
-    xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1+1))),1)]);  
+    set(GuiSampleHandle.axesScatterTop,'XData',sampleFeatures.(topFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in topFeatureIndex2 (y-axis)
 function popupFeatureTopIndex2_Callback(hObject,~,~)
     topFeatureIndex2 = get(hObject,'Value');
-    newYData = sampleFeatures.(topFeatureIndex2+1); % +1 because first column in feature table is index (thumbNumber)
-    index = find(~isnan(newYData));
-    if mod(length(index),2) == 1
-        index(end+1) = index(end);
-    end
-    index = reshape(index,2,[]);
-    zoom_factor_y(1) = 1.1;
-    set(GuiSampleHandle.axesScatterTop,'YData',newYData(index)); 
-    ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2+1))),1)]);    
+    set(GuiSampleHandle.axesScatterTop,'YData',sampleFeatures.(topFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesTop,[0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex1 (x-axis)
 function popupFeatureMiddleIndex1_Callback(hObject,~,~)
     middleFeatureIndex1 = get(hObject,'Value');
-    newXData = sampleFeatures.(middleFeatureIndex1+1); % +1 because first column in feature table is index (thumbNumber)
-    index = find(~isnan(newXData));
-    if mod(length(index),2) == 1
-        index(end+1) = index(end);
-    end
-    index = reshape(index,2,[]);
-    zoom_factor_x(2) = 1.1;
-    set(GuiSampleHandle.axesScatterMiddle,'XData',newXData(index)); 
-    xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1+1))),1)]); 
+    set(GuiSampleHandle.axesScatterMiddle,'XData',sampleFeatures.(middleFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex2 (y-axis)
 function popupFeatureMiddleIndex2_Callback(hObject,~,~)
     middleFeatureIndex2 = get(hObject,'Value');
-    newYData = sampleFeatures.(middleFeatureIndex2+1); % +1 because first column in feature table is index (thumbNumber)
-    index = find(~isnan(newYData));
-    if mod(length(index),2) == 1
-        index(end+1) = index(end);
-    end
-    index = reshape(index,2,[]);
-    zoom_factor_y(2) = 1.1;
-    set(GuiSampleHandle.axesScatterMiddle,'YData',newYData(index)); 
-    ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);    
+    set(GuiSampleHandle.axesScatterMiddle,'YData',sampleFeatures.(middleFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex1 (x-axis)
 function popupFeatureBottomIndex1_Callback(hObject,~,~)
     bottomFeatureIndex1 = get(hObject,'Value');
-    newXData = sampleFeatures.(bottomFeatureIndex1+1); % +1 because first column in feature table is index (thumbNumber)
-    index = find(~isnan(newXData));
-    if mod(length(index),2) == 1
-        index(end+1) = index(end);
-    end
-    index = reshape(index,2,[]);
-    zoom_factor_x(3) = 1.1;
-    set(GuiSampleHandle.axesScatterBottom,'XData',newXData(index)); 
-    xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]); 
+    set(GuiSampleHandle.axesScatterBottom,'XData',sampleFeatures.(bottomFeatureIndex1+1)); % +1 because first column in feature table is index (thumbNumber)
+    xlim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex2 (y-axis)
 function popupFeatureBottomIndex2_Callback(hObject,~,~)
     bottomFeatureIndex2 = get(hObject,'Value');
-    newYData = sampleFeatures.(bottomFeatureIndex2+1); % +1 because first column in feature table is index (thumbNumber)
-    index = find(~isnan(newYData));
-    if mod(length(index),2) == 1
-        index(end+1) = index(end);
-    end
-    index = reshape(index,2,[]);
-    zoom_factor_y(3) = 1.1;
-    set(GuiSampleHandle.axesScatterBottom,'YData',newYData(index)); 
-    ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]); 
+    set(GuiSampleHandle.axesScatterBottom,'YData',sampleFeatures.(bottomFeatureIndex2+1)); % +1 because first column in feature table is index (thumbNumber)
+    ylim(GuiSampleHandle.axesBottom,[0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]);
 end
 
 % --- Executes on slider movement.
@@ -518,7 +428,7 @@ function plot_thumbnails(val)
             k = (j-1)*cols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
 %             plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
-            plotImInAxis(rawImage,segmentedImage,hAxes(k),hImages(k));
+            plotImInAxis(rawImage,[],hAxes(k),hImages(k));
             
             % update visual selection dependent on selectedFrames array
 %             if selectedFrames(thumbInd) == 1
@@ -547,20 +457,8 @@ end
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
 function plotImInAxis(im,segm,hAx,hIm)
     if size(im,3) > 1
-        im2 = im(:,:,2);
-        max_ch2 = max(max(im2(segm(:,:,2))));
-        if isempty(max_ch2)
-            max_ch2 = maxi;
-        end
-        im3 = im(:,:,3);   
-        max_ch3 = max(max(im3(segm(:,:,3))));
-        if isempty(max_ch3)
-            max_ch3 = maxi;
-        end
         % create overlay image here
-%         overlay(:,:,1) = im(:,:,2)/maxi; overlay(:,:,3) = im(:,:,2)/maxi; overlay(:,:,2) = im(:,:,3)/maxi;
-        overlay(:,:,1) = im(:,:,2)/max_ch2; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
-        overlay(end-1,2:6,:) = 1;
+        overlay(:,:,1) = im(:,:,2)/maxi; overlay(:,:,3) = im(:,:,2)/maxi; overlay(:,:,2) = im(:,:,3)/maxi;
 %         overlay(:,:,1) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,3) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,2) = im(:,:,3)/max(max(im(:,:,3)));
         set(hIm,'CData',overlay);
     else
@@ -603,54 +501,36 @@ function openSpecificImage(~,~,row)
                 end
             end
         case 'extend' % shift & left mouse button action
-%             FEHLERHAFT! (ausserdem zoom factor hinzufuegen)
-%             if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
-%                 pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
-%                 posToDelete = sampleFeatures.ThumbNr == usedThumbs(currPos(pos));
-%                 sampleFeatures{posToDelete,:} = NaN;
-%                 selectedFrames(currPos(pos)) = [];
-%                 selectedCells(posToDelete) = 0;
-%                 usedThumbs(currPos(pos)) = [];
-%                 nrUsedThumbs = size(usedThumbs,2);
-%                 set(GuiSampleHandle.slider,'Min',-nrUsedThumbs+2,'SliderStep', [1, 1] / (nrUsedThumbs - 5));
-%                 currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
-%                 plot_thumbnails(-get(GuiSampleHandle.slider,'Value'));
-%                 
-%                 axes(GuiSampleHandle.axesTop)
-%                 XData = sampleFeatures.(topFeatureIndex1);
-%                 YData = sampleFeatures.(topFeatureIndex2);    
-%     
-%                 index = find(~isnan(XData+YData+selectedCells));
-%                 if mod(length(index),2) == 1
-%                     index(end+1) = index(end);
-%                 end
-%                 index = reshape(index,2,[]);
-% 
-%                 GuiSampleHandle.axesScatterTop = mesh(GuiSampleHandle.axesTop,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-%                 view(2); xlim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2))),1)]);
-%                 
-%                 
-%                 axes(GuiSampleHandle.axesMiddle) 
-%                 XData = sampleFeatures.(middleFeatureIndex1);
-%                 YData = sampleFeatures.(middleFeatureIndex2); 
-%                 GuiSampleHandle.axesScatterMiddle = mesh(GuiSampleHandle.axesMiddle,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-%                 view(2); xlim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2))),1)]);
-%                 
-%                 axes(GuiSampleHandle.axesBottom)
-%                 XData = sampleFeatures.(bottomFeatureIndex1);
-%                 YData = sampleFeatures.(bottomFeatureIndex2); 
-%                 GuiSampleHandle.axesScatterBottom = mesh(GuiSampleHandle.axesBottom,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-%                 view(2); xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
-%                   
-%                 if sum(selectedCells) > 0
-%                     colormap([0 0 1; 1 .5 0]);
-%                 else
-%                     colormap([0 0 1]);
-%                 end
-%                 
-%                 set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
-%                                         num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
-%             end
+            if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
+                pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
+                posToDelete = sampleFeatures.ThumbNr == usedThumbs(currPos(pos));
+                sampleFeatures{posToDelete,:} = NaN;
+                rgbTriple(posToDelete,:) = [0 0 1];
+                selectedFrames(currPos(pos)) = [];
+                selectedCells(posToDelete) = 0;
+                usedThumbs(currPos(pos)) = [];
+                nrUsedThumbs = size(usedThumbs,2);
+                set(GuiSampleHandle.slider,'Min',-nrUsedThumbs+2,'SliderStep', [1, 1] / (nrUsedThumbs - 5));
+                currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
+                plot_thumbnails(-get(GuiSampleHandle.slider,'Value'));
+                
+                axes(GuiSampleHandle.axesTop)
+                GuiSampleHandle.axesScatterTop = scatter(sampleFeatures.(topFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                                      sampleFeatures.(topFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+                xlim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2+1))),1)]);
+                
+                axes(GuiSampleHandle.axesMiddle) 
+                GuiSampleHandle.axesScatterMiddle = scatter(sampleFeatures.(middleFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                                         sampleFeatures.(middleFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+                xlim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);
+                
+                axes(GuiSampleHandle.axesBottom)
+                GuiSampleHandle.axesScatterBottom = scatter(sampleFeatures.(bottomFeatureIndex1+1),...    % +1 because first column in feature table is index (thumbNumber)
+                                         sampleFeatures.(bottomFeatureIndex2+1),marker_size,'filled','CData',rgbTriple);
+                xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]);
+                set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+                                        num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+            end
         case 'alt' % right mouse button action
             im = get(gcbo,'cdata');
             figure; imagesc(im,[0,max(max(im(im<1)))]); axis equal; axis off;
@@ -661,16 +541,16 @@ end
 function updateScatterPlots(pos,booleanOnOff)
     selectedFrames(pos) = booleanOnOff;
     selectedCells(sampleFeatures.ThumbNr == usedThumbs(pos)) = booleanOnOff;
-
+    rgbTriple(selectedCells,1) = 1;
+    rgbTriple(selectedCells,2) = 0.5;
+    rgbTriple(selectedCells,3) = 0;
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
     % update all scatter plots with new manual clustering
-    set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
-    set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
-    set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
-    if sum(selectedCells) > 0
-        colormap([0 0 1; 1 .5 0]);
-    else
-        colormap([0 0 1]);
-    end
+    set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+    set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+    set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     % update title for scatter panel showing clustering summary
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
         num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
@@ -681,7 +561,6 @@ function gate_scatter(handle,~,plotnr)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
-    
     if plotnr == 1
         h = impoly(GuiSampleHandle.axesTop);
         xtest = get(GuiSampleHandle.axesScatterTop,'XData');
@@ -700,32 +579,31 @@ function gate_scatter(handle,~,plotnr)
     [in,~] = inpolygon(xtest,ytest,pos(:,1),pos(:,2));
     selectedCells(in) = 1;
     selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
+    rgbTriple(selectedCells,1) = 1;
+    rgbTriple(selectedCells,2) = 0.5;
+    rgbTriple(selectedCells,3) = 0;
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
     % update all scatter plots with new manual clustering
-    set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
-    set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
-    set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
+    set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+    set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+    set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     delete(h);
-    
-    if sum(selectedCells) > 0
-        colormap([0 0 1; 1 .5 0]);
-    else
-        colormap([0 0 1]);
-    end
-    
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
         num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
     % update view to selected thumbnail closest to current view
     val = round(get(GuiSampleHandle.slider, 'Value'));    
     if isequal(currPos,linspace(1,nrUsedThumbs,nrUsedThumbs))
         selectedFrames_nr = find(selectedFrames);
-        [~, ii] = min(abs(-selectedFrames_nr-val));       
-        closestValue = selectedFrames_nr(ii(1)); 
+        [~, index] = min(abs(-selectedFrames_nr-val));       
+        closestValue = selectedFrames_nr(index(1)); 
         plot_thumbnails(closestValue);
         set(GuiSampleHandle.slider, 'Value',-closestValue);
     else
         selectedFrames_nr = find(ismember(currPos,find(selectedFrames)));
-        [~, ii] = min(abs(-selectedFrames_nr-val));        
-        closestValue = selectedFrames_nr(ii(1)); 
+        [~, index] = min(abs(-selectedFrames_nr-val));        
+        closestValue = selectedFrames_nr(index(1)); 
         plot_thumbnails(closestValue);
         set(GuiSampleHandle.slider, 'Value',-closestValue);
     end
@@ -733,12 +611,14 @@ function gate_scatter(handle,~,plotnr)
 end
 
 function clear_selection(~,~)
-    selectedCells = zeros(size(selectedCells));
+    selectedCells = false(size(selectedCells));
     selectedFrames = false(size(selectedFrames));
-    colormap([0 0 1]);
-    set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
-    set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
-    set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
+    rgbTriple(~selectedCells,1) = 0;
+    rgbTriple(~selectedCells,2) = 0;
+    rgbTriple(~selectedCells,3) = 1;
+    set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+    set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+    set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
     num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
     currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
@@ -764,30 +644,31 @@ function select_event(handle,~,plotnr)
         ytest = get(GuiSampleHandle.axesScatterBottom,'YData');
     end
     pos = getPosition(h);
+%     pos_extended = [0.95*pos(1), 0.95*pos(2); 0.95*pos(1), 1.05*pos(2); 1.05*pos(1), 1.05*pos(2); 1.05*pos(1), 0.95*pos(2)];
+%     pos_extended = [pos(1)-50, pos(2)-50; pos(1)-50, pos(2)+50; pos(1)+50, pos(2)+50; pos(1)+50, pos(2)-50];
     pos_extended = [pos(1)-max(20,0.5*pos(1)), pos(2)-max(20,0.5*pos(2)); pos(1)-max(20,0.5*pos(1)), pos(2)+max(20,0.5*pos(2));...
         pos(1)+max(20,0.5*pos(1)), pos(2)+max(20,0.5*pos(2)); pos(1)+max(20,0.5*pos(1)), pos(2)-max(20,0.5*pos(2))];
     [in,~] = inpolygon(xtest,ytest,pos_extended(:,1),pos_extended(:,2));
-    if sum(in(:)) > 1
+    sum(in)
+    if sum(in) > 1
         indices = find(in);
-        [~,ii] = min((xtest(in) - pos(1)).^2 + (ytest(in) - pos(2)).^2);
-        in(indices(indices ~= indices(ii))) = 0;
+        [~,index] = min((xtest(in) - pos(1)).^2 + (ytest(in) - pos(2)).^2);
+        in(indices(indices ~= indices(index))) = 0;
     end
     if selectedCells(in) == 0
         selectedCells(in) = 1;
         selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
-
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
         % update all scatter plots with new manual clustering
-        set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
-        set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
-        set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
+        set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+        set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+        set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
         delete(h);
-        
-        if sum(selectedCells) > 0
-            colormap([0 0 1; 1 .5 0]);
-        else
-            colormap([0 0 1]);
-        end
-    
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
             num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update view to selected thumbnail
@@ -798,18 +679,17 @@ function select_event(handle,~,plotnr)
         if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(selectedCells) == sampleFeatures.ThumbNr(in), 1))
             selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0;
         end
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
         % update all scatter plots with new manual clustering
-        set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
-        set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
-        set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
+        set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+        set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+        set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
         delete(h);
-        
-        if sum(selectedCells) > 0
-            colormap([0 0 1; 1 .5 0]);
-        else
-            colormap([0 0 1]);
-        end
-        
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
             num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update currentview
@@ -817,50 +697,6 @@ function select_event(handle,~,plotnr)
         plot_thumbnails(-val);
     end
     set(handle,'backg',color)
-end
-
-function zoom_in(~,~,plot_nr,axis)
-    if plot_nr == 1 && strcmp(axis,'x')
-        zoom_factor_x(1) = 0.9 * zoom_factor_x(1);
-        xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]);
-    elseif plot_nr == 1 && strcmp(axis,'y')
-        zoom_factor_y(1) = 0.9 * zoom_factor_y(1);
-        ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
-    elseif plot_nr == 2 && strcmp(axis,'x')
-        zoom_factor_x(2) = 0.9 * zoom_factor_x(2);
-        xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]);
-    elseif plot_nr == 2 && strcmp(axis,'y')
-        zoom_factor_y(2) = 0.9 * zoom_factor_y(2);
-        ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
-    elseif plot_nr == 3 && strcmp(axis,'x')
-        zoom_factor_x(3) = 0.9 * zoom_factor_x(3);
-        xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]);
-    elseif plot_nr == 3 && strcmp(axis,'y')
-        zoom_factor_y(3) = 0.9 * zoom_factor_y(3);
-        ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
-    end
-end
-
-function zoom_out(~,~,plot_nr,axis)
-    if plot_nr == 1 && strcmp(axis,'x')
-        zoom_factor_x(1) = 1.1 * zoom_factor_x(1);
-        xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]);
-    elseif plot_nr == 1 && strcmp(axis,'y')
-        zoom_factor_y(1) = 1.1 * zoom_factor_y(1);
-        ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
-    elseif plot_nr == 2 && strcmp(axis,'x')
-        zoom_factor_x(2) = 1.1 * zoom_factor_x(2);
-        xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]);
-    elseif plot_nr == 2 && strcmp(axis,'y')
-        zoom_factor_y(2) = 1.1 * zoom_factor_y(2);
-        ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
-    elseif plot_nr == 3 && strcmp(axis,'x')
-        zoom_factor_x(3) = 1.1 * zoom_factor_x(3);
-        xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]);
-    elseif plot_nr == 3 && strcmp(axis,'y')
-        zoom_factor_y(3) = 1.1 * zoom_factor_y(3);
-        ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
-    end
 end
 
 function sort_cells(~,~)
@@ -916,20 +752,19 @@ function load_gates(handle,~)
     if isempty(classes)
         msgbox('No prior selection avaliable.')
     elseif size(classes,2)==1
-        selectedCells = zeros(size(selectedCells));
+        selectedCells = false(size(selectedCells));
         selectedFrames = false(size(selectedFrames));
-        selectedCells = double(currentSample.results.classification{:,1});
-        selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1; 
-        set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
-        set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
-        set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
-        
-        if sum(selectedCells) > 0
-            colormap([0 0 1; 1 .5 0]);
-        else
-            colormap([0 0 1]);
-        end
-        
+        selectedCells = currentSample.results.classification{:,1};
+        selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(selectedCells))) = 1; 
+        rgbTriple(selectedCells,1) = 1;
+        rgbTriple(selectedCells,2) = 0.5;
+        rgbTriple(selectedCells,3) = 0;
+        rgbTriple(~selectedCells,1) = 0;
+        rgbTriple(~selectedCells,2) = 0;
+        rgbTriple(~selectedCells,3) = 1;
+        set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+        set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+        set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
         num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         val = round(get(GuiSampleHandle.slider, 'Value'));
@@ -939,20 +774,19 @@ function load_gates(handle,~)
                 'SelectionMode','single',...
                 'ListString',classes,'ListSize',[250,150]);
         if v == 1
-            selectedCells = zeros(size(selectedCells));
+            selectedCells = false(size(selectedCells));
             selectedFrames = false(size(selectedFrames));
             selectedCells = currentSample.results.classification{:,s};
             selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(selectedCells))) = 1; 
-            set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
-            set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
-            set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
-                    
-            if sum(selectedCells) > 0
-                colormap([0 0 1; 1 .5 0]);
-            else
-                colormap([0 0 1]);
-            end
-            
+            rgbTriple(selectedCells,1) = 1;
+            rgbTriple(selectedCells,2) = 0.5;
+            rgbTriple(selectedCells,3) = 0;
+            rgbTriple(~selectedCells,1) = 0;
+            rgbTriple(~selectedCells,2) = 0;
+            rgbTriple(~selectedCells,3) = 1;
+            set(GuiSampleHandle.axesScatterTop,'CData',rgbTriple);
+            set(GuiSampleHandle.axesScatterMiddle,'CData',rgbTriple);
+            set(GuiSampleHandle.axesScatterBottom,'CData',rgbTriple);
             set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
             num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
             val = round(get(GuiSampleHandle.slider, 'Value'));
