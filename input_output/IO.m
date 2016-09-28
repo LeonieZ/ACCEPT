@@ -118,24 +118,24 @@ classdef IO < handle
         end
         
         function save_sample(this,currentSample)
-            save([currentSample.savePath,filesep,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
-            load([currentSample.savePath,filesep,'processed.mat'],'samplesProcessed');
+            save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
+            load([currentSample.savePath,'processed.mat'],'samplesProcessed');
             samplesProcessed=union(samplesProcessed,{currentSample.id});
-            save([currentSample.savePath,filesep,'processed.mat'],'samplesProcessed','-append');
+            save([currentSample.savePath,'processed.mat'],'samplesProcessed','-append');
         end
         
         function save_data_frame(this,currentSample,currentDataFrame)
-            if ~exist([currentSample.savePath,filesep,'frames',filesep,currentSample.id],'dir')
-                mkdir([currentSample.savePath,filesep,'frames',filesep,currentSample.id]);
+            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
             end
-            save([currentSample.savePath,filesep,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame','-v7.3');            
+            save([currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame','-v7.3');            
         end
         
         function save_data_frame_segmentation(this,currentSample,currentDataFrame)
-            if ~exist([currentSample.savePath,filesep,'frames',filesep,currentSample.id],'dir')
-                mkdir([currentSample.savePath,filesep,'frames',filesep,currentSample.id]);
+            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
             end
-            t=Tiff([currentSample.savePath,filesep,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
+            t=Tiff([currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
             t.setTag('Photometric',t.Photometric.MinIsBlack);
             t.setTag('Compression',t.Compression.LZW);
             t.setTag('ImageLength',size(currentDataFrame.segmentedImage,1));
@@ -447,8 +447,8 @@ classdef IO < handle
             isToBeProc=false(1,numel(sampleNames));
             if ~exist(savepath,'dir')
                 mkdir(savepath);
-                mkdir([savepath,filesep,'output']);
-                mkdir([savepath,filesep,'frames']);
+                mkdir([savePath,'output']);
+                mkdir([savePath,'frames']);
                 samplesProcessed={};
                 save([savepath filesep 'processed.mat'],'samplesProcessed','-v7.3');
                 isProc=false(1,numel(sampleNames));
