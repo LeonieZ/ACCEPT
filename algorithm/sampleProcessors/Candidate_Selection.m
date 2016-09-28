@@ -16,13 +16,13 @@ classdef Candidate_Selection < SampleProcessor
         end
         
         function run(this,inputSample)
-            gui = gui_manual_gates();
-            waitfor(gui.fig_main,'UserData')
-            gates = get(gui.fig_main,'UserData');
-            delete(gui.fig_main)
-            clear('gui');
-            
-            this.pipeline{4}.gates = gates;
+%             gui = gui_manual_gates();
+%             waitfor(gui.fig_main,'UserData')
+%             gates = get(gui.fig_main,'UserData');
+%             delete(gui.fig_main)
+%             clear('gui');
+%             
+%             this.pipeline{4}.gates = gates;
             
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);

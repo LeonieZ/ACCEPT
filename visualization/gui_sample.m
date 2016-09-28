@@ -547,14 +547,15 @@ end
 % --- Helper function used in thumbnail gallery to plot thumbnails in axes
 function plotImInAxis(im,segm,hAx,hIm)
     if size(im,3) > 1
-        im2 = im(:,:,2);
-        max_ch2 = max(max(im2(segm(:,:,2))));
-        if isempty(max_ch2)
+        if sum(sum(segm(:,:,2))) > 1
+            max_ch2 = max(max(im(:,:,2)));
+        else 
             max_ch2 = maxi;
         end
-        im3 = im(:,:,3);   
-        max_ch3 = max(max(im3(segm(:,:,3))));
-        if isempty(max_ch3)
+
+        if sum(sum(segm(:,:,3))) > 1
+            max_ch3 = max(max(im(:,:,3)));
+        else 
             max_ch3 = maxi;
         end
         % create overlay image here

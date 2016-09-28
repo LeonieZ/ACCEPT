@@ -119,19 +119,25 @@ update_list(base);
 
 
 function process(handle,~,base)
-%     global gui
     display('Process samples...')
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5],'string','Process samples...');
     drawnow;
-    %     selectedCellsInTable = get(gui.table,'UserData');
-%     cellsInTable = get(gui.table,'Data');
+
     sliderpos = -round(get(gui.slider,'Value'));
     selectedCellsInTable = find(gui.selectedCells);
+    
+    if isa(base.sampleProcessor,'Candidate_Selection') && isempty(base.sampleProcessor.pipeline{4}.gates)
+        gui_gates = gui_manual_gates();
+        waitfor(gui_gates.fig_main,'UserData')
+        base.sampleProcessor.pipeline{4}.gates = get(gui_gates.fig_main,'UserData');
+        delete(gui_gates.fig_main)
+        clear('gui_gates');
+    end
+    
     if size(selectedCellsInTable,1) == 0
         if sum(~base.sampleList.isProcessed) > 0
             if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
-    %             msgbox('No sample selected')
                 base.sampleList.toBeProcessed = ~base.sampleList.isProcessed;
                 gui.selectedCells = base.sampleList.toBeProcessed;
                 dat = get(gui.table,'data');

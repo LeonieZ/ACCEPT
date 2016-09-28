@@ -62,7 +62,7 @@ classdef ThumbnailLoader < Loader
             false,this.channelEdgeRemoval,rawImage);
             name = strsplit(this.sample.imageFileNames{frameNr},'.');
             if exist([name{1} '_segm.tif'], 'file') == 2
-                dataFrame.segmentedImage = this.read_segm(frameNr);
+                dataFrame.segmentedImage = logical(this.read_segm(frameNr));
                 sumImage = sum(dataFrame.segmentedImage,3); 
                 labels = repmat(bwlabel(sumImage,8),1,1,size(dataFrame.segmentedImage,3));
                 dataFrame.labelImage = labels.*dataFrame.segmentedImage;
