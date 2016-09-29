@@ -238,7 +238,8 @@ index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterTop = mesh(GuiSampleHandle.axesTop,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
 view(2); colormap([0 0 1]);
-xlim([0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
+% xlim([0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
+xlim([0,max(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2)),1)]);
                                   
 % initialize cell counter (scatter elements) in title
 set(GuiSampleHandle.uiPanelScatter,'Title',...
@@ -304,7 +305,8 @@ index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterMiddle = mesh(GuiSampleHandle.axesMiddle,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
 view(2); colormap([0 0 1]);
-xlim([0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
+% xlim([0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
+xlim([0,max(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2)),1)]);
 
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
@@ -357,7 +359,8 @@ index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterBottom = mesh(GuiSampleHandle.axesBottom,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
 view(2); colormap([0 0 1]);
-xlim([0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
+% xlim([0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
+xlim([0,max(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2)),1)]);
 
 set(gca,'TickDir','out');
 % create choose button to switch feature index1 (x-axis)
@@ -414,8 +417,8 @@ end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)
 function popupFeatureTopIndex1_Callback(hObject,~,~)
-    topFeatureIndex1 = get(hObject,'Value');
-    newXData = sampleFeatures.(topFeatureIndex1+1); % +1 because first column in feature table is index (thumbNumber)
+    topFeatureIndex1 = get(hObject,'Value') + 1; % +1 because first column in feature table is index (thumbNumber)
+    newXData = sampleFeatures.(topFeatureIndex1);
     index = find(~isnan(newXData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
@@ -423,13 +426,14 @@ function popupFeatureTopIndex1_Callback(hObject,~,~)
     index = reshape(index,2,[]);
     zoom_factor_x(1) = 1.1;
     set(GuiSampleHandle.axesScatterTop,'XData',newXData(index)); 
-    xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1+1))),1)]);  
+%     xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]);  
+    xlim(GuiSampleHandle.axesTop,[0,max(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1)),1)]);
 end
 
 % --- Executes on selection in topFeatureIndex2 (y-axis)
 function popupFeatureTopIndex2_Callback(hObject,~,~)
-    topFeatureIndex2 = get(hObject,'Value');
-    newYData = sampleFeatures.(topFeatureIndex2+1); % +1 because first column in feature table is index (thumbNumber)
+    topFeatureIndex2 = get(hObject,'Value') + 1; % +1 because first column in feature table is index (thumbNumber)
+    newYData = sampleFeatures.(topFeatureIndex2);
     index = find(~isnan(newYData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
@@ -437,13 +441,14 @@ function popupFeatureTopIndex2_Callback(hObject,~,~)
     index = reshape(index,2,[]);
     zoom_factor_y(1) = 1.1;
     set(GuiSampleHandle.axesScatterTop,'YData',newYData(index)); 
-    ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2+1))),1)]);    
+%     ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);  
+    ylim(GuiSampleHandle.axesTop,[0,max(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2)),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex1 (x-axis)
 function popupFeatureMiddleIndex1_Callback(hObject,~,~)
-    middleFeatureIndex1 = get(hObject,'Value');
-    newXData = sampleFeatures.(middleFeatureIndex1+1); % +1 because first column in feature table is index (thumbNumber)
+    middleFeatureIndex1 = get(hObject,'Value') + 1; % +1 because first column in feature table is index (thumbNumber)
+    newXData = sampleFeatures.(middleFeatureIndex1);
     index = find(~isnan(newXData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
@@ -451,13 +456,14 @@ function popupFeatureMiddleIndex1_Callback(hObject,~,~)
     index = reshape(index,2,[]);
     zoom_factor_x(2) = 1.1;
     set(GuiSampleHandle.axesScatterMiddle,'XData',newXData(index)); 
-    xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1+1))),1)]); 
+%     xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]); 
+    xlim(GuiSampleHandle.axesMiddle,[0,max(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1)),1)]);
 end
 
 % --- Executes on selection in middleFeatureIndex2 (y-axis)
 function popupFeatureMiddleIndex2_Callback(hObject,~,~)
-    middleFeatureIndex2 = get(hObject,'Value');
-    newYData = sampleFeatures.(middleFeatureIndex2+1); % +1 because first column in feature table is index (thumbNumber)
+    middleFeatureIndex2 = get(hObject,'Value') + 1; % +1 because first column in feature table is index (thumbNumber)
+    newYData = sampleFeatures.(middleFeatureIndex2); 
     index = find(~isnan(newYData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
@@ -465,13 +471,14 @@ function popupFeatureMiddleIndex2_Callback(hObject,~,~)
     index = reshape(index,2,[]);
     zoom_factor_y(2) = 1.1;
     set(GuiSampleHandle.axesScatterMiddle,'YData',newYData(index)); 
-    ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2+1))),1)]);    
+%     ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);  
+    ylim(GuiSampleHandle.axesMiddle,[0,max(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2)),1)]); 
 end
 
 % --- Executes on selection in bottomFeatureIndex1 (x-axis)
 function popupFeatureBottomIndex1_Callback(hObject,~,~)
-    bottomFeatureIndex1 = get(hObject,'Value');
-    newXData = sampleFeatures.(bottomFeatureIndex1+1); % +1 because first column in feature table is index (thumbNumber)
+    bottomFeatureIndex1 = get(hObject,'Value') + 1; % +1 because first column in feature table is index (thumbNumber)
+    newXData = sampleFeatures.(bottomFeatureIndex1); 
     index = find(~isnan(newXData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
@@ -479,13 +486,14 @@ function popupFeatureBottomIndex1_Callback(hObject,~,~)
     index = reshape(index,2,[]);
     zoom_factor_x(3) = 1.1;
     set(GuiSampleHandle.axesScatterBottom,'XData',newXData(index)); 
-    xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1+1))),1)]); 
+%     xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]);
+    xlim(GuiSampleHandle.axesBottom,[0,max(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1)),1)]);
 end
 
 % --- Executes on selection in bottomFeatureIndex2 (y-axis)
 function popupFeatureBottomIndex2_Callback(hObject,~,~)
-    bottomFeatureIndex2 = get(hObject,'Value');
-    newYData = sampleFeatures.(bottomFeatureIndex2+1); % +1 because first column in feature table is index (thumbNumber)
+    bottomFeatureIndex2 = get(hObject,'Value') + 1; % +1 because first column in feature table is index (thumbNumber)
+    newYData = sampleFeatures.(bottomFeatureIndex2); 
     index = find(~isnan(newYData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
@@ -493,7 +501,8 @@ function popupFeatureBottomIndex2_Callback(hObject,~,~)
     index = reshape(index,2,[]);
     zoom_factor_y(3) = 1.1;
     set(GuiSampleHandle.axesScatterBottom,'YData',newYData(index)); 
-    ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2+1))),1)]); 
+%     ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]); 
+    ylim(GuiSampleHandle.axesBottom,[0,max(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2)),1)]); 
 end
 
 % --- Executes on slider movement.
@@ -823,44 +832,56 @@ end
 function zoom_in(~,~,plot_nr,axis)
     if plot_nr == 1 && strcmp(axis,'x')
         zoom_factor_x(1) = 0.9 * zoom_factor_x(1);
-        xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]);
+%         xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]);
+        xlim(GuiSampleHandle.axesTop,[0,max(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1)),1)]);
     elseif plot_nr == 1 && strcmp(axis,'y')
         zoom_factor_y(1) = 0.9 * zoom_factor_y(1);
-        ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
+%         ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
+        ylim(GuiSampleHandle.axesTop,[0,max(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2)),1)]);
     elseif plot_nr == 2 && strcmp(axis,'x')
         zoom_factor_x(2) = 0.9 * zoom_factor_x(2);
-        xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]);
+%         xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]);
+        xlim(GuiSampleHandle.axesMiddle,[0,max(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1)),1)]);
     elseif plot_nr == 2 && strcmp(axis,'y')
         zoom_factor_y(2) = 0.9 * zoom_factor_y(2);
-        ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
+%         ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
+        ylim(GuiSampleHandle.axesMiddle,[0,max(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2)),1)]);
     elseif plot_nr == 3 && strcmp(axis,'x')
         zoom_factor_x(3) = 0.9 * zoom_factor_x(3);
-        xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]);
+%         xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]);
+        xlim(GuiSampleHandle.axesBottom,[0,max(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1)),1)]);
     elseif plot_nr == 3 && strcmp(axis,'y')
         zoom_factor_y(3) = 0.9 * zoom_factor_y(3);
-        ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
+%         ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
+        ylim(GuiSampleHandle.axesBottom,[0,max(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2)),1)]);
     end
 end
 
 function zoom_out(~,~,plot_nr,axis)
     if plot_nr == 1 && strcmp(axis,'x')
         zoom_factor_x(1) = 1.1 * zoom_factor_x(1);
-        xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]);
+%         xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]);
+        xlim(GuiSampleHandle.axesTop,[0,max(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1)),1)]);
     elseif plot_nr == 1 && strcmp(axis,'y')
         zoom_factor_y(1) = 1.1 * zoom_factor_y(1);
-        ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
+%         ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
+        ylim(GuiSampleHandle.axesTop,[0,max(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2)),1)]);
     elseif plot_nr == 2 && strcmp(axis,'x')
         zoom_factor_x(2) = 1.1 * zoom_factor_x(2);
-        xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]);
+%         xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]);
+        xlim(GuiSampleHandle.axesMiddle,[0,max(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1)),1)]);
     elseif plot_nr == 2 && strcmp(axis,'y')
         zoom_factor_y(2) = 1.1 * zoom_factor_y(2);
-        ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
+%         ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
+        ylim(GuiSampleHandle.axesMiddle,[0,max(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2)),1)]);
     elseif plot_nr == 3 && strcmp(axis,'x')
         zoom_factor_x(3) = 1.1 * zoom_factor_x(3);
-        xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]);
+%         xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]);
+        xlim(GuiSampleHandle.axesBottom,[0,max(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1)),1)]);
     elseif plot_nr == 3 && strcmp(axis,'y')
         zoom_factor_y(3) = 1.1 * zoom_factor_y(3);
-        ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
+%         ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
+        ylim(GuiSampleHandle.axesBottom,[0,max(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2)),1)]);
     end
 end
 
