@@ -221,6 +221,9 @@ plot_thumbnails(3);
 %% Fill uiPanelScatter
 
 marker_size = 10;
+GuiSampleHandle.marker_size_control = uicontrol('Style','edit','Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[50 53.7 6 2],'String',num2str(marker_size),'HorizontalAlignment','center',...
+                            'FontUnits', 'normalized','FontSize',0.6,'BackgroundColor',[ 1 1 1],'Callback',@change_marker_size);
+
 % create data for scatter plot at the top
 GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 42.2 40.4 13.1]); %[left bottom width height]
 
@@ -895,6 +898,13 @@ function resort_cells(~,~)
     currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
     val = round(get(GuiSampleHandle.slider, 'Value'));
     plot_thumbnails(-val); 
+end
+
+function change_marker_size(~,~)
+    marker_size = min(max(2,str2double(GuiSampleHandle.marker_size_control.String)),20);
+    GuiSampleHandle.axesScatterTop.MarkerSize = marker_size;
+    GuiSampleHandle.axesScatterMiddle.MarkerSize = marker_size;
+    GuiSampleHandle.axesScatterBottom.MarkerSize = marker_size;
 end
 
 function export_gates(handle,~)
