@@ -442,20 +442,20 @@ classdef IO < handle
         end
         
         function [isProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames)
-            savepath=[resultsPath,filesep,sampleProcessorId];
+            savePath=[resultsPath,filesep,sampleProcessorId,filesep];
             isProc=true(1,numel(sampleNames));
             isToBeProc=false(1,numel(sampleNames));
-            if ~exist(savepath,'dir')
-                mkdir(savepath);
+            if ~exist(savePath,'dir')
+                mkdir(savePath);
                 mkdir([savePath,'output']);
                 mkdir([savePath,'frames']);
                 samplesProcessed={};
-                save([savepath filesep 'processed.mat'],'samplesProcessed','-v7.3');
+                save([savePath filesep 'processed.mat'],'samplesProcessed','-v7.3');
                 isProc=false(1,numel(sampleNames));
                 %isToBeProc=true(1,numel(sampleNames));
             else
                 %Check in results dir if any samples are already processed.
-                try load([savepath filesep 'processed.mat'],'samplesProcessed')
+                try load([savePath filesep 'processed.mat'],'samplesProcessed')
                 catch 
                     %appears to be no list (?) so lets create an empty sampleProccesed variable
                     samplesProcessed={};
