@@ -80,12 +80,12 @@ dat{6} = size(currentSample.results.features,1);
 entry{6} = [rnames{6}, ': ',num2str(dat{6})];
 
 GuiSampleHandle.uiPanelTable = uipanel('Parent',GuiSampleHandle.uiPanelOverview,...
-                                     'Units','characters','Position',[1.5 1.4 39 12],...
+                                     'Units','characters','Position',[1.5 1.4 42 12],...
                                      'Title','Sample Information','TitlePosition','CenterTop',...
                                      'BackgroundColor',[1 1 1]);
                                       
 GuiSampleHandle.tableDetails = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelTable,...
-                                  'Units','characters','Position',[0.2 .5 38.8 9],...
+                                  'Units','characters','Position',[0.2 .5 41.8 9],...
                                   'String',entry,'FontUnits','normalized', 'FontSize',0.11,'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
 
 tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
@@ -221,11 +221,11 @@ plot_thumbnails(3);
 %% Fill uiPanelScatter
 
 marker_size = 10;
-GuiSampleHandle.marker_size_control = uicontrol('Style','edit','Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[50 53.7 6 2],'String',num2str(marker_size),'HorizontalAlignment','center',...
-                            'FontUnits', 'normalized','FontSize',0.6,'BackgroundColor',[ 1 1 1],'Callback',@change_marker_size);
+GuiSampleHandle.marker_size_control = uicontrol('Style','edit','Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[52 53.7 5 2],'String',num2str(marker_size),'HorizontalAlignment','center',...
+                            'FontUnits', 'normalized','FontSize',0.55,'BackgroundColor',[ 1 1 1],'Callback',@change_marker_size);
 
 % create data for scatter plot at the top
-GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 42.2 40.4 13.1]); %[left bottom width height]
+GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[11.2 42.2 40.4 13.1]); %[left bottom width height]
 
 topFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 topFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_2_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
@@ -282,18 +282,18 @@ GuiSampleHandle.clearScatter = uicontrol('Parent',GuiSampleHandle.uiPanelScatter
 GuiSampleHandle.selectSingleScatter1 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
             'FontSize',0.4,'String', 'Select Event','Position', [1.5 38.6 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,1));  
 GuiSampleHandle.zoomIn1_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [51 43.5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,1,'x')); 
+            'FontSize',0.8, 'String', '+','Position', [53 43.5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,1,'x')); 
 GuiSampleHandle.zoomOut1_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [51 42.2 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,1,'x')); 
+            'FontSize',0.8, 'String', '-','Position', [53 42.2 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,1,'x')); 
 GuiSampleHandle.zoomIn1_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [1 54.3 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,1,'y')); 
+            'FontSize',0.8, 'String', '+','Position', [0.25 54.3 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,1,'y')); 
 GuiSampleHandle.zoomOut1_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [1 53 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,1,'y'));
+            'FontSize',0.8, 'String', '-','Position', [0.25 53 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,1,'y'));
 
 
 %----
 % create data for scatter plot in the middle
-GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 23 40.4 13.1]); %[left bottom width height]
+GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[11.2 23 40.4 13.1]); %[left bottom width height]
 middleFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 middleFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_1_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 
@@ -334,17 +334,17 @@ GuiSampleHandle.gateScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter
 GuiSampleHandle.selectSingleScatter2 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
             'FontSize',0.4,'String', 'Select Event','Position', [1.5 19.3 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,2)); 
 GuiSampleHandle.zoomIn2_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [51 24.3 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,2,'x')); 
+            'FontSize',0.8, 'String', '+','Position', [53 24.3 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,2,'x')); 
 GuiSampleHandle.zoomOut2_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [51 23 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,2,'x')); 
+            'FontSize',0.8, 'String', '-','Position', [53 23 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,2,'x')); 
 GuiSampleHandle.zoomIn2_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [1 35.1 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,2,'y')); 
+            'FontSize',0.8, 'String', '+','Position', [0.25 35.1 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,2,'y')); 
 GuiSampleHandle.zoomOut2_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [1 33.8 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,2,'y'));
+            'FontSize',0.8, 'String', '-','Position', [0.25 33.8 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,2,'y'));
 
 %----
 % create scatter plot at the bottom
-GuiSampleHandle.axesBottom = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[9.2 3.7 40.4 13.1]); %[left bottom width height]
+GuiSampleHandle.axesBottom = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[11.2 3.7 40.4 13.1]); %[left bottom width height]
 bottomFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_4_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 if isempty(bottomFeatureIndex2)
@@ -388,13 +388,13 @@ GuiSampleHandle.gateScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter
 GuiSampleHandle.selectSingleScatter3 = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
             'FontSize',0.4,'String', 'Select Event','Position', [1.5 0.1 13.5 1.8],'Callback', @(handle,event,plotnr)select_event(handle,event,3));   
 GuiSampleHandle.zoomIn3_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [51 5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,3,'x')); 
+            'FontSize',0.8, 'String', '+','Position', [53 5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,3,'x')); 
 GuiSampleHandle.zoomOut3_x = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [51 3.7 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,3,'x')); 
+            'FontSize',0.8, 'String', '-','Position', [53 3.7 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,3,'x')); 
 GuiSampleHandle.zoomIn3_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '+','Position', [1 15.8 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,3,'y')); 
+            'FontSize',0.8, 'String', '+','Position', [0.25 15.8 3 1],'Callback', @(handle,event,plotnr,axis)zoom_in(handle,event,3,'y')); 
 GuiSampleHandle.zoomOut3_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.8, 'String', '-','Position', [1 14.5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,3,'y'));
+            'FontSize',0.8, 'String', '-','Position', [0.25 14.5 3 1],'Callback', @(handle,event,plotnr,axis)zoom_out(handle,event,3,'y'));
         
 
 %% Create export/load buttons----
