@@ -666,7 +666,8 @@ function openSpecificImage(~,~,row)
 %             end
         case 'alt' % right mouse button action
             im = get(gcbo,'cdata');
-            figure; imagesc(im,[0,max(max(im(im<1)))]); axis equal; axis off;
+            figure; imagesc(im,[0,max(max(im))]); axis equal; axis off;
+            colormap(gca,map);
     end
 end
 
@@ -804,11 +805,11 @@ function select_event(handle,~,plotnr)
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
             num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update view to selected thumbnail
-        plot_thumbnails(find(usedThumbs == sampleFeatures.ThumbNr(in)));
-        set(GuiSampleHandle.slider, 'Value',-find(usedThumbs == sampleFeatures.ThumbNr(in)));
+        plot_thumbnails(find(currPos == find(usedThumbs == sampleFeatures.ThumbNr(in))));
+        set(GuiSampleHandle.slider, 'Value',-find(currPos == find(usedThumbs == sampleFeatures.ThumbNr(in))));
     else
         selectedCells(in) = 0;
-        if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(selectedCells) == sampleFeatures.ThumbNr(in), 1))
+        if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(logical(selectedCells)) == sampleFeatures.ThumbNr(in), 1))
             selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0;
         end
         % update all scatter plots with new manual clustering
