@@ -401,6 +401,11 @@ GuiSampleHandle.zoomOut3_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 
 % export gates as manual classification
 GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Export Selection','FontUnits', 'normalized',...
             'FontSize',.5,'Position', [5.1 61.2 27.5 2.6],'Callback', {@export_gates}); 
+        
+% design manual classification
+GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Multiple Gates','FontUnits', 'normalized',...
+            'FontSize',.5,'Position', [158.8 61.2 27.5 2.6],'Callback', {@design_manual_classifier}); 
+        
 % load gates as manual classification
 GuiSampleHandle.load_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Load Selection','FontUnits', 'normalized',...
             'FontSize',.5,'Position', [33 61.2 26.4 2.6],'Callback', {@load_gates}); 
@@ -993,6 +998,38 @@ function load_gates(handle,~)
         end
     end
     set(handle,'backg',color)
+end
+
+function design_manual_classifier(~,~)
+    mc = ManualClassification(cell(0),'ManualGates');
+
+    gui_gates = gui_manual_gates();
+    waitfor(gui_gates.fig_main,'UserData')
+    mc.gates = get(gui_gates.fig_main,'UserData');
+    delete(gui_gates.fig_main)
+    clear('gui_gates');
+
+    gate_result = mc.run(sampleFeatures);
+    
+    selectedCells = zeros(size(selectedCells));
+    selectedFrames = false(size(selectedFrames));   
+    selectedCells = double(gate_result{:,1});
+    selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1;
+    
+    set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
+    set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
+    set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
+
+    if sum(selectedCells) > 0
+        colormap([0 0 1; 1 .5 0]);
+    else
+        colormap([0 0 1]);
+    end
+
+    set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
+    num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
+    val = round(get(GuiSampleHandle.slider, 'Value'));
+    plot_thumbnails(-val); 
 end
 
 function export_thumbs(handle,~)
