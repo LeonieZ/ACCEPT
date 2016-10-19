@@ -1,25 +1,29 @@
-function uiHandle=ACCEPT(varargin)
+ function [uiHandle,base]=ACCEPT(varargin)
     %% Automated CTC Classification Enumeration and PhenoTyping algorithm
-    % main function to run the image analysis algorithm for the detection of
-    % circulating tumor cells. If given input arguments it will run in batch
-    % mode. The function accepts the following input arguments:
-    % .....
-    % Developed for the European CANCER-ID project by Leonie Zeune, Guus
-    % van Dalum, Christoph Brune and Leon Terstappen. 
+    % main function to run the image analysis algorithm for the detection
+    % of circulating tumor cells. If given input arguments it will run in
+    % cli mode. Without any arguments the GUI will start.
+    % The function 
+    % accepts the following input arguments: ..... 
+    
+    % Developed for the European CANCER-ID project by: 
+    % Leonie Zeune, Guus van Dalum, Christoph Brune.
 
 
     %% Clear command window, close all figures and clear global struct used to
     % pass information between functions. 
     clc;
     close all
-%     clear actc
+    
     %% Add subdirectories to path
     file = which('ACCEPT.m');
     installDir = fileparts(file);
     addpath(genpath_exclude(installDir));
     
-    %% Check the number of arguments in and launch the appropriate script.
+    %% start the base class
     base = Base();
+    
+    %% Create input parser, check the number of arguments in and launch the appropriate script.
     parser = gen_input_parser(base);
     parse(parser,varargin{:});
     if parser.Results.noGui==false

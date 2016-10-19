@@ -4,11 +4,12 @@ classdef Automatic_Classification < SampleProcessor
     % an extracts features for every cell. No classification!
         
     properties
+
     end
     
     methods 
         function this = Automatic_Classification()
-            
+            this.name = 'Automatic Classification';
         end
     end
 end

@@ -34,11 +34,11 @@ classdef Logger < handle
             %only process logMessages that are below the current logging
             %level
             if eventData.logLevel <= this.level
-            entry = [datestr(now,13),': ',eventData.message];
-            fprintf(this.fid,'%s\r\n', entry);
-            if eventData.logLevel <= 2
-                disp(entry)
-            end
+                entry = [datestr(now,13),': ',eventData.message];
+                fprintf(this.fid,'%s\r\n', entry);
+                if eventData.logLevel <= 2
+                    disp(entry)
+                end
             end
         
         end

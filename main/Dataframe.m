@@ -47,7 +47,6 @@ classdef Dataframe < handle
     
     events
         loadNeigbouringFrames
-        logMessage
         saveSegmentation
     end
           

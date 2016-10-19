@@ -54,6 +54,7 @@ classdef Sample < handle
         columns
         frameOrder
     end
+    
     properties (Access={?Loader})
         imagePath
         priorPath
@@ -61,11 +62,6 @@ classdef Sample < handle
         tiffHeaders
     end
     
-    events
-        logMessage
-    end
-    
-
     methods
         function this = Sample(name,type,pixelSize,hasEdges,channelNames,channelEdgeRemoval,nrOfFrames,priorLocations)
             if nargin==8
@@ -78,9 +74,7 @@ classdef Sample < handle
                 this.channelEdgeRemoval=channelEdgeRemoval;
                 this.nrOfFrames=nrOfFrames;
                 this.priorLocations=priorLocations;
-            end
-            notify(this,'logMessage',LogMessage(4,['New sample: ',this.id, ' is constructed.']));
-                     
+            end      
         end
 
         function save_results(this)

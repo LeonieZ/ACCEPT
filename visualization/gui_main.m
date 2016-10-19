@@ -7,33 +7,10 @@ set(0,'units','characters');
 screensz = get(0,'screensize');
 
 % Update chooseButton for tasks via available sampleProcessors
-gui.tasks_raw = base.availableSampleProcessors;
-% convert sampleProcessor m-file names to readable Strings
-if ~isempty(gui.tasks_raw)
-    tasks = strrep(strrep(gui.tasks_raw,'_',' '),'.m','');
-end
-% select DEFAULT sampleProcessor number (in alphabetical order) for visualization
-defaultSampleProcessorNumber = 1;
+gui.tasks_raw = cellfun(@(s) s.name,base.availableSampleProcessors,'UniformOutput',false);
 
-inputString = '';
-resultString = '';
-
-if(exist([installDir,filesep,'input_output',filesep,'LatestSettings.mat'], 'file') == 2)
-   load([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor')
-   if exist(inputPath, 'dir')
-        inputString = inputPath;
-        base.sampleList.inputPath = inputPath;
-   end
-   if exist(resultPath, 'dir')
-        resultString = resultPath;
-        base.sampleList.resultPath = resultPath;
-   end
-
-   proc = find(cellfun(@(s) strcmp(processor, s), tasks));
-   if ~isempty(proc)
-       defaultSampleProcessorNumber = proc;
-   end
-end
+% get current sampleProcessor number from base for visualization
+currentProcessorIndex=find(cellfun(@(s) strcmp(base.sampleProcessor.name, s.name), base.availableSampleProcessors));
 
 uni_logo = imread('logoUT.png'); 
 cancerid_logo = imread('logoCancerID.png');
@@ -60,8 +37,8 @@ end
 set(gui.subtitle,'Visible','on');
 
 gui.task = uicontrol(gui.fig_main,'Style','text', 'String','Choose a task:','Units','characters','Position',[30 40.7 35 2],'FontUnits','normalized', 'FontSize',1,'BackgroundColor',[1 1 1]);
-gui.task_list = uicontrol(gui.fig_main,'Style', 'popup','String', tasks,'Units','characters','Position', [67 41.4 62 1.2],'Callback', {@choosetask,base}, 'FontUnits','normalized', 'FontSize',0.9);  
-set(gui.task_list,'Value',defaultSampleProcessorNumber);
+gui.task_list = uicontrol(gui.fig_main,'Style', 'popup','String', gui.tasks_raw,'Units','characters','Position', [67 41.4 62 1.2],'Callback', {@choosetask,base}, 'FontUnits','normalized', 'FontSize',0.9);  
+set(gui.task_list,'Value',currentProcessorIndex);
 sz = get(gui.task,'Extent');
 curpos = get(gui.task,'Position'); 
 if curpos(3) < sz(3)
@@ -75,18 +52,13 @@ while sz(4) > curpos(4)
     sz = get(gui.task,'Extent');
 end
 
-% create sampleProcessor object for - per default - selected sampleProcessor
-currentSampleProcessorName = strrep(gui.tasks_raw{get(gui.task_list,'Value')},'.m','');
-eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
-base.sampleList.sampleProcessorId=base.sampleProcessor.id();
-
 gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','characters','Position',[35.2 35.8 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@input_path,base});
 gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[67.6 35.8 57.5 2.3]);
-gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String',inputString,'Units','characters','Position',[67.8 36.3 56.5 1.3],'FontUnits','normalized', 'FontSize',.7);
+gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.inputPath,'Units','characters','Position',[67.8 36.3 56.5 1.3],'FontUnits','normalized', 'FontSize',.7);
 
 gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','characters','Position',[35.2 32.2 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@results_path,base});
 gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[67.6 32.2 57.5 2.3]);
-gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String',resultString,'Units','characters','Position',[67.8 32.7 56.5 1.3],'FontUnits','normalized', 'FontSize',.7);
+gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.resultPath,'Units','characters','Position',[67.8 32.7 56.5 1.3],'FontUnits','normalized', 'FontSize',.7);
 
 sz_inButton = get(gui.input_path_button,'Extent'); sz_resButton = get(gui.results_path_button,'Extent');
 if sz_inButton(3) > 32 || sz_resButton(3) > 32
@@ -250,8 +222,7 @@ function choosetask(source,~,base)
     val = get(source,'Value');        
     set(gui.task_list,'Value',val);
     % create sampleProcessor object for selected sampleProcessor 
-    currentSampleProcessorName = strrep(gui.tasks_raw{val},'.m','');
-    eval(['base.sampleProcessor = ',currentSampleProcessorName,'();']);
+    base.sampleProcessor = base.availableSampleProcessors{val};
     base.sampleList.sampleProcessorId=base.sampleProcessor.id();
     update_list(base);
 end
@@ -349,10 +320,7 @@ end
 
 function close_fcn(~,~) 
 %     fid=fopen([installDir,filesep,'input_output',filesep,'LatestSettings.txt'],'w');
-    inputPath = base.sampleList.inputPath;
-    resultPath = base.sampleList.resultPath;
-    processor = base.sampleProcessor.name;
-    save([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor');
+    base.save_state;
     delete(gcf)
 end
 

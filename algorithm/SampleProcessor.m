@@ -8,6 +8,7 @@ classdef SampleProcessor < handle
         dataframeProcessor;
         pipeline=cell(0);
         io;
+        showInList=true;
     end
     
     events

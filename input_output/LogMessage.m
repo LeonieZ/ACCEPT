@@ -3,7 +3,7 @@ classdef (ConstructOnLoad) LogMessage < event.EventData
 
     
     properties
-        message  %The log message, this ahs to be a string. 
+        message  %The log message, this has to be a string. 
         logLevel %1..4 future proofing so we can decide on the amount of logging. 
     end
     

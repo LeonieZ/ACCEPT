@@ -33,7 +33,7 @@ classdef SampleList < handle
                 this.isProcessed=isProc;
                 this.loaderToBeUsed=loaderUsed;
                 %this.isToBeProcessed=isToBeProc;
-                this.toBeProcessed=zeros(size(isProc)); 
+                this.toBeProcessed=zeros(size(isProc));
             end
         end
         
