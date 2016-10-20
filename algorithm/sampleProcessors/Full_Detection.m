@@ -7,10 +7,10 @@ classdef Full_Detection < SampleProcessor
     end
     
     methods 
-        function this = Full_Detection()
+        function this = Full_Detection(io)
             this.name = 'Full Detection';
             this.version = '0.1';
-            this.io = IO();  
+            this.io = io;  
             this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end

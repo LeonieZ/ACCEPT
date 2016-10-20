@@ -90,6 +90,7 @@ function p = genpath_exclude(d)
 end
 
 function parser = gen_input_parser(base)
+    % Construct the inputParster object to check varargin
     parser=inputParser;
     parser.FunctionName='batchmode input parser';
     parser.addOptional('noGui',false,@(x)islogical(x));

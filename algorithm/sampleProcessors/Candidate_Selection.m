@@ -7,10 +7,10 @@ classdef Candidate_Selection < SampleProcessor
     end
     
     methods 
-        function this = Candidate_Selection()
+        function this = Candidate_Selection(io)
             this.name = 'Candidate Selection';
             this.version = '0.1';
-            this.io = IO();  
+            this.io = io;  
             this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end

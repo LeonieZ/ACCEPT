@@ -7,10 +7,10 @@ classdef Marker_Characterization < SampleProcessor
     end
     
     methods 
-        function this = Marker_Characterization()
+        function this = Marker_Characterization(io)
             this.name = 'Marker Characterization';
             this.version = '0.1';
-            this.io = IO();  
+            this.io = io;  
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
         end

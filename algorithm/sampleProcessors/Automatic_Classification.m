@@ -8,8 +8,9 @@ classdef Automatic_Classification < SampleProcessor
     end
     
     methods 
-        function this = Automatic_Classification()
+        function this = Automatic_Classification(io)
             this.name = 'Automatic Classification';
+            this.io = io;
         end
     end
 end

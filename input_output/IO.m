@@ -3,11 +3,11 @@ classdef IO < handle
     %allows for easy loading of different sample types
     
     properties
-        overwriteResults=false;
+        
     end
     
     properties(SetAccess=private)
-        loaderTypesAvailable={CellTracks(),MCBP(),ThumbnailLoader(),Default()}; % beware of the order, the first loader type that can load a dir will be used.
+       
     end
     
     events
@@ -24,13 +24,6 @@ classdef IO < handle
             else
                 outputList=SampleList();
             end
-            addlistener(outputList,'updatedProcessorId',@this.updated_sample_processor);
-            addlistener(outputList,'updatedInputPath',@this.updated_input_path);
-            addlistener(outputList,'updatedResultPath',@this.updated_result_path);
-        end
-        
-        function update_sample_list(this,sampleList)
-                sampleList.isProcessed=this.processed_samples(sampleList.resultPath,sampleList.sampleProcessorId,sampleList.sampleNames);
         end
         
         function outputSample=load_sample(this,sampleList,sampleNr)
@@ -106,7 +99,7 @@ classdef IO < handle
             end
         end
         
-       function load_thumbs_to_results(this,sample)
+        function load_thumbs_to_results(this,sample)
            loader=sample.loader(sample);
            if isa(loader,'ThumbnailLoader')
                loader.load_thumbs_to_results();
@@ -346,68 +339,15 @@ classdef IO < handle
         function clear_results(this,currentSample)
             currentSample.results = Result();
         end
+        
+        function update_sample_list(this,sampleList)
+                sampleList.isProcessed=this.processed_samples(sampleList.resultPath,sampleList.sampleProcessorId,sampleList.sampleNames);
+        end
          
     end
     
     
     methods (Access = private)
-        function populate_available_input_types(this)
-            % populate available inputs 
-            % Function not used atm /g
-            temp = what('Loaders');
-            flist = temp.m;
-
-            for i=1:numel(flist)
-               [~,filename,filetext]=fileparts(flist{i}); % get just the filename
-               if exist(filename, 'class') && ismember('loader', superclasses(filename))
-                 this.loaderTypesAvailable{end+1} = filename();
-               end
-             end
-        end
-        
-        function updated_sample_processor(this,sampleList,~)
-            if all([~isempty(sampleList.resultPath),...
-                    ~isempty(sampleList.inputPath),...
-                    ~strcmp(sampleList.sampleProcessorId,'empty'),...
-                    isempty(sampleList.sampleNames)]);
-                this.updated_input_path(sampleList);
-            end
-            if and(~isempty(sampleList.inputPath),~isempty(sampleList.resultPath))
-                [isProc]=this.processed_samples(sampleList.resultPath,...
-                                                    sampleList.sampleProcessorId,...
-                                                    sampleList.sampleNames);
-                sampleList.isProcessed=isProc;
-            end
-        end
-        
-        function updated_result_path(this,sampleList,~)
-            if all([~isempty(sampleList.inputPath),...
-                    ~isempty(sampleList.resultPath),...
-                    ~strcmp(sampleList.sampleProcessorId,'empty'),...
-                    isempty(sampleList.sampleNames)]);
-                this.updated_input_path(sampleList);
-            end
-            if and(~isempty(sampleList.resultPath),...
-                    ~strcmp(sampleList.sampleProcessorId,'empty'));
-                [isProc]=this.processed_samples(sampleList.resultPath,...
-                                                sampleList.sampleProcessorId,...
-                                                sampleList.sampleNames);
-                sampleList.isProcessed=isProc;
-             end
-        end
-        
-        function updated_input_path(this,sampleList,~)
-            [sampleNames,loaderUsed]=this.available_samples(sampleList.inputPath);
-            sampleList.sampleNames=sampleNames;
-            sampleList.loaderToBeUsed=loaderUsed;
-            if and(~isempty(sampleList.resultPath),...
-                ~strcmp(sampleList.sampleProcessorId,'empty'));
-                [isProc]=this.processed_samples(sampleList.resultPath,...
-                                        sampleList.sampleProcessorId,...
-                                        sampleNames);
-                sampleList.isProcessed=isProc;
-            end
-        end
        
         function loaderHandle=check_sample_type(this,samplePath)
             %Checks which loader types can load the sample path and chooses
@@ -485,6 +425,16 @@ classdef IO < handle
     end
     
     methods(Static)
+        function check_save_path(savePath)
+            if ~exist(savePath,'dir')
+                mkdir(savePath);
+                mkdir([savePath,'output']);
+                mkdir([savePath,'frames']);
+                samplesProcessed={};
+                save([savePath filesep 'processed.mat'],'samplesProcessed','-v7.3');
+            end
+        end
+        
         function size=sample_pixel_size(inputSample)
             %calculate total image size to plot locations
             size(1)=inputSample.imagesize(1)*inputSample.rows;
@@ -499,6 +449,7 @@ classdef IO < handle
             location(1)=smallImageSize(1)*rows+round(y/8);
             location(2)=smallImageSize(2)*columns+round(x/8);
         end
+        
         function location=calculate_location(inputSample,priorLocationNr)
             x=mean(inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr));
             y=mean(inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr));
