@@ -24,16 +24,11 @@ classdef SampleList < handle
     end
     
     methods
-        function this=SampleList(procId,inputP,resultP,smpleNames,isProc,loaderUsed)
-            if nargin==6
+        function this=SampleList(procId,inputP,resultP)
+            if nargin==3
                 this.sampleProcessorId = procId;
                 this.inputPath = inputP;
                 this.resultPath = resultP;
-                this.sampleNames = smpleNames;
-                this.isProcessed = isProc;
-                this.loaderToBeUsed = loaderUsed;
-                %this.isToBeProcessed=isToBeProc;
-                this.toBeProcessed = zeros(size(isProc));
             end
         end
         
@@ -55,7 +50,7 @@ classdef SampleList < handle
         
         function set.resultPath(this,value)
             this.resultPath = value;
-            IO.chech_save_path(this.save_path());
+            IO.check_save_path(this.save_path());
             this.updated_result_path();
             notify(this,'updated')
         end
@@ -88,13 +83,9 @@ classdef SampleList < handle
                 this.updated_input_path();
             end
             if and(~isempty(this.inputPath),~isempty(this.resultPath))
-                [isProc]=this.processed_samples(this.resultPath,...
-                                                    this.sampleProcessorId,...
-                                                    this.sampleNames);
-                this.isProcessed=isProc;
+                this.processed_samples()
             end
         end
-        
                 
         function updated_result_path(this)
             if all([~isempty(this.inputPath),...
@@ -105,10 +96,7 @@ classdef SampleList < handle
             end
             if and(~isempty(this.resultPath),...
                     ~strcmp(this.sampleProcessorId,'empty'));
-                [isProc]=this.processed_samples(this.resultPath,...
-                                                this.sampleProcessorId,...
-                                                this.sampleNames);
-                this.isProcessed=isProc;
+                    this.processed_samples()
              end
         end
         
@@ -116,30 +104,28 @@ classdef SampleList < handle
             [this.sampleNames,this.loaderToBeUsed]=IO.available_samples(this);
             if and(~isempty(this.resultPath),...
                 ~strcmp(this.sampleProcessorId,'empty'));
-                [isProc]=this.processed_samples(this.resultPath,...
-                                        this.sampleProcessorId,...
-                                        this.sampleNames);
-                this.isProcessed=isProc;   
+                this.processed_samples()   
             end
         end
         
-        function [isProc]=processed_samples(this,sampleNames)
-            this.isProcessed=false(1,numel(sampleNames));
-            this.toBeProcessed=true(1,numel(sampleNames));
+        function processed_samples(this)
+            this.isProcessed=false(1,numel(this.sampleNames));
+            this.toBeProcessed=true(1,numel(this.sampleNames));
             %Check in results dir if any samples are already processed.
             try load([this.save_path() filesep 'processed.mat'],'samplesProcessed')
             catch 
                 %appears to be no list (?) so lets create an empty sampleProccesed variable
                 samplesProcessed={};
             end
-            [~,index]=setdiff(sampleNames,samplesProcessed);
+            [~,index]=intersect(this.sampleNames,samplesProcessed);
             if this.overwriteResults==false
-                %isToBeProc(index)=true;
-                isProc(index)=false;
-            else
-                %isToBeProc=true(1,numel(sampleNames));
-                isProc(index)=false;
+                this.toBeProcessed(index)=false;
+                this.isProcessed(index)=true;
             end
+        end
+        
+        function update_sample_list()
+                this.processed_samples();
         end
     end
 end
