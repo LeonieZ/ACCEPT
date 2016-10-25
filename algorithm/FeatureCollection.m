@@ -5,14 +5,12 @@ classdef FeatureCollection < SampleProcessorObject
     properties
        dataProcessor = DataframeProcessor();
        use_thumbs = 0;
-       io
        priorLocations = [];
     end
     
     methods
-        function this = FeatureCollection(inputDataframeProcessor,io,varargin)
+        function this = FeatureCollection(inputDataframeProcessor,varargin)
             this.dataProcessor = inputDataframeProcessor;
-            this.io = io;
             if nargin > 2
                 this.use_thumbs = varargin{1};
             end
@@ -28,7 +26,7 @@ classdef FeatureCollection < SampleProcessorObject
             if this.use_thumbs == 0
                 for i = 1:inputSample.nrOfFrames
                     i
-                    dataFrame = this.io.load_data_frame(inputSample,i);
+                    dataFrame = IO.load_data_frame(inputSample,i);
                     this.dataProcessor.run(dataFrame);
                     objectsfoundearlier = size(inputSample.results.features,1);
                     objectsfound = size(dataFrame.features,1);
@@ -99,7 +97,7 @@ classdef FeatureCollection < SampleProcessorObject
 %                 end
                 if strcmp(inputSample.type,'ThumbnailLoader')
                     for i = 1:nPriorLoc
-                        thumbFrame = this.io.load_data_frame(inputSample,i);                
+                        thumbFrame = IO.load_data_frame(inputSample,i);                
                         this.dataProcessor.run(thumbFrame);
                         % for the parallel version we need an explicit update
                         % of the i-th dataFrame called thumbFrames{i}
@@ -112,7 +110,7 @@ classdef FeatureCollection < SampleProcessorObject
                     end         
                 else
                    parfor i = 1:nPriorLoc
-                        thumbFrame = this.io.load_thumbnail_frame(inputSample,i,'prior');                 
+                        thumbFrame = IO.load_thumbnail_frame(inputSample,i,'prior');                 
                         this.dataProcessor.run(thumbFrame);
                         % for the parallel version we need an explicit update
                         % of the i-th dataFrame called thumbFrames{i}
@@ -142,7 +140,7 @@ classdef FeatureCollection < SampleProcessorObject
                 size(this.priorLocations,1)
                 for i = 1:size(this.priorLocations,1)
                     i
-                    thumbFrame = this.io.load_thumbnail_frame(inputSample,i,this.priorLocations); 
+                    thumbFrame = IO.load_thumbnail_frame(inputSample,i,this.priorLocations); 
                     this.dataProcessor.run(thumbFrame);
 %                     thumbsfoundearlier = size(returnSample.results.thumbnails,1);
                     objectsfound = size(thumbFrame.features,1);

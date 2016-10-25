@@ -7,10 +7,9 @@ classdef Full_Detection < SampleProcessor
     end
     
     methods 
-        function this = Full_Detection(io)
+        function this = Full_Detection()
             this.name = 'Full Detection';
-            this.version = '0.1';
-            this.io = io;  
+            this.version = '0.1'; 
             this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end
@@ -39,14 +38,14 @@ classdef Full_Detection < SampleProcessor
                 this.pipeline{i}.run(inputSample);
             end  
             
-            this.io.save_results_as_xls(inputSample);
+            IO.save_results_as_xls(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);
             sol = SampleOverviewLoading();
             md = MaskDetermination();
-            fc = FeatureCollection(this.dataframeProcessor,this.io);
+            fc = FeatureCollection(this.dataframeProcessor,IO);
             pipeline{1} = sol;
             pipeline{2} = md;
             pipeline{3} = fc;

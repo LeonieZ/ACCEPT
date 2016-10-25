@@ -4,7 +4,6 @@ classdef Base < handle
     
     properties
         programVersion= '1.0.0-beta';
-        io = IO();
         sampleList = SampleList();
         sampleProcessor = SampleProcessor();
         availableSampleProcessors={};
@@ -34,12 +33,9 @@ classdef Base < handle
             this.logger = Logger(installDir);
             this.logger.entry(this,LogMessage(1,['>>>> Session started <<<< ACCEPT version: ', this.programVersion]));
           
-            % Create sample List 
-            this.sampleList = this.io.create_sample_list();
-            
             % Search for available SampleProcessors and populate the list.
             tmp = what('sampleProcessors');
-            processors=strcat(strrep(tmp.m,'.m',''),'(this.io);');
+            processors=strcat(strrep(tmp.m,'.m',''),'();');
             for i=1:numel(processors)
                 this.availableSampleProcessors{i} = eval(processors{i});
                 removeLines(i)=~this.availableSampleProcessors{i}.showInList;
@@ -47,7 +43,6 @@ classdef Base < handle
             this.availableSampleProcessors(removeLines)=[];
             
             % adding log listeners
-            addlistener(this.io,'logMessage',@(src,event)this.logger.entry(src,event));
             addlistener(this.sampleProcessor,'logMessage',@(src,event)this.logger.entry(src,event));
             
             % add progress listener
@@ -102,7 +97,7 @@ classdef Base < handle
                     sample.results=Result(); 
                     this.logger.entry(LogMessage(2,['Processing sample ',sample.id ,'...']));
                     this.sampleProcessor.run(sample);
-                    this.io.save_sample(sample);
+                    IO.save_sample(sample);
                     this.logger.entry(LogMessage(2,['Sample ',sample.id ,' is processed.']));
                     this.nrProcessed = this.nrProcessed + 1;
                     notify(this,'updateProcessed')

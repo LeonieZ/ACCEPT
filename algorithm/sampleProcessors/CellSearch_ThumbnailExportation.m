@@ -7,16 +7,15 @@ classdef CellSearch_ThumbnailExportation < SampleProcessor
     end
     
     methods 
-        function this = CellSearch_ThumbnailExportation(io)
+        function this = CellSearch_ThumbnailExportation()
             this.name = 'CellSearch Thumbnail Exportation';
-            this.version = '0.1';
-            this.io = io;  
+            this.version = '0.1'; 
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
         end
         
         function run(this,inputSample)
-            this.io.save_thumbnail(inputSample,[],'prior',false);
+            IO.save_thumbnail(inputSample,[],'prior',false);
         end
         
         
