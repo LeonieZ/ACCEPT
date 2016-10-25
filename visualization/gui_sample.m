@@ -116,6 +116,7 @@ end
                                 
 %% Fill uiPanelGallery
 gui_sample_color = [1 1 1];
+three_channel_overlay = true;
 
 
 % create column names for gallery
@@ -212,6 +213,11 @@ GuiSampleHandle.sortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style
             'FontSize',0.55,'String', 'Selected cells to top.','Position', [130.7 43.45 26 1.65],'Callback', @sort_cells); 
 GuiSampleHandle.resortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
             'FontSize',0.55,'String', 'Original sorting.','Position', [108 43.45 22 1.65],'Callback', @resort_cells); 
+ 
+GuiSampleHandle.OverlayButtonTxT = uicontrol('Parent',GuiSampleHandle.fig_main,'Style','text','Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.55,'Position',[5.1 43.35 20 1.65],'BackgroundColor',[ 1 1 1],'String','3 Channel Overlay');
+GuiSampleHandle.changeOverlayButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'checkbox', 'Units','characters',...
+            'Value',1,'Position', [25.4 43.35 5 1.65],'BackgroundColor',[ 1 1 1],'Callback', @change_overlay); 
 
 % go through all thumbnails (resp. dataframes)
 plot_thumbnails(3);
@@ -575,11 +581,22 @@ function plotImInAxis(im,segm,hAx,hIm)
         else 
             max_ch3 = maxi;
         end
+        
+        if sum(sum(segm(:,:,1))) > 1
+            max_ch1 = max(max(im(:,:,1)));
+        else 
+            max_ch1 = maxi;
+        end
         % create overlay image here
-%         overlay(:,:,1) = im(:,:,2)/maxi; overlay(:,:,3) = im(:,:,2)/maxi; overlay(:,:,2) = im(:,:,3)/maxi;
-        overlay(:,:,1) = im(:,:,2)/max_ch2; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
-        overlay(end-1,2:6,:) = 1;
-%         overlay(:,:,1) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,3) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,2) = im(:,:,3)/max(max(im(:,:,3)));
+        if three_channel_overlay == false
+    %         overlay(:,:,1) = im(:,:,2)/maxi; overlay(:,:,3) = im(:,:,2)/maxi; overlay(:,:,2) = im(:,:,3)/maxi;
+            overlay(:,:,1) = im(:,:,2)/max_ch2; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
+            overlay(end-1,2:6,:) = 1;
+    %         overlay(:,:,1) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,3) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,2) = im(:,:,3)/max(max(im(:,:,3)));
+        else
+            overlay(:,:,1) = im(:,:,1)/max_ch1; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
+            overlay(end-1,2:6,:) = 1;
+        end            
         set(hIm,'CData',overlay);
     else
         if ~isempty(segm)
@@ -902,6 +919,12 @@ end
 
 function resort_cells(~,~)
     currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
+    val = round(get(GuiSampleHandle.slider, 'Value'));
+    plot_thumbnails(-val); 
+end
+
+function change_overlay(~,~)
+    three_channel_overlay = logical(get(GuiSampleHandle.changeOverlayButton,'Value'));
     val = round(get(GuiSampleHandle.slider, 'Value'));
     plot_thumbnails(-val); 
 end
