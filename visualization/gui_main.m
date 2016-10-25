@@ -168,7 +168,7 @@ function visualize(handle,~,base)
     elseif size(selectedCellsInTable,1) == 1
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
             % load selected sample
-            currentSample = base.io.load_sample(base.sampleList,selectedCellsInTable(1));
+            currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1));
             if size(currentSample.results.thumbnails,1)<1 || isempty(currentSample.results.features)
                msgbox('Empty Sample.')
             else
@@ -255,7 +255,7 @@ function update_list(base)
     else
         sliderpos = -round(get(gui.slider,'Value'));
         sl = base.sampleList;
-        base.io.update_sample_list(sl);
+        base.sampleList.update_sample_list();
         nbrSamples = size(sl.sampleNames,2);
         gui.selectedCells = false(nbrSamples,1);
         nbrAttributes = 2;

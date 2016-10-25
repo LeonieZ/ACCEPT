@@ -20,6 +20,7 @@ classdef SampleList < handle
     end
         
     events
+        logMessage
         updated
     end
     
@@ -124,7 +125,7 @@ classdef SampleList < handle
             end
         end
         
-        function update_sample_list()
+        function update_sample_list(this)
                 this.processed_samples();
         end
     end

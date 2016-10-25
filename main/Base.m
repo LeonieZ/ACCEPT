@@ -6,7 +6,7 @@ classdef Base < handle
         programVersion= '1.0.0-beta';
         sampleList = SampleList();
         sampleProcessor = SampleProcessor();
-        availableSampleProcessors={};
+        availableSampleProcessors = {};
         profiler = true;
         parallelProcessing = false;
         logger;
@@ -42,17 +42,12 @@ classdef Base < handle
             end
             this.availableSampleProcessors(removeLines)=[];
             
-            % adding log listeners
-            addlistener(this.sampleProcessor,'logMessage',@(src,event)this.logger.entry(src,event));
-            
-            % add progress listener
-            addlistener(this,'updateProgress',@this.update_progress);
             
             % Turn on profiler and parallel pool when needed.
             if this.profiler
                 profile on;
             end
-            if this.parallelProcessing==1
+            if this.parallelProcessing == true
                 this.pool=parpool;    
             end
             
@@ -76,6 +71,13 @@ classdef Base < handle
                     this.sampleProcessor = this.availableSampleProcessors{1};
                 end
             end
+            
+            % adding log listeners
+            addlistener(this.sampleList,'logMessage',@(src,event)this.logger.entry(src,event));
+            
+            % add progress listener
+            addlistener(this,'updateProgress',@this.update_progress);
+
         end
         
         function run(this)
@@ -92,15 +94,15 @@ classdef Base < handle
                 choice = 'No';
             end
             for k=1:nbrSamples
-                if this.sampleList.toBeProcessed(k) == 1 | choice == yes
-                    sample = this.io.load_sample(this.sampleList,k);
+                if this.sampleList.toBeProcessed(k) == 1 | strcmp(choice,'Yes')
+                    sample = IO.load_sample(this.sampleList,k);
                     sample.results=Result(); 
-                    this.logger.entry(LogMessage(2,['Processing sample ',sample.id ,'...']));
+                    this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
                     this.sampleProcessor.run(sample);
                     IO.save_sample(sample);
-                    this.logger.entry(LogMessage(2,['Sample ',sample.id ,' is processed.']));
+                    this.logger.entry(this,LogMessage(2,['Sample ',sample.id ,' is processed.']));
                     this.nrProcessed = this.nrProcessed + 1;
-                    notify(this,'updateProcessed')
+                    notify(this,'updateProcess')
                 end
             end 
             profile viewer
