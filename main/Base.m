@@ -127,11 +127,13 @@ classdef Base < handle
                         waitbar(wbar_fraction,wbar,'Please wait...')
                         sample = this.io.load_sample(this.sampleList,k);
                         sample.results=Result(); 
-                        waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
-                        disp(['Processing sample ',sample.id ,'...']);
-                        this.sampleProcessor.run(sample);
-                        this.io.save_sample(sample);
-                        disp(['Sample ',sample.id ,' is processed.']);
+                        if isfield(sample,'type') %ignore sample that do not have an appropriate loader
+                            waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
+                            disp(['Processing sample ',sample.id ,'...']);
+                            this.sampleProcessor.run(sample);
+                            this.io.save_sample(sample);
+                            disp(['Sample ',sample.id ,' is processed.']);
+                        end
                         nrProcessed = nrProcessed + 1;
                     end    
                 end
