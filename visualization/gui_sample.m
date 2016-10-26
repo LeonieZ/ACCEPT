@@ -215,9 +215,9 @@ GuiSampleHandle.resortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Sty
             'FontSize',0.55,'String', 'Original sorting.','Position', [108 43.45 22 1.65],'Callback', @resort_cells); 
  
 GuiSampleHandle.OverlayButtonTxT = uicontrol('Parent',GuiSampleHandle.fig_main,'Style','text','Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.55,'Position',[5.1 43.35 20 1.65],'BackgroundColor',[ 1 1 1],'String','3 Channel Overlay');
+            'FontSize',0.55,'Position',[5.1 43.35 22 1.65],'BackgroundColor',[ 1 1 1],'String','3 Channel Overlay');
 GuiSampleHandle.changeOverlayButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'checkbox', 'Units','characters',...
-            'Value',1,'Position', [25.4 43.35 5 1.65],'BackgroundColor',[ 1 1 1],'Callback', @change_overlay); 
+            'Value',1,'Position', [27.4 43.35 5 1.65],'BackgroundColor',[ 1 1 1],'Callback', @change_overlay); 
 
 % go through all thumbnails (resp. dataframes)
 plot_thumbnails(3);
@@ -688,7 +688,9 @@ function openSpecificImage(~,~,row)
 %             end
         case 'alt' % right mouse button action
             im = get(gcbo,'cdata');
-            figure; imagesc(im,[0,max(max(im))]); axis equal; axis off;
+            true_max_int = max(im(im~=1));
+            im_new = (im / true_max_int) .* double(im~=1) + 1.002 * double(im==1);
+            figure; imagesc(im_new,[0,1.002]); axis equal; axis off;
             colormap(gca,map);
     end
 end
