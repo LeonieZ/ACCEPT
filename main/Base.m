@@ -76,8 +76,6 @@ classdef Base < handle
             addlistener(this.sampleList,'logMessage',@(src,event)this.logger.entry(src,event));
             
             % add progress listener
-            addlistener(this,'updateProgress',@this.update_progress);
-
         end
         
         function run(this)
@@ -102,7 +100,8 @@ classdef Base < handle
                     IO.save_sample(sample);
                     this.logger.entry(this,LogMessage(2,['Sample ',sample.id ,' is processed.']));
                     this.nrProcessed = this.nrProcessed + 1;
-                    notify(this,'updateProcess')
+                    this.update_progress();
+                    
                 end
             end 
             profile viewer
@@ -112,6 +111,7 @@ classdef Base < handle
         function update_progress(this)
         % Update the progress variable. 
         this.progress = this.nrProcessed / sum(this.sampleList.toBeProcessed);
+        notify(this,'updateProgress')
         end
                 
         function h=save_splash(this)

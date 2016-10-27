@@ -99,6 +99,9 @@ function process(handle,~,base)
     sliderpos = -round(get(gui.slider,'Value'));
     selectedCellsInTable = find(gui.selectedCells);
     
+    wbHandle = waitbar(0,'Please wait until samples are processed');
+    el=event.listener(base,'updateProgress',@(src,event)update_wb(src,event,base,wbHandle));
+
     if isa(base.sampleProcessor,'Candidate_Selection') && isempty(base.sampleProcessor.pipeline{4}.gates)
         gui_gates = gui_manual_gates();
         waitfor(gui_gates.fig_main,'UserData')
@@ -151,8 +154,10 @@ function process(handle,~,base)
             msgbox('no dirs selected');
         end
     end
-%     gui.selectedCells = false(size(base.sampleList.sampleNames,2),1);
+    %     gui.selectedCells = false(size(base.sampleList.sampleNames,2),1);
     set(handle,'backg',color,'String','Process');
+    close(wbHandle)
+    %delete(el)
     update_list(base);   
 end
 
@@ -322,6 +327,10 @@ function close_fcn(~,~)
 %     fid=fopen([installDir,filesep,'input_output',filesep,'LatestSettings.txt'],'w');
     base.save_state;
     delete(gcf)
+end
+
+function update_wb(~,~,base,wbHandle)
+    waitbar(base.progress,wbHandle);
 end
 
 
