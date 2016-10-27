@@ -65,7 +65,7 @@ classdef ExtractFeatures < DataframeProcessorObject
                 % transform to labeled image
                 sumImage = sum(segImage,3); 
                 labels = repmat(bwlabel(sumImage,4),1,1,size(segImage,3));
-                labelImage = labels.*segImage; icy_imshow(labelImage);
+                labelImage = labels.*segImage;
             
                 returnFrame = table();
                 this.nrObjects = max(labelImage(:));
