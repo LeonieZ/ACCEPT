@@ -114,7 +114,7 @@ elseif isa(inputSample,'table')
         end
     else
         bool = true(nrObjects,1);
-        parfor j = 1:nrObjects
+        for j = 1:nrObjects
             for ii = 1:size(gateStr,1)
                 include_event = inputSample.(gateStr{ii,1})(j) > gate_valuesl(ii) & inputSample.(gateStr{ii,1})(j) <= gate_valuesu(ii);
                 bool(j) = bool(j) & include_event;
