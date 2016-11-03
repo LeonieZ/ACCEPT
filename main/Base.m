@@ -89,7 +89,7 @@ classdef Base < handle
                                 'Processed Sample', 'Yes','No','No');
                 set(0,'defaultUicontrolFontSize', 12)
             else
-                choice = 'No';
+            choice = 'No';
             end
             for k=1:nbrSamples
                 if this.sampleList.toBeProcessed(k) == 1 | strcmp(choice,'Yes')
