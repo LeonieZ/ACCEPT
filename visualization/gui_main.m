@@ -11,7 +11,9 @@ gui.tasks_raw = cellfun(@(s) s.name,base.availableSampleProcessors,'UniformOutpu
 
 % get current sampleProcessor number from base for visualization
 currentProcessorIndex=find(cellfun(@(s) strcmp(base.sampleProcessor.name, s.name), base.availableSampleProcessors));
-
+if isempty(currentProcessorIndex)
+    currentProcessorIndex = 1;
+end
 uni_logo = imread('logoUT.png'); 
 cancerid_logo = imread('logoCancerID.png');
 % subtitle = imread('title2.tif'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
