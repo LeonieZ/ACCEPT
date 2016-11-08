@@ -86,7 +86,7 @@ f=size_pixels(3:4)./size_characters(3:4);
 %%% 
 
 gui.table = uitable('Parent', gui.fig_main, 'Data', [],'ColumnName', {'Sample name','Select'},'ColumnFormat', {'char','logical'},'ColumnEditable', [false,true],'RowName',[],'Units','characters',...
-    'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.7*51.2*f(1) 0.3*51.2*f(1)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt));
+    'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.695*51.2*f(1) 0.295*51.2*f(1)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt));
 gui.slider = uicontrol('Style','Slider','Parent',gui.fig_main,'Units','characters','Position',[105.6 10.8 3.2 19.6],'Min',-1,'Max',0,'Value',0,...
     'SliderStep', [1, 1] ,'Visible','off','Callback',{@update_table,base});
 set(gui.fig_main,'Visible','on');
@@ -284,16 +284,18 @@ function update_list(base)
         set(gui.table,'data', dat,'Visible','off');
         pos_cur = get(gui.table,'Position');
         size_nd = get(gui.table,'Extent');
-        while size_nd(4) > pos_cur(4)
-            dat(end,:) = [];
-            nbrRows = size(dat,1);
-            set(gui.table,'data', dat);
-            size_nd = get(gui.table,'Extent');
+        if size_nd(4) > pos_cur(4)
+            while size_nd(4) > pos_cur(4)
+                dat(end,:) = [];
+                nbrRows = size(dat,1);
+                set(gui.table,'data', dat);
+                size_nd = get(gui.table,'Extent');
+            end
+            set(gui.table, 'Position',[(160 - size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, size_nd(3), size_nd(4)]);  
+            set(gui.table,'FontSize',get(gui.table,'FontSize')*pos_cur(4)/size_nd(4));
+            slider_pos = get(gui.slider,'Position');
+            set(gui.slider,'Position',[(160 + size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
         end
-        set(gui.table, 'Position',[(160 - size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, size_nd(3), size_nd(4)]);  
-        set(gui.table,'FontSize',get(gui.table,'FontSize')*pos_cur(4)/size_nd(4));
-        slider_pos = get(gui.slider,'Position');
-        set(gui.slider,'Position',[(160 + size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
         if nbrSamples > nbrRows
             set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Visible','on');
         end
