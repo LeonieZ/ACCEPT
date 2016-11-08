@@ -56,13 +56,13 @@ while sz(4) > curpos(4)
     sz = get(gui.task,'Extent');
 end
 
-gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','characters','Position',[35.2 35.8 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@input_path,base});
-gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[67.6 35.8 57.5 2.3]);
-gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.inputPath,'Units','characters','Position',[67.8 36.3 56.5 1.3],'FontUnits','normalized', 'FontSize',.7);
+gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','characters','Position',[23.3 35.8 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@input_path,base});
+gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[55.7 35.8 81 2.3]);
+gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.inputPath,'Units','characters','Position',[56.2 36.3 80 1.3],'FontUnits','normalized', 'FontSize',.7);
 
-gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','characters','Position',[35.2 32.2 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@results_path,base});
-gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[67.6 32.2 57.5 2.3]);
-gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.resultPath,'Units','characters','Position',[67.8 32.7 56.5 1.3],'FontUnits','normalized', 'FontSize',.7);
+gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','characters','Position',[23.3 32.2 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@results_path,base});
+gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[55.7 32.2 81 2.3]);
+gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.resultPath,'Units','characters','Position',[56.2 32.7 80 1.3],'FontUnits','normalized', 'FontSize',.7);
 
 sz_inButton = get(gui.input_path_button,'Extent'); sz_resButton = get(gui.results_path_button,'Extent');
 if sz_inButton(3) > 32 || sz_resButton(3) > 32
