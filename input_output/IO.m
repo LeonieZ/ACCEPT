@@ -34,7 +34,7 @@ classdef IO < handle
         end
         
         function outputSample=load_sample(this,sampleList,sampleNr)
-            if exist(this.saved_sample_path(sampleList,sampleNr),'file');
+            if exist(this.saved_sample_path(sampleList,sampleNr),'file')
                 load(this.saved_sample_path(sampleList,sampleNr));
                 currentSample.savePath=sampleList.save_path;
                 outputSample=currentSample;

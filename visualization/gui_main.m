@@ -13,6 +13,8 @@ gui.tasks_raw = cellfun(@(s) s.name,base.availableSampleProcessors,'UniformOutpu
 currentProcessorIndex=find(cellfun(@(s) strcmp(base.sampleProcessor.name, s.name), base.availableSampleProcessors));
 if isempty(currentProcessorIndex)
     currentProcessorIndex = 1;
+    base.sampleProcessor = base.availableSampleProcessors{1};
+    base.sampleList.sampleProcessorId=base.sampleProcessor.id();
 end
 uni_logo = imread('logoUT.png'); 
 cancerid_logo = imread('logoCancerID.png');
@@ -280,19 +282,18 @@ function update_list(base)
         dat{r,2} = false;
         end
         set(gui.table,'data', dat,'Visible','off');
+        pos_cur = get(gui.table,'Position');
         size_nd = get(gui.table,'Extent');
-        if size_nd(4) > 19.6
-            while size_nd(4) > 20
-                dat(end,:) = [];
-                nbrRows = size(dat,1);
-                set(gui.table,'data', dat);
-                size_nd = get(gui.table,'Extent');
-            end
-            set(gui.table, 'Position',[(160 - size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, size_nd(3), size_nd(4)]);  
-            slider_pos = get(gui.slider,'Position');
-            set(gui.slider,'Position',[(160 + size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
-
+        while size_nd(4) > pos_cur(4)
+            dat(end,:) = [];
+            nbrRows = size(dat,1);
+            set(gui.table,'data', dat);
+            size_nd = get(gui.table,'Extent');
         end
+        set(gui.table, 'Position',[(160 - size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, size_nd(3), size_nd(4)]);  
+        set(gui.table,'FontSize',get(gui.table,'FontSize')*pos_cur(4)/size_nd(4));
+        slider_pos = get(gui.slider,'Position');
+        set(gui.slider,'Position',[(160 + size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
         if nbrSamples > nbrRows
             set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Visible','on');
         end
