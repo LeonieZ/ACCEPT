@@ -50,7 +50,7 @@ classdef IO < handle
                 loaderFound = loaderTypesAvailable{i}.can_load_this_folder(samplePath);
             end
             loaderHandle=loaderTypesAvailable{i};
-         end
+        end
         
         function outputSample = load_sample(sampleList,sampleNr)
             % loads a sample from a sampleList. First checks if this sample

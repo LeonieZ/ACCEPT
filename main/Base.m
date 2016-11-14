@@ -68,7 +68,8 @@ classdef Base < handle
 
                 proc = find(cellfun(@(s) strcmp(processor, s.name), this.availableSampleProcessors));
                 if ~isempty(proc)
-                    this.sampleProcessor = this.availableSampleProcessors{1};
+                    this.sampleProcessor = this.availableSampleProcessors{proc};
+                    this.sampleList.sampleProcessorId = this.sampleProcessor.id();
                 end
             end
             
@@ -143,6 +144,7 @@ classdef Base < handle
             resultPath = this.sampleList.resultPath;
             processor = this.sampleProcessor.name;
             save([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor');
+            this.delete;
         end
 
         function delete(this)

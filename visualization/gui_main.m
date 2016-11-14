@@ -11,7 +11,11 @@ gui.tasks_raw = cellfun(@(s) s.name,base.availableSampleProcessors,'UniformOutpu
 
 % get current sampleProcessor number from base for visualization
 currentProcessorIndex=find(cellfun(@(s) strcmp(base.sampleProcessor.name, s.name), base.availableSampleProcessors));
-
+if isempty(currentProcessorIndex)
+    currentProcessorIndex = 1;
+    base.sampleProcessor = base.availableSampleProcessors{1};
+    base.sampleList.sampleProcessorId=base.sampleProcessor.id();
+end
 uni_logo = imread('logoUT.png'); 
 cancerid_logo = imread('logoCancerID.png');
 % subtitle = imread('title2.tif'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
@@ -52,13 +56,13 @@ while sz(4) > curpos(4)
     sz = get(gui.task,'Extent');
 end
 
-gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','characters','Position',[35.2 35.8 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@input_path,base});
-gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[67.6 35.8 57.5 2.3]);
-gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.inputPath,'Units','characters','Position',[67.8 36.3 56.5 1.3],'FontUnits','normalized', 'FontSize',.7);
+gui.input_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select input folder','Units','characters','Position',[23.3 35.8 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@input_path,base});
+gui.input_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[55.7 35.8 81 2.3]);
+gui.input_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.inputPath,'Units','characters','Position',[56.2 36.3 80 1.3],'FontUnits','normalized', 'FontSize',.7);
 
-gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','characters','Position',[35.2 32.2 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@results_path,base});
-gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[67.6 32.2 57.5 2.3]);
-gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.resultPath,'Units','characters','Position',[67.8 32.7 56.5 1.3],'FontUnits','normalized', 'FontSize',.7);
+gui.results_path_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Select results folder','Units','characters','Position',[23.3 32.2 32 2.3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@results_path,base});
+gui.results_path_frame = uipanel('Parent',gui.fig_main, 'Units','characters','Position',[55.7 32.2 81 2.3]);
+gui.results_path = uicontrol(gui.fig_main,'Style','text', 'String',base.sampleList.resultPath,'Units','characters','Position',[56.2 32.7 80 1.3],'FontUnits','normalized', 'FontSize',.7);
 
 sz_inButton = get(gui.input_path_button,'Extent'); sz_resButton = get(gui.results_path_button,'Extent');
 if sz_inButton(3) > 32 || sz_resButton(3) > 32
@@ -82,7 +86,7 @@ f=size_pixels(3:4)./size_characters(3:4);
 %%% 
 
 gui.table = uitable('Parent', gui.fig_main, 'Data', [],'ColumnName', {'Sample name','Select'},'ColumnFormat', {'char','logical'},'ColumnEditable', [false,true],'RowName',[],'Units','characters',...
-    'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.7*51.2*f(1) 0.3*51.2*f(1)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt));
+    'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.695*51.2*f(1) 0.295*51.2*f(1)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt));
 gui.slider = uicontrol('Style','Slider','Parent',gui.fig_main,'Units','characters','Position',[105.6 10.8 3.2 19.6],'Min',-1,'Max',0,'Value',0,...
     'SliderStep', [1, 1] ,'Visible','off','Callback',{@update_table,base});
 set(gui.fig_main,'Visible','on');
@@ -283,18 +287,19 @@ function update_list(base)
         dat{r,2} = false;
         end
         set(gui.table,'data', dat,'Visible','off');
+        pos_cur = get(gui.table,'Position');
         size_nd = get(gui.table,'Extent');
-        if size_nd(4) > 19.6
-            while size_nd(4) > 20
+        if size_nd(4) > pos_cur(4)
+            while size_nd(4) > pos_cur(4)
                 dat(end,:) = [];
                 nbrRows = size(dat,1);
                 set(gui.table,'data', dat);
                 size_nd = get(gui.table,'Extent');
             end
             set(gui.table, 'Position',[(160 - size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, size_nd(3), size_nd(4)]);  
+            set(gui.table,'FontSize',get(gui.table,'FontSize')*pos_cur(4)/size_nd(4));
             slider_pos = get(gui.slider,'Position');
             set(gui.slider,'Position',[(160 + size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
-
         end
         if nbrSamples > nbrRows
             set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Visible','on');

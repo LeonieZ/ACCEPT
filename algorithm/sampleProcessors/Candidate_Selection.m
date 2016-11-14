@@ -14,15 +14,7 @@ classdef Candidate_Selection < SampleProcessor
             this.pipeline = this.make_sample_pipeline();
         end
         
-        function run(this,inputSample)
-%             gui = gui_manual_gates();
-%             waitfor(gui.fig_main,'UserData')
-%             gates = get(gui.fig_main,'UserData');
-%             delete(gui.fig_main)
-%             clear('gui');
-%             
-%             this.pipeline{4}.gates = gates;
-            
+        function run(this,inputSample)            
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);
             lambda          = 0.01;
