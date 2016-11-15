@@ -42,6 +42,8 @@ classdef Base < handle
             end
             this.availableSampleProcessors(removeLines)=[];
             
+            % Create an empty SampleList
+            this.sampleList=SampleList();
             
             % Turn on profiler and parallel pool when needed.
             if this.profiler
