@@ -30,6 +30,7 @@ classdef SampleList < handle
                 this.sampleProcessorId = procId;
                 this.inputPath = inputP;
                 this.resultPath = resultP;
+                this.updated_sample_processor()
             end
         end
         

@@ -398,6 +398,16 @@ classdef IO < handle
             location(1)=(inputSample.imageSize(1)*rows+y)*0.645;
             location(2)=(inputSample.imageSize(2)*columns+x)*0.645;
         end
+        
+        function availableSampleProcessors=check_available_sample_processors()
+            tmp = what('sampleProcessors');
+            processors=strcat(strrep(tmp.m,'.m',''),'();');
+            for i=1:numel(processors)
+                availableSampleProcessors{i} = eval(processors{i});
+                removeLines(i)=~availableSampleProcessors{i}.showInList;
+            end
+            availableSampleProcessors(removeLines)=[];
+        end
     end
 end
  

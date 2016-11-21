@@ -11,7 +11,7 @@ classdef CellTracksXp < Loader
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
         channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
         channelEdgeRemoval=2;
-        xmlData=[];
+        dlmData=[];
         sample=Sample();
     end
     
@@ -250,23 +250,28 @@ classdef CellTracksXp < Loader
             this.dlmData = [];
             % find directory where xml file is located in
             if isempty(this.sample.priorPath)
-                NoXML=1;
+                NoDLM=1;
             elseif strcmp(this.sample.priorPath,'No dir found')
-                NoXML=1;
+                NoDLM=1;
             else
-                XMLFile = dir([this.sample.priorPath filesep '*.xml']);
+                DLMFile = dir([this.sample.priorPath filesep '*.dlm']);
             end
             
-            if size(XMLFile,1) > 1
-                for i = 1:size(XMLFile,1)
-                    if find(ismember(strfind(XMLFile(1).name,'.'),1))
-                        XMLFile(i) = [];
-                    end
-                end
+            if size(DLMFile,1) > 5
+                test(1)=any(arrayfun(@(x) strcmp(x.name,'autoanalysis.dlm'),DLMFile));
+                test(2)=any(arrayfun(@(x) strcmp(x.name,'cells.dlm'),DLMFile));
+                test(3)=any(arrayfun(@(x) strcmp(x.name,'expdata.dlm'),DLMFile));
+                test(4)=any(arrayfun(@(x) strcmp(x.name,'exper.dlm'),DLMFile));
+                test(5)=any(arrayfun(@(x) strcmp(x.name,'frames.dlm'),DLMFile));
+                test(6)=any(arrayfun(@(x) strcmp(x.name,'pic.dlm'),DLMFile));
+                NoDLM=~all(test);
+            else
+                %To few DLM files found
+                NoDLM=1;
             end
                 
             % Load & process XML file
-            if NoXML == 0
+            if NoDLM == 0
                 this.xmlData=xml2struct([this.sample.priorPath filesep XMLFile.name]);
                 this.xmlData.num_events = [];
                 this.xmlData.CellSearchIds = [];

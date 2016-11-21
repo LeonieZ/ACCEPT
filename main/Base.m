@@ -34,13 +34,7 @@ classdef Base < handle
             this.logger.entry(this,LogMessage(1,['>>>> Session started <<<< ACCEPT version: ', this.programVersion]));
           
             % Search for available SampleProcessors and populate the list.
-            tmp = what('sampleProcessors');
-            processors=strcat(strrep(tmp.m,'.m',''),'();');
-            for i=1:numel(processors)
-                this.availableSampleProcessors{i} = eval(processors{i});
-                removeLines(i)=~this.availableSampleProcessors{i}.showInList;
-            end
-            this.availableSampleProcessors(removeLines)=[];
+            this.availableSampleProcessors=IO.check_available_sample_processors();
             
             % Create an empty SampleList
             this.sampleList=SampleList();
