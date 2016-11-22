@@ -19,42 +19,40 @@ classdef rescore_using_gate < SampleProcessor
         
         function outputStr=id(this) 
             [outputStr,this.previousProcessor] = this.choose_processor_to_rescore();
-            this.gate=[];
+            this.gates=[];
         end
         
         function run(this,inputSample)
             % Catch empty gate Popup can be skipped by filling gate befor
             % run
-            if isempty(this.gate)
-                this.ask_for_gate();
+            if isempty(this.gates)
+                this.ask_for_gates();
             end
             
             if isempty(inputSample.results)
                 %When we have nothing to gate we run the original sampleProcessor
                 this.previousProcessor.run(inputSample)
-            else
+            end
                 %we do our gatinging
 
-            end
+            
         end
         
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);
-           
-            sol = SampleOverviewLoading();
-            md = MaskDetermination();
-            fc = FeatureCollection(this.dataframeProcessor);    
+      
             mc = ManualClassification(cell(0),'ManualGates');
+            pipeline{1} = mc;
             
-            pipeline{1} = sol;
-            pipeline{2} = md;
-            pipeline{3} = fc;
-            pipeline{4} = mc;
         end
         
         function ask_for_gate(this);
             %create fileui popup to ask for file in which gate is stored
             keyboard
+            gui_gates = gui_manual_gates();
+            waitfor(gui_gates.fig_main,'UserData')
+            this.gates = get(gui_gates.fig_main,'UserData');
+            mc.gates=this.gates;
         end
     end
     
