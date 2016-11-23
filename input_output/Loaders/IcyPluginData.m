@@ -10,7 +10,8 @@ classdef IcyPluginData < handle
             locations=table();
             [sample.priorPath,bool]=this.find_dir(samplePath,'xls',1);
             xlsfiles=dir([sample.priorPath,'*.xls']);
-            thumbSize=[76,76];
+            thumbSize=[90,90];
+
             if bool==1 
                 if ispc
                     try [~,~,raw]=xlsread([sample.priorPath,filesep,xlsfiles(1).name],1);
