@@ -1,62 +1,117 @@
 classdef IO < handle
-    %the toplevel class that handles the various input and output operations. It
-    %allows for easy loading of different sample types
+    %this class has only static functions that handle the various input and output operations. It
+    %allows for easy loading and saving of different sample types
     
-    properties
-        overwriteResults=false;
+    methods (Static, Access = private)
+        %% general functions that are reused in IO
+        function location=saved_sample_path(sampleList,sampleNr)
+            location=[sampleList.save_path(),'output',filesep,sampleList.sampleNames{sampleNr},'.mat'];
+        end
+    
+        function location=saved_data_frame_path(sample,frameNr)
+            location=[sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr),'.mat'];
+        end
+                      
     end
     
-    properties(SetAccess=private)
-        loaderTypesAvailable={CellTracks(),MCBP(),ThumbnailLoader(),Default()}; % beware of the order, the first loader type that can load a dir will be used.
-    end
-    
-    events
-        logMessage
-    end
-    
-    methods
-        function outputList = create_sample_list(this,inputPath,resultPath,sampleProcessor)
-            if nargin==4
-                [sampleNames,loaderUsed]=this.available_samples(inputPath);
-                %[isProc,isToBeProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
-                [isProc]=this.processed_samples(resultPath,sampleProcessor.id(),sampleNames);
-                outputList=SampleList(sampleProcessor.id(),inputPath,resultPath,sampleNames,isProc,loaderUsed);
-            else
-                outputList=SampleList();
+    methods(Static)
+        %% SampleList handeling functions
+        function [sampleNames,loaderUsed] = available_samples(sampleList)
+            %creates list of samples from input dir. It also checks if
+            %these samples are already processed in the output dir when the
+            %overwriteResults attribute is set to false. 
+            files = dir(sampleList.inputPath);
+            if isempty(files)
+                %sampleList.logMessage('inputPath is empty; cannot continue',1,1);
+                error('inputDir is empty; cannot continue');
             end
-            addlistener(outputList,'updatedProcessorId',@this.updated_sample_processor);
-            addlistener(outputList,'updatedInputPath',@this.updated_input_path);
-            addlistener(outputList,'updatedResultPath',@this.updated_result_path);
+
+            % select only directory entries from the input listing and remove
+            % anything that starts with a .*.
+            samples = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
+            for i=1:numel(samples)
+                sampleNames{i}=samples(i).name;
+                loaderUsed{i}=IO.check_sample_type([sampleList.inputPath,filesep,samples(i).name],sampleList.loaderTypesAvailable);
+            end
         end
         
-        function update_sample_list(this,sampleList)
-                sampleList.isProcessed=this.processed_samples(sampleList.resultPath,sampleList.sampleProcessorId,sampleList.sampleNames);
+        function save_sample_processor(smplLst,processor)
+            save([smplLst.save_path(),'processed.mat'],'processor','-append','-v7.3');
+        end
+
+        %% Sample handeling functions
+        function loaderHandle = check_sample_type(samplePath,loaderTypesAvailable)
+            %Checks which loader types can load the sample path and chooses
+            %the first one on the list. 
+            loaderFound=false;
+            i=0;
+            while ~loaderFound
+                i=i+1; 
+                loaderFound = loaderTypesAvailable{i}.can_load_this_folder(samplePath);
+            end
+            loaderHandle=loaderTypesAvailable{i};
         end
         
-        function outputSample=load_sample(this,sampleList,sampleNr)
-            if exist(this.saved_sample_path(sampleList,sampleNr),'file')
-                load(this.saved_sample_path(sampleList,sampleNr));
+        function outputSample = load_sample(sampleList,sampleNr)
+            % loads a sample from a sampleList. First checks if this sample
+            % has been saved before. If not we look up the loader handle
+            % and construct the sample. 
+            if exist(IO.saved_sample_path(sampleList,sampleNr),'file');
+                load(IO.saved_sample_path(sampleList,sampleNr));
                 currentSample.savePath=sampleList.save_path;
-                outputSample=currentSample;
+                outputSample = currentSample;
             else
-                loader=sampleList.loaderToBeUsed{sampleNr};
+                loader = sampleList.loaderToBeUsed{sampleNr};
                 loader.new_sample_path([sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
-                outputSample=loader.sample;
+                outputSample = loader.sample;
                 outputSample.savePath=sampleList.save_path();
             end
         end
         
-        function outputFrame=load_data_frame(this,sample,frameNr)
-            if exist(this.saved_data_frame_path(sample,frameNr),'file')
-                load(this.saved_data_frame_path(sample,frameNr));
-                outputFrame=currentDataFrame;
+        function save_sample(currentSample)
+            % Function to save the sample in a .mat file for later reuse.
+            % and mark the sample sample as processed. 
+            save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
+            %do we split this in a seperate function? /g
+            load([currentSample.savePath,'processed.mat'],'samplesProcessed');
+            samplesProcessed=union(samplesProcessed,{currentSample.id});
+            save([currentSample.savePath,'processed.mat'],'samplesProcessed','-append');
+        end
+        
+        function clear_results(currentSample)
+            currentSample.results = Result();
+        end
+        
+        function save_results_as_xls(currentSample)
+            %export results to a csv file. 
+             tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
+             writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.csv']);
+        end
+        
+        %% DataFrame handeling functions
+        function outputFrame = load_data_frame(sample,frameNr)
+            % Load data frame using loader linked to sample
+            if exist(IO.saved_data_frame_path(sample,frameNr),'file')
+                load(IO.saved_data_frame_path(sample,frameNr));
+                outputFrame = currentDataFrame;
             else
-                loader=sample.loader(sample);
-                outputFrame=loader.load_data_frame(frameNr);
+                loader = sample.loader(sample);
+                outputFrame = loader.load_data_frame(frameNr);
             end
         end
         
-        function outputFrame=load_thumbnail_frame(this,sample,thumbNr,option,rescaled)
+        function save_data_frame(currentSample,currentDataFrame)
+            % Save DataFrame 
+            % Check why we dont use the savepath function? /G
+            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
+            end
+            save([currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame','-v7.3');            
+        end
+        
+        %% Thumbnail functions
+         function outputFrame=load_thumbnail_frame(sample,thumbNr,option,rescaled)
+             % gets loader from sample and looks for a saved thumbnail. If no thumbnail was created before a new one is generated. 
             loader=sample.loader(sample);
             if exist('option','var') && strcmp('prior',option) && exist('rescaled','var')  && rescaled == false
                 if isprop(loader,'rescaleTiffs')
@@ -106,32 +161,15 @@ classdef IO < handle
             end
         end
         
-       function load_thumbs_to_results(this,sample)
+        function load_thumbs_to_results(sample)
+            %special function that allows for a specific loader.
            loader=sample.loader(sample);
            if isa(loader,'ThumbnailLoader')
                loader.load_thumbs_to_results();
            end
        end
-        
-        function save_sample_processor(this,smplLst,processor)
-            save([smplLst.save_path(),'processed.mat'],'processor','-append','-v7.3');
-        end
-        
-        function save_sample(this,currentSample)
-            save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
-            load([currentSample.savePath,'processed.mat'],'samplesProcessed');
-            samplesProcessed=union(samplesProcessed,{currentSample.id});
-            save([currentSample.savePath,'processed.mat'],'samplesProcessed','-append');
-        end
-        
-        function save_data_frame(this,currentSample,currentDataFrame)
-            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
-                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
-            end
-            save([currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame','-v7.3');            
-        end
-        
-        function save_data_frame_segmentation(this,currentSample,currentDataFrame)
+             
+        function save_data_frame_segmentation(currentSample,currentDataFrame)
             if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
                 mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
             end
@@ -147,7 +185,7 @@ classdef IO < handle
             t.close;
         end
         
-        function save_thumbnail(this,currentSample,eventNr,option,rescaled,class)
+        function save_thumbnail(currentSample,eventNr,option,rescaled,class)
            [id,~] = strtok(currentSample.id,'.');
            
            if ~exist('class','var')
@@ -184,7 +222,7 @@ classdef IO < handle
 
            if exist('option','var') && strcmp('prior',option)
                 if exist('eventNr','var') && ~isempty(eventNr)
-                    currentDataFrame=this.load_thumbnail_frame(currentSample,eventNr,'prior',rescaled);
+                    currentDataFrame=IO.load_thumbnail_frame(currentSample,eventNr,'prior',rescaled);
                     t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,filesep,'priorThumbs',num2str(eventNr),'_thumb_prior.tif'],'w');
                     t.setTag('Photometric',t.Photometric.MinIsBlack);
                     t.setTag('Compression',t.Compression.LZW);
@@ -213,7 +251,7 @@ classdef IO < handle
                     end
                 else
                     for i = 1:size(currentSample.priorLocations)
-                        currentDataFrame=this.load_thumbnail_frame(currentSample,i,'prior',rescaled);
+                        currentDataFrame=IO.load_thumbnail_frame(currentSample,i,'prior',rescaled);
                         t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'priorThumbs',filesep, num2str(i),'_thumb_prior.tif'],'w');
                         t.setTag('Photometric',t.Photometric.MinIsBlack);
                         t.setTag('Compression',t.Compression.LZW);
@@ -325,166 +363,19 @@ classdef IO < handle
                 end
            end
         end
-                                   
-        function save_results_as_xls(this,currentSample)
-             tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
-%             if isempty(tempTable)
-%                 tempTable=table();
-%             end
-            % Test if csv is able to deal with large tables (>17k events)
-            % if ispc
-            %                writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xls']);
-            % else
-             writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.csv']);
-            % end
-        end
+                              
         
-        function update_results(this,sampleList)
-            this.updated_results_path(sampleList);
-        end
-        
-        function clear_results(this,currentSample)
-            currentSample.results = Result();
-        end
-         
-    end
-    
-    
-    methods (Access = private)
-        function populate_available_input_types(this)
-            % populate available inputs 
-            % Function not used atm /g
-            temp = what('Loaders');
-            flist = temp.m;
-
-            for i=1:numel(flist)
-               [~,filename,filetext]=fileparts(flist{i}); % get just the filename
-               if exist(filename, 'class') && ismember('loader', superclasses(filename))
-                 this.loaderTypesAvailable{end+1} = filename();
-               end
-             end
-        end
-        
-        function updated_sample_processor(this,sampleList,~)
-            if all([~isempty(sampleList.resultPath),...
-                    ~isempty(sampleList.inputPath),...
-                    ~strcmp(sampleList.sampleProcessorId,'empty'),...
-                    isempty(sampleList.sampleNames)]);
-                this.updated_input_path(sampleList);
-            end
-            if and(~isempty(sampleList.inputPath),~isempty(sampleList.resultPath))
-                [isProc]=this.processed_samples(sampleList.resultPath,...
-                                                    sampleList.sampleProcessorId,...
-                                                    sampleList.sampleNames);
-                sampleList.isProcessed=isProc;
-            end
-        end
-        
-        function updated_result_path(this,sampleList,~)
-            if all([~isempty(sampleList.inputPath),...
-                    ~isempty(sampleList.resultPath),...
-                    ~strcmp(sampleList.sampleProcessorId,'empty'),...
-                    isempty(sampleList.sampleNames)]);
-                this.updated_input_path(sampleList);
-            end
-            if and(~isempty(sampleList.resultPath),...
-                    ~strcmp(sampleList.sampleProcessorId,'empty'));
-                [isProc]=this.processed_samples(sampleList.resultPath,...
-                                                sampleList.sampleProcessorId,...
-                                                sampleList.sampleNames);
-                sampleList.isProcessed=isProc;
-             end
-        end
-        
-        function updated_input_path(this,sampleList,~)
-            [sampleNames,loaderUsed]=this.available_samples(sampleList.inputPath);
-            sampleList.sampleNames=sampleNames;
-            sampleList.loaderToBeUsed=loaderUsed;
-            if and(~isempty(sampleList.resultPath),...
-                ~strcmp(sampleList.sampleProcessorId,'empty'));
-                [isProc]=this.processed_samples(sampleList.resultPath,...
-                                        sampleList.sampleProcessorId,...
-                                        sampleNames);
-                sampleList.isProcessed=isProc;
-            end
-        end
-       
-        function loaderHandle=check_sample_type(this,samplePath)
-            %Checks which loader types can load the sample path and chooses
-            %the first one on the list. 
-            loaderFound=false;
-            i=0;
-            while ~loaderFound
-                i=i+1; 
-                loaderFound = this.loaderTypesAvailable{i}.can_load_this_folder(samplePath);
-            end
-            loaderHandle=this.loaderTypesAvailable{i};
-        end
-        
-        function [sampleNames,loaderUsed]=available_samples(this,inputPath)
-            %creates list of samples from input dir. It also checks if
-            %these samples are already processed in the output dir when the
-            %overwriteResults attribute is set to false. 
-            files = dir(inputPath);
-            if isempty(files)
-                this.logMessage('inputPath is empty; cannot continue',1,1);
-                error('inputDir is empty; cannot continue');
-            end
-
-            % select only directory entries from the input listing and remove
-            % anything that starts with a .*.
-            samples = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
-            for i=1:numel(samples)
-                sampleNames{i}=samples(i).name;
-                loaderUsed{i}=this.check_sample_type([inputPath,filesep,samples(i).name]);
-            end
-
-        end
-        
-        function [isProc]=processed_samples(this,resultsPath,sampleProcessorId,sampleNames)
-            savePath=[resultsPath,filesep,sampleProcessorId,filesep];
-            isProc=true(1,numel(sampleNames));
-            isToBeProc=false(1,numel(sampleNames));
+        %% Utility functions        
+        function check_save_path(savePath)
             if ~exist(savePath,'dir')
                 mkdir(savePath);
                 mkdir([savePath,'output']);
                 mkdir([savePath,'frames']);
                 samplesProcessed={};
                 save([savePath filesep 'processed.mat'],'samplesProcessed','-v7.3');
-                isProc=false(1,numel(sampleNames));
-                %isToBeProc=true(1,numel(sampleNames));
-            else
-                %Check in results dir if any samples are already processed.
-                try load([savePath filesep 'processed.mat'],'samplesProcessed')
-                catch 
-                    %appears to be no list (?) so lets create an empty sampleProccesed variable
-                    samplesProcessed={};
-                end
-                [~,index]=setdiff(sampleNames,samplesProcessed);
-                if this.overwriteResults==false
-                    %isToBeProc(index)=true;
-                    isProc(index)=false;
-                else
-                    %isToBeProc=true(1,numel(sampleNames));
-                    isProc(index)=false;
-                end
             end
         end
-          
-    end
-    
-    methods (Static, Access = private)
-        function location=saved_sample_path(sampleList,sampleNr)
-            location=[sampleList.save_path(),'output',filesep,sampleList.sampleNames{sampleNr},'.mat'];
-        end
-    
-        function location=saved_data_frame_path(sample,frameNr)
-            location=[sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr),'.mat'];
-        end
-                      
-    end
-    
-    methods(Static)
+        
         function size=sample_pixel_size(inputSample)
             %calculate total image size to plot locations
             size(1)=inputSample.imagesize(1)*inputSample.rows;
@@ -499,12 +390,23 @@ classdef IO < handle
             location(1)=smallImageSize(1)*rows+round(y/8);
             location(2)=smallImageSize(2)*columns+round(x/8);
         end
+        
         function location=calculate_location(inputSample,priorLocationNr)
             x=mean(inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr));
             y=mean(inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr));
             [rows,columns]=find(inputSample.priorLocations.frameNr(priorLocationNr)==inputSample.frameOrder);
             location(1)=(inputSample.imageSize(1)*rows+y)*0.645;
             location(2)=(inputSample.imageSize(2)*columns+x)*0.645;
+        end
+        
+        function availableSampleProcessors=check_available_sample_processors()
+            tmp = what('sampleProcessors');
+            processors=strcat(strrep(tmp.m,'.m',''),'();');
+            for i=1:numel(processors)
+                availableSampleProcessors{i} = eval(processors{i});
+                removeLines(i)=~availableSampleProcessors{i}.showInList;
+            end
+            availableSampleProcessors(removeLines)=[];
         end
     end
 end

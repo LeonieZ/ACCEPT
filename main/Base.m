@@ -4,15 +4,20 @@ classdef Base < handle
     
     properties
         programVersion= '1.0.0-beta';
-        io = IO();
         sampleList = SampleList();
         sampleProcessor = SampleProcessor();
-        availableSampleProcessors={};
+        availableSampleProcessors = {};
         profiler = true;
         parallelProcessing = false;
         logger;
         pool;
         busy;
+        progress;
+        nrProcessed;
+    end
+    
+    events
+        updateProgress;
     end
     
     methods
@@ -28,27 +33,17 @@ classdef Base < handle
             this.logger = Logger(installDir);
             this.logger.entry(this,LogMessage(1,['>>>> Session started <<<< ACCEPT version: ', this.programVersion]));
           
-            % Create sample List 
-            this.sampleList = this.io.create_sample_list();
-            
             % Search for available SampleProcessors and populate the list.
-            tmp = what('sampleProcessors');
-            processors=strcat(strrep(tmp.m,'.m',''),'();');
-            for i=1:numel(processors)
-            this.availableSampleProcessors{i} = eval(processors{i});
-            removeLines(i)=~this.availableSampleProcessors{i}.showInList;
-            end
-            this.availableSampleProcessors(removeLines)=[];
+            this.availableSampleProcessors=IO.check_available_sample_processors();
             
-            % adding log listeners
-            addlistener(this.io,'logMessage',@(src,event)this.logger.entry(src,event));
-            addlistener(this.sampleProcessor,'logMessage',@(src,event)this.logger.entry(src,event));
+            % Create an empty SampleList
+            this.sampleList=SampleList();
             
             % Turn on profiler and parallel pool when needed.
             if this.profiler
                 profile on;
             end
-            if this.parallelProcessing==1
+            if this.parallelProcessing == true
                 this.pool=parpool;    
             end
             
@@ -73,77 +68,52 @@ classdef Base < handle
                     this.sampleList.sampleProcessorId = this.sampleProcessor.id();
                 end
             end
+            
+            % adding log listeners
+            addlistener(this.sampleList,'logMessage',@(src,event)this.logger.entry(src,event));
+            
+            % add progress listener
         end
         
         function run(this)
             % run SampleProcessor with each sample marked as toBeProcessed
             this.busy=true;
             nbrSamples = size(this.sampleList.toBeProcessed,2);
-            
-            wbar = waitbar(0,'Please wait...');
-            nrProcessed = 0;
+            this.nrProcessed = 0;
             if ~isempty(find(this.sampleList.isProcessed(find(this.sampleList.toBeProcessed)))) %#ok<EFIND,FNDSB>
                 set(0,'defaultUicontrolFontSize', 14)
                 choice = questdlg('Some selected samples are already processed. Do you want to process them again?', ...
                                 'Processed Sample', 'Yes','No','No');
                 set(0,'defaultUicontrolFontSize', 12)
-                switch choice
-                    case 'Yes'
-                        for k=1:nbrSamples
-                            if this.sampleList.toBeProcessed(k) == 1
-                                wbar_fraction = nrProcessed / sum(this.sampleList.toBeProcessed);
-                                waitbar(wbar_fraction,wbar,'Please wait...')
-                                sample = this.io.load_sample(this.sampleList,k);
-                                sample.results=Result(); 
-                                waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
-                                disp(['Processing sample ',sample.id ,'...']);
-                                this.sampleProcessor.run(sample);
-                                this.io.save_sample(sample);
-                                disp(['Sample ',sample.id ,' is processed.']);
-                                nrProcessed = nrProcessed + 1;
-                            end
-                        end 
-                    case 'No'
-                       for k=1:nbrSamples
-                            if this.sampleList.toBeProcessed(k) == 1
-                                wbar_fraction = nrProcessed / sum(this.sampleList.toBeProcessed);
-                                waitbar(wbar_fraction,wbar,'Please wait...')
-                                if this.sampleList.isProcessed(k) == 0
-                                    sample = this.io.load_sample(this.sampleList,k);
-                                    sample.results=Result(); 
-                                    waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
-                                    disp(['Processing sample ',sample.id ,'...']);
-                                    this.sampleProcessor.run(sample);
-                                    this.io.save_sample(sample);
-                                    disp(['Sample ',sample.id ,' is processed.']);
-                                end
-                                nrProcessed = nrProcessed + 1;
-                            end
-                        end 
-                end 
             else
-                for k=1:nbrSamples
-                    if this.sampleList.toBeProcessed(k) == 1
-                        wbar_fraction = nrProcessed / sum(this.sampleList.toBeProcessed);
-                        waitbar(wbar_fraction,wbar,'Please wait...')
-                        sample = this.io.load_sample(this.sampleList,k);
-                        sample.results=Result(); 
-                        if isprop(sample,'type') %ignore sample that do not have an appropriate loader
-                            waitbar(wbar_fraction,wbar,['Please wait... Sample ' sample.id ' is being processed.'])
-                            disp(['Processing sample ',sample.id ,'...']);
-                            this.sampleProcessor.run(sample);
-                            this.io.save_sample(sample);
-                            disp(['Sample ',sample.id ,' is processed.']);
-                        end
-                        nrProcessed = nrProcessed + 1;
-                    end    
-                end
+                choice = 'No';
             end
+            if strcmp(choice,'No')
+                this.sampleList.toBeProcessed(this.sampleList.isProcessed)= false
+            end
+            for k=1:nbrSamples
+                if this.sampleList.toBeProcessed(k)
+                    sample = IO.load_sample(this.sampleList,k);
+                    % sample.results=Result(); 
+                    this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
+                    this.sampleProcessor.run(sample);
+                    IO.save_sample(sample);
+                    this.logger.entry(this,LogMessage(2,['Sample ',sample.id ,' is processed.']));
+                    this.nrProcessed = this.nrProcessed + 1;
+                    this.update_progress();
+                    
+                end
+            end 
             profile viewer
             this.busy=false;
-            close(wbar)
         end
-
+        
+        function update_progress(this)
+        % Update the progress variable. 
+        this.progress = this.nrProcessed / sum(this.sampleList.toBeProcessed);
+        notify(this,'updateProgress')
+        end
+                
         function h=save_splash(this)
             screen = get(0,'screensize');
             screenWidth  = screen(3);

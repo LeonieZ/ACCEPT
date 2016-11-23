@@ -10,7 +10,6 @@ classdef Full_Detection_DLA < SampleProcessor
         function this = Full_Detection_DLA()
             this.name = 'Full Detection DLA';
             this.version = '0.1';
-            this.io = IO();  
             this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end
@@ -39,14 +38,14 @@ classdef Full_Detection_DLA < SampleProcessor
                 this.pipeline{i}.run(inputSample);
             end  
             
-            this.io.save_results_as_xls(inputSample);
+            IO.save_results_as_xls(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);
             sol = SampleOverviewLoading();
             md = MaskDetermination();
-            fc = FeatureCollection(this.dataframeProcessor,this.io);
+            fc = FeatureCollection(this.dataframeProcessor,IO);
             pipeline{1} = sol;
             pipeline{2} = md;
             pipeline{3} = fc;

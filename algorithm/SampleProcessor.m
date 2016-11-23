@@ -7,7 +7,6 @@ classdef SampleProcessor < handle
         version
         dataframeProcessor;
         pipeline=cell(0);
-        io;
         showInList=true;
     end
     
@@ -16,9 +15,8 @@ classdef SampleProcessor < handle
     end
     
     methods
-        function this = SampleProcessor(dataframeProcessor,io,varargin)
+        function this = SampleProcessor(dataframeProcessor,varargin)
             if nargin > 0
-                this.io = io;
                 this.dataframeProcessor = dataframeProcessor;
 
                 if nargin > 2

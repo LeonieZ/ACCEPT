@@ -10,7 +10,6 @@ classdef CTC_Scoring < SampleProcessor
         function this = CTC_Scoring()
             this.name = 'CTC Scoring';
             this.version = '0.1';
-            this.io = IO(); 
         end
     end
 end

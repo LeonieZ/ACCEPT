@@ -9,8 +9,7 @@ classdef Marker_Characterization < SampleProcessor
     methods 
         function this = Marker_Characterization()
             this.name = 'Marker Characterization';
-            this.version = '0.1';
-            this.io = IO();  
+            this.version = '0.1';  
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
         end
@@ -35,17 +34,17 @@ classdef Marker_Characterization < SampleProcessor
                     inputSample.results.segmentation{1,notNec(i)} = [];
                 end
             end
-            this.io.save_results_as_xls(inputSample);
+            IO.save_results_as_xls(inputSample);
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
-%             this.io.save_thumbnail(inputSample,[],'prior');
-            this.io.save_thumbnail(inputSample);
+%             IO.save_thumbnail(inputSample,[],'prior');
+            IO.save_thumbnail(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);
             sol = SampleOverviewLoading();
-            fc = FeatureCollection(this.dataframeProcessor,this.io,1);
+            fc = FeatureCollection(this.dataframeProcessor,IO,1);
             pipeline{1} = sol;
             pipeline{2} = fc;
         end

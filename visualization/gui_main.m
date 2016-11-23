@@ -103,6 +103,9 @@ function process(handle,~,base)
     sliderpos = -round(get(gui.slider,'Value'));
     selectedCellsInTable = find(gui.selectedCells);
     
+    wbHandle = waitbar(0,'Please wait until samples are processed');
+    el=event.listener(base,'updateProgress',@(src,event)update_wb(src,event,base,wbHandle));
+
     if isa(base.sampleProcessor,'Candidate_Selection') && isempty(base.sampleProcessor.pipeline{4}.gates)
         gui_gates = gui_manual_gates();
         waitfor(gui_gates.fig_main,'UserData')
@@ -155,8 +158,10 @@ function process(handle,~,base)
             msgbox('no dirs selected');
         end
     end
-%     gui.selectedCells = false(size(base.sampleList.sampleNames,2),1);
+    %     gui.selectedCells = false(size(base.sampleList.sampleNames,2),1);
     set(handle,'backg',color,'String','Process');
+    close(wbHandle)
+    %delete(el)
     update_list(base);   
 end
 
@@ -172,7 +177,7 @@ function visualize(handle,~,base)
     elseif size(selectedCellsInTable,1) == 1
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
             % load selected sample
-            currentSample = base.io.load_sample(base.sampleList,selectedCellsInTable(1));
+            currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1));
             if size(currentSample.results.thumbnails,1)<1 || isempty(currentSample.results.features)
                msgbox('Empty Sample.')
             else
@@ -259,7 +264,7 @@ function update_list(base)
     else
         sliderpos = -round(get(gui.slider,'Value'));
         sl = base.sampleList;
-        base.io.update_sample_list(sl);
+        base.sampleList.update_sample_list();
         nbrSamples = size(sl.sampleNames,2);
         gui.selectedCells = false(nbrSamples,1);
         nbrAttributes = 2;
@@ -327,6 +332,10 @@ function close_fcn(~,~)
 %     fid=fopen([installDir,filesep,'input_output',filesep,'LatestSettings.txt'],'w');
     base.save_state;
     delete(gcf)
+end
+
+function update_wb(~,~,base,wbHandle)
+    waitbar(base.progress,wbHandle);
 end
 
 

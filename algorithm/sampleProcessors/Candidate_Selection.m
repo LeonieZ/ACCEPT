@@ -10,7 +10,6 @@ classdef Candidate_Selection < SampleProcessor
         function this = Candidate_Selection()
             this.name = 'Candidate Selection';
             this.version = '0.1';
-            this.io = IO();  
             this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end
@@ -32,8 +31,8 @@ classdef Candidate_Selection < SampleProcessor
             for i = 3:numel(this.pipeline)
                 this.pipeline{i}.run(inputSample);
             end  
-            this.io.save_thumbnail(inputSample,[],[],[],1);
-            this.io.save_results_as_xls(inputSample);
+            IO.save_thumbnail(inputSample,[],[],[],1);
+            IO.save_results_as_xls(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)
@@ -41,7 +40,7 @@ classdef Candidate_Selection < SampleProcessor
            
             sol = SampleOverviewLoading();
             md = MaskDetermination();
-            fc = FeatureCollection(this.dataframeProcessor,this.io);    
+            fc = FeatureCollection(this.dataframeProcessor);    
             mc = ManualClassification(cell(0),'ManualGates');
             
             pipeline{1} = sol;
