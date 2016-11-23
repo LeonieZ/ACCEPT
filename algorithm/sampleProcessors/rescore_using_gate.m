@@ -29,12 +29,12 @@ classdef rescore_using_gate < SampleProcessor
                 this.ask_for_gates();
             end
             
-            if isempty(inputSample.results)
+            if isempty(inputSample.results.features)
                 %When we have nothing to gate we run the original sampleProcessor
                 this.previousProcessor.run(inputSample)
             end
                 %we do our gatinging
-
+            this.pipeline{1}.run(inputSample)
             
         end
         
@@ -48,7 +48,6 @@ classdef rescore_using_gate < SampleProcessor
         
         function ask_for_gates(this);
             %create fileui popup to ask for file in which gate is stored
-            keyboard
             gui_gates = gui_manual_gates();
             waitfor(gui_gates.fig_main,'UserData')
             this.gates = get(gui_gates.fig_main,'UserData');

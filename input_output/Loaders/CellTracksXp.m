@@ -272,6 +272,8 @@ classdef CellTracksXp < Loader
                 
             % Load & process XML file
             if NoDLM == 0
+                
+                
                 this.xmlData=xml2struct([this.sample.priorPath filesep XMLFile.name]);
                 this.xmlData.num_events = [];
                 this.xmlData.CellSearchIds = [];
@@ -326,6 +328,11 @@ classdef CellTracksXp < Loader
                     end
                     
             end
+            
+            function content=read_expdata(path)
+                fid=fopen(path);
+                content=textscan(fid,'%s%f', 'Delimiter','¦');
+            end
         end
        
         
@@ -375,6 +382,8 @@ classdef CellTracksXp < Loader
                     col=(cols-(imgNr-1-(row-1)*this.sample.columns));
             end
         end
+        
+        
         
     end
         

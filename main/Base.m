@@ -88,10 +88,13 @@ classdef Base < handle
             else
                 choice = 'No';
             end
+            if strcmp(choice,'No')
+                this.sampleList.toBeProcessed(this.sampleList.isProcessed)= false
+            end
             for k=1:nbrSamples
-                if this.sampleList.toBeProcessed(k) == 1 | strcmp(choice,'Yes')
+                if this.sampleList.toBeProcessed(k)
                     sample = IO.load_sample(this.sampleList,k);
-                    sample.results=Result(); 
+                    % sample.results=Result(); 
                     this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
                     this.sampleProcessor.run(sample);
                     IO.save_sample(sample);
