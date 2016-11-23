@@ -5,7 +5,7 @@ classdef rescore_using_gate < SampleProcessor
         
     properties
         previousProcessor=SampleProcessor();
-        gate=[];
+        gates=[];
     end
     
     methods 
@@ -46,13 +46,13 @@ classdef rescore_using_gate < SampleProcessor
             
         end
         
-        function ask_for_gate(this);
+        function ask_for_gates(this);
             %create fileui popup to ask for file in which gate is stored
             keyboard
             gui_gates = gui_manual_gates();
             waitfor(gui_gates.fig_main,'UserData')
             this.gates = get(gui_gates.fig_main,'UserData');
-            mc.gates=this.gates;
+            this.pipeline{1}.gates=this.gates;
         end
     end
     
