@@ -7,7 +7,7 @@ classdef Base < handle
         sampleList = SampleList();
         sampleProcessor = SampleProcessor();
         availableSampleProcessors = {};
-        profiler = true;
+        profiler = false;
         parallelProcessing = false;
         logger;
         pool;
@@ -103,8 +103,10 @@ classdef Base < handle
                     this.update_progress();
                     
                 end
-            end 
-            profile viewer
+            end
+            if this.profiler
+                profile viewer
+            end
             this.busy=false;
         end
         
