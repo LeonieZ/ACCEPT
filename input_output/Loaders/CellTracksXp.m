@@ -329,10 +329,7 @@ classdef CellTracksXp < Loader
                     
             end
             
-            function content=read_expdata(path)
-                fid=fopen(path);
-                content=textscan(fid,'%s%f', 'Delimiter','¦');
-            end
+
         end
        
         
@@ -403,6 +400,29 @@ classdef CellTracksXp < Loader
                 bool = false;
             end    
 
+        end
+    end
+    methods(Static)%,Access=private)
+        function dlmData=read_exper_dlm(path)
+            fileId=fopen(path);
+            test=textscan(fileId,'%s','delimiter','¦');
+            
+        
+        end
+        function dlmData=read_pic_dlm(path)
+            fileId=fopen(path);
+            temp=textscan(fileId,'%s%s%s%f%s','delimiter','¦');
+            dlmData.frame.timestamp=temp{1};
+            dlmData.frame.frameNr=temp{4};
+            fclose(fileId)
+        end
+        
+        function dlmData=read_cells_dlm(path)
+            fileId=fopen(path);
+            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','¦');
+            dlmData.frame.timestamp=temp{1};
+            dlmData.frame.frameNr=temp{4};
+            fclose(fileId)
         end
     end
 end
