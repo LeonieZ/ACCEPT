@@ -3,11 +3,10 @@ classdef CellTracksXp < Loader
     %   Detailed explanation goes here
     
     properties
-        name='CellTracks'
+        name='CellTracksXp'
         hasEdges=true;
         rescaleTiffs=true;
         pixelSize=0.64;
-        tiffHeaders;
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
         channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
         channelEdgeRemoval=2;
@@ -16,7 +15,7 @@ classdef CellTracksXp < Loader
     end
     
     methods
-        function this = CellTracks(input) %pass either a sample or a path to the constructor
+        function this = CellTracksXp(input) %pass either a sample or a path to the constructor
             if nargin == 1
                 validateattributes(input,{'Sample','char'},{'nonempty'},'','input');
                 if isa(input,'Sample')
@@ -33,7 +32,7 @@ classdef CellTracksXp < Loader
         
         function new_sample_path(this,samplePath)
             this.sample.type = this.name;
-            this.sample.loader = @CellTracks;
+            this.sample.loader = @CellTracksXp;
             [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100); 
             [this.sample.priorPath,~] = this.find_dir(samplePath,'dlm',3); 
             splitPath = regexp(samplePath, filesep, 'split');
@@ -48,8 +47,8 @@ classdef CellTracksXp < Loader
             this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
             this.processDLM();
-            this.sample.priorLocations = this.prior_locations_in_sample;
-            this.sample.frameOrder=this.calculate_frame_nr_order;
+            this.sample.priorLocations = this.prior_locations_in_sample();
+            this.sample.frameOrder=this.calculate_frame_nr_order();
             this.sample.results = Result();
             this.sample.overviewImage = [];
             this.sample.histogram = [];
@@ -215,19 +214,19 @@ classdef CellTracksXp < Loader
         end
         
         function locations=prior_locations_in_sample(this)
-            if isempty(this.xmlData)
-                this.processXML();
+            if isempty(this.dlmData)
+                this.processDLM();
             end
             index=[];
             %index=[1:this.xmlData.num_events];
-            if ~isempty(this.xmlData)
-                index=find(this.xmlData.score==1|this.xmlData.score==2);
+            if ~isempty(this.dlmData)
+                index=find(this.dlmData.score==true);
             end
             if isempty(index)
                 locations=[];
             else
                 for i=1:numel(index)
-                    locations(i,:)=this.event_to_pixels_and_frame(index(i));
+                    locations(i,:)=this.dlmData.priorEvents.locations(index(i),:);
                 end
             end
         end           
@@ -269,67 +268,47 @@ classdef CellTracksXp < Loader
                 %To few DLM files found
                 NoDLM=1;
             end
-                
-            % Load & process XML file
-            if NoDLM == 0
-                
-                
-                this.xmlData=xml2struct([this.sample.priorPath filesep XMLFile.name]);
-                this.xmlData.num_events = [];
-                this.xmlData.CellSearchIds = [];
-                this.xmlData.locations = [];
-                this.xmlData.score=[];
-                this.xmlData.frameNr=[];
-                this.xmlData.camYSize=1384;
-                this.xmlData.camXSize=1036;
-
-                this.xmlData.num_events = size(this.xmlData.events.record,1);
-                this.xmlData.CellSearchIds = zeros(this.xmlData.num_events,1);
-                this.xmlData.locations = zeros(this.xmlData.num_events,4);
-                this.xmlData.score=zeros(this.xmlData.num_events,1);
-                this.xmlData.frameNr=zeros(this.xmlData.num_events,1);
-                for i=1:this.xmlData.num_events
-                    this.xmlData.CellSearchIds(i)=str2num(this.xmlData.events.record(i).eventnum); %#ok<*ST2NM>
-                    this.xmlData.score(i)=str2num(this.xmlData.events.record(i).numselected);                    
-                    this.xmlData.frameNr(i)=str2num(this.xmlData.events.record(i).framenum);
-                    tempstr=this.xmlData.events.record(i).location;
-                    start=strfind(tempstr,'(');
-                    finish=strfind(tempstr,')');
-                    to=str2num(tempstr(start(1)+1:finish(1)-1));
-                    from=str2num(tempstr(start(2)+1:finish(2)-1));
-                    this.xmlData.locations(i,:)=[from,to];
-                end
-                this.sample.columns=str2num(this.xmlData.runs.record.numcols);
-                this.sample.rows=str2num(this.xmlData.runs.record.numrows);
-                this.xmlData.camYSize=str2num(this.xmlData.runs.record.camysize);
-                this.xmlData.camXSize=str2num(this.xmlData.runs.record.camxsize);
-            else
-                    %notify(this,'logMessage',logmessage(2,['unable to read xml']));
-                    %setting row and colums based on nrOfImages
-                    switch this.sample.nrOfFrames
-                        case 210 % 6*35 images
-                            this.sample.columns=35;
-                            this.sample.rows=6;
-                        case 180 % 5*36 images
-                            this.sample.columns=36;
-                            this.sample.rows=5;
-                        case 175 % 5*35 images
-                            this.sample.columns=35;
-                            this.sample.rows=5;
-                        case 170 % 5*34 images
-                            this.sample.columns=34;
-                            this.sample.rows=5;
-                        case 144 % 4*36 images
-                            this.sample.columns=36;
-                            this.sample.rows=4;
-                        case 140 % 4*35 images
-                            this.sample.columns=35;
-                            this.sample.rows=4;
-                    end
-                    
+            %setting row and colums based on nrOfImages
+            switch this.sample.nrOfFrames
+                case 210 % 6*35 images
+                    this.sample.columns=35;
+                    this.sample.rows=6;
+                case 180 % 5*36 images
+                    this.sample.columns=36;
+                    this.sample.rows=5;
+                case 175 % 5*35 images
+                    this.sample.columns=35;
+                    this.sample.rows=5;
+                case 170 % 5*34 images
+                    this.sample.columns=34;
+                    this.sample.rows=5;
+                case 144 % 4*36 images
+                    this.sample.columns=36;
+                    this.sample.rows=4;
+                case 140 % 4*35 images
+                    this.sample.columns=35;
+                    this.sample.rows=4;
             end
-            
+            % Load & process DLM file
+            if NoDLM == 0
+                this.dlmData=[];
+                this.dlmData.CellSearchIds = [];
+                this.dlmData.locations = [];
+                this.dlmData.score=[];
+                this.dlmData.frameNr=[];
+                this.dlmData.camYSize=1384;
+                this.dlmData.camXSize=1036;
 
+                this.dlmData.frame=this.read_pic_dlm([this.sample.priorPath filesep 'pic.dlm']);
+                this.dlmData.priorEvents=this.read_cells_dlm([this.sample.priorPath filesep 'cells.dlm'],this.dlmData.frame);
+                
+                this.dlmData.num_events = numel(this.dlmData.priorEvents.eventNr);
+                this.dlmData.CellSearchIds = this.dlmData.priorEvents.eventNr;
+                this.dlmData.score=this.dlmData.priorEvents.selected;
+                    
+                %notify(this,'logMessage',logmessage(2,['unable to read xml']));
+                
+            end
         end
        
         
@@ -339,33 +318,15 @@ classdef CellTracksXp < Loader
             switch row
                 case {1,3,5} 
                     col=(cols-(imgNr-row*this.sample.columns));
-                    coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
-                    coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row;  
+                    coordinates(1)=pixelCoordinates(1)+this.dlmData.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+this.dlmData.camYSize*row;  
                 otherwise
                     col=imgNr-1-row*cols;
-                    coordinates(1)=pixelCoordinates(1)+this.xmlData.camXSize*col;
-                    coordinates(2)=pixelCoordinates(2)+this.xmlData.camYSize*row; 
-            end
+                    coordinates(1)=pixelCoordinates(1)+this.dlmData.camXSize*col;
+                    coordinates(2)=pixelCoordinates(2)+this.dlmData.camYSize*row; 
+            end 
         end
 
-        function [locations]=event_to_pixels_and_frame(this,eventNr)
-            frameNr=this.xmlData.frameNr(eventNr);
-            row = ceil(frameNr/this.sample.columns) - 1;
-            cols = this.sample.columns;
-            switch row
-                case {1,3,5} 
-                    col=(cols-(frameNr-row*this.sample.columns));
-                otherwise
-                    col=frameNr-1-row*this.sample.columns;
-            end
-            xBottomLeft=max(this.xmlData.locations(eventNr,1)-this.xmlData.camXSize*col-10,1);
-            yBottomLeft=max(this.xmlData.locations(eventNr,2)-this.xmlData.camYSize*row-10,1);
-            xTopRight=min(this.xmlData.locations(eventNr,3)-this.xmlData.camXSize*col+10,this.xmlData.camXSize);
-            yTopRight=min(this.xmlData.locations(eventNr,4)-this.xmlData.camYSize*row+10,this.xmlData.camYSize);
-            xLocation=min(this.xmlData.locations(eventNr,3));
-            yLocation=min(this.xmlData.locations(eventNr,4));
-            locations=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight,xLocation,yLocation);
-        end
         
         function [row, col]=frameNr_to_row_col(this,imgNr)
             row = ceil(imgNr/this.sample.columns);
@@ -380,8 +341,54 @@ classdef CellTracksXp < Loader
             end
         end
         
+        function priorEvents=read_cells_dlm(this,path,frame)
+            fileId=fopen(path);
+            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','¦');
+            nrOfEvents=numel(temp{1});
+            priorEvents.eventNr=zeros(nrOfEvents,1);
+            priorEvents.selected=zeros(nrOfEvents,1);
+            priorEvents.frameNr=zeros(nrOfEvents,1);
+            priorEvents.xBottomLeft=zeros(nrOfEvents,1);
+            priorEvents.yBottomLeft=zeros(nrOfEvents,1);
+            priorEvents.xTopRight=zeros(nrOfEvents,1);
+            priorEvents.yTopRight=zeros(nrOfEvents,1);
+            priorEvents.xLocation=zeros(nrOfEvents,1);
+            priorEvents.yLocation=zeros(nrOfEvents,1);
+            priorEvents.xBottomLeft=temp{3}-temp{5}/2;
+            priorEvents.yBottomLeft=temp{4}-temp{6}/2;
+            priorEvents.xTopRight=temp{3}+temp{5}/2;
+            priorEvents.yTopRight=temp{4}+temp{6}/2;
+            for i=1:nrOfEvents
+                priorEvents.eventNr(i)=i;
+                priorEvents.selected(i)=strcmp(temp{11}(i),'Y');
+                priorEvents.frameNr(i)=frame.frameNr(find(strcmp(frame.timeStamp,temp{2}(i))));
+                coordinates=this.pixels_to_coordinates([priorEvents.xBottomLeft(i) priorEvents.yBottomLeft(i)],...
+                priorEvents.frameNr(i));
+                priorEvents.xLocation(i)=coordinates(1);
+                priorEvents.yLocation(i)=coordinates(2);
+            end
+            eventNr=priorEvents.eventNr;
+            frameNr=priorEvents.frameNr;
+            xBottomLeft=priorEvents.xBottomLeft;
+            yBottomLeft=priorEvents.yBottomLeft;
+            xTopRight=priorEvents.xTopRight;
+            yTopRight=priorEvents.yTopRight;
+            xLocation=priorEvents.xLocation;
+            yLocation=priorEvents.yLocation;
+            priorEvents.locations=table(eventNr,frameNr,...
+                xBottomLeft,yBottomLeft,xTopRight,yTopRight,xLocation,yLocation);
+            fclose(fileId);
+        end       
         
-        
+        function frame=read_pic_dlm(~,path)
+            fileId=fopen(path);
+            temp=textscan(fileId,'%s%s%s%f%s','delimiter','¦');
+            frame.timeStamp=temp{1};
+            frame.frameNr=temp{4};
+            frame.timeStamp=strrep(frame.timeStamp,'"','');
+            fclose(fileId);
+        end
+
     end
         
     methods(Static)
@@ -400,29 +407,6 @@ classdef CellTracksXp < Loader
                 bool = false;
             end    
 
-        end
-    end
-    methods(Static)%,Access=private)
-        function dlmData=read_exper_dlm(path)
-            fileId=fopen(path);
-            test=textscan(fileId,'%s','delimiter','¦');
-            
-        
-        end
-        function dlmData=read_pic_dlm(path)
-            fileId=fopen(path);
-            temp=textscan(fileId,'%s%s%s%f%s','delimiter','¦');
-            dlmData.frame.timestamp=temp{1};
-            dlmData.frame.frameNr=temp{4};
-            fclose(fileId)
-        end
-        
-        function dlmData=read_cells_dlm(path)
-            fileId=fopen(path);
-            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','¦');
-            dlmData.frame.timestamp=temp{1};
-            dlmData.frame.frameNr=temp{4};
-            fclose(fileId)
         end
     end
 end
