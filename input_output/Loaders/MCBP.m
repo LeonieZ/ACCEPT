@@ -145,10 +145,11 @@ classdef MCBP < Loader & IcyPluginData & CustomCsv
                 end
                this.sample.columns=str2num(parameters{29}(19:end));
                this.sample.rows=str2num(parameters{30}(19:end));
+               this.sample.pixelSize=str2num(parameters{15}(10:end));
                this.channelNames{1}=parameters{31}(11:end);
                this.channelNames{2}=parameters{32}(11:end);
                this.channelNames{3}=parameters{33}(11:end);
-               this.channelNames{4}=parameters{34}(11:end);
+               this.channelNames{4}=parameters{34}(11:end);          
                this.channelRemapping=[0,0,0,0];
                this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{1}))=1;
                this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{2}))=2;

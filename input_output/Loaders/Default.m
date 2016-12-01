@@ -38,7 +38,7 @@ classdef Default < Loader
         function new_sample_path(this,samplePath)
             this.sample=Sample();
             this.sample.type = this.name;
-            this.sample.loader = @MCBP;
+            this.sample.loader = @Default;
             splitPath = regexp(samplePath, filesep, 'split');
             if isempty(splitPath{end})
                 this.sample.id=splitPath{end-1};
