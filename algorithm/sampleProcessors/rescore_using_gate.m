@@ -17,7 +17,7 @@ classdef rescore_using_gate < SampleProcessor
         end
         
         
-        function outputStr=id(this) 
+        function outputStr = id(this) 
             [outputStr,this.previousProcessor] = this.choose_processor_to_rescore();
             this.gates=[];
         end
@@ -46,7 +46,7 @@ classdef rescore_using_gate < SampleProcessor
             
         end
         
-        function ask_for_gates(this);
+        function ask_for_gates(this)
             %create fileui popup to ask for file in which gate is stored
             gui_gates = gui_manual_gates();
             waitfor(gui_gates.fig_main,'UserData')

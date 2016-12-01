@@ -232,6 +232,8 @@ GuiSampleHandle.marker_size_control = uicontrol('Style','edit','Parent',GuiSampl
 
 % create data for scatter plot at the top
 GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[11.2 42.2 40.4 13.1]); %[left bottom width height]
+GuiSampleHandle.axesTop.YAxis.Exponent = 0;
+GuiSampleHandle.axesTop.XAxis.Exponent = 0;
 
 topFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 topFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_2_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
@@ -300,6 +302,8 @@ GuiSampleHandle.zoomOut1_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 
 %----
 % create data for scatter plot in the middle
 GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[11.2 23 40.4 13.1]); %[left bottom width height]
+GuiSampleHandle.axesMiddle.YAxis.Exponent = 0;
+GuiSampleHandle.axesMiddle.XAxis.Exponent = 0;
 middleFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 middleFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_1_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 
@@ -351,6 +355,8 @@ GuiSampleHandle.zoomOut2_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 
 %----
 % create scatter plot at the bottom
 GuiSampleHandle.axesBottom = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[11.2 3.7 40.4 13.1]); %[left bottom width height]
+GuiSampleHandle.axesBottom.YAxis.Exponent = 0;
+GuiSampleHandle.axesBottom.XAxis.Exponent = 0;
 bottomFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_4_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 if isempty(bottomFeatureIndex2)
@@ -442,6 +448,7 @@ function popupFeatureTopIndex1_Callback(hObject,~,~)
     set(GuiSampleHandle.axesScatterTop,'XData',newXData(index)); 
 %     xlim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]);  
     xlim(GuiSampleHandle.axesTop,[0,max(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1)),1)]);
+    GuiSampleHandle.axesTop.XAxis.Exponent = 0;
 end
 
 % --- Executes on selection in topFeatureIndex2 (y-axis)
@@ -457,6 +464,7 @@ function popupFeatureTopIndex2_Callback(hObject,~,~)
     set(GuiSampleHandle.axesScatterTop,'YData',newYData(index)); 
 %     ylim(GuiSampleHandle.axesTop,[0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);  
     ylim(GuiSampleHandle.axesTop,[0,max(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2)),1)]);
+    GuiSampleHandle.axesTop.YAxis.Exponent = 0;
 end
 
 % --- Executes on selection in middleFeatureIndex1 (x-axis)
@@ -472,6 +480,7 @@ function popupFeatureMiddleIndex1_Callback(hObject,~,~)
     set(GuiSampleHandle.axesScatterMiddle,'XData',newXData(index)); 
 %     xlim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]); 
     xlim(GuiSampleHandle.axesMiddle,[0,max(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1)),1)]);
+    GuiSampleHandle.axesMiddle.XAxis.Exponent = 0;
 end
 
 % --- Executes on selection in middleFeatureIndex2 (y-axis)
@@ -487,6 +496,7 @@ function popupFeatureMiddleIndex2_Callback(hObject,~,~)
     set(GuiSampleHandle.axesScatterMiddle,'YData',newYData(index)); 
 %     ylim(GuiSampleHandle.axesMiddle,[0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);  
     ylim(GuiSampleHandle.axesMiddle,[0,max(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2)),1)]); 
+    GuiSampleHandle.axesMiddle.YAxis.Exponent = 0;
 end
 
 % --- Executes on selection in bottomFeatureIndex1 (x-axis)
@@ -502,6 +512,7 @@ function popupFeatureBottomIndex1_Callback(hObject,~,~)
     set(GuiSampleHandle.axesScatterBottom,'XData',newXData(index)); 
 %     xlim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]);
     xlim(GuiSampleHandle.axesBottom,[0,max(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1)),1)]);
+    GuiSampleHandle.axesBottom.XAxis.Exponent = 0;
 end
 
 % --- Executes on selection in bottomFeatureIndex2 (y-axis)
@@ -517,6 +528,7 @@ function popupFeatureBottomIndex2_Callback(hObject,~,~)
     set(GuiSampleHandle.axesScatterBottom,'YData',newYData(index)); 
 %     ylim(GuiSampleHandle.axesBottom,[0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]); 
     ylim(GuiSampleHandle.axesBottom,[0,max(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2)),1)]); 
+    GuiSampleHandle.axesBottom.YAxis.Exponent = 0;
 end
 
 % --- Executes on slider movement.
