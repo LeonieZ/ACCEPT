@@ -13,27 +13,36 @@ defaultSampleProcessorNumber = 1;
 
 if(exist([installDir,filesep,'input_output',filesep,'LatestSettings.mat'], 'file') == 2)
    load([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor')
+   proc = find(cellfun(@(s) strcmp(processor, s.name), base.availableSampleProcessors));
+   if ~isempty(proc)
+       currentProcessorIndex = proc;
+       base.sampleProcessor = base.availableSampleProcessors{proc};
+       base.sampleList.sampleProcessorId = base.sampleProcessor.id();
+   else
+       currentProcessorIndex = defaultSampleProcessorNumber;
+       base.sampleProcessor = base.availableSampleProcessors{defaultSampleProcessorNumber};
+       base.sampleList.sampleProcessorId=base.sampleProcessor.id();    
+   end
    if exist(inputPath, 'dir')
         base.sampleList.inputPath = inputPath;
    end
    if exist(resultPath, 'dir')
         base.sampleList.resultPath = resultPath;
    end
-
-   proc = find(cellfun(@(s) strcmp(processor, s.name), base.availableSampleProcessors));
-   if ~isempty(proc)
-       base.sampleProcessor = base.availableSampleProcessors{proc};
-       base.sampleList.sampleProcessorId = base.sampleProcessor.id();
-   end
+else
+    currentProcessorIndex = defaultSampleProcessorNumber;
+    base.sampleProcessor = base.availableSampleProcessors{defaultSampleProcessorNumber};
+    base.sampleList.sampleProcessorId=base.sampleProcessor.id();
 end
 
 % get current sampleProcessor number from base for visualization
-currentProcessorIndex=find(cellfun(@(s) strcmp(base.sampleProcessor.name, s.name), base.availableSampleProcessors));
-if isempty(currentProcessorIndex)
-    currentProcessorIndex = defaultSampleProcessorNumber;
-    base.sampleProcessor = base.availableSampleProcessors{1};
-    base.sampleList.sampleProcessorId=base.sampleProcessor.id();
-end
+% currentProcessorIndex=find(cellfun(@(s) strcmp(base.sampleProcessor.name, s.name), base.availableSampleProcessors));
+% if isempty(currentProcessorIndex)
+%     currentProcessorIndex = defaultSampleProcessorNumber;
+%     base.sampleProcessor = base.availableSampleProcessors{defaultSampleProcessorNumber};
+%     base.sampleList.sampleProcessorId=base.sampleProcessor.id();
+% end
+
 uni_logo = imread('logoUT.png'); 
 cancerid_logo = imread('logoCancerID.png');
 % subtitle = imread('title2.tif'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
