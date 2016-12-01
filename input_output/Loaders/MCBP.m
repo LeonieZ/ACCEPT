@@ -1,4 +1,4 @@
-classdef MCBP < Loader & IcyPluginData
+classdef MCBP < Loader & IcyPluginData & CustomCsv
     %MCBP Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -48,6 +48,10 @@ classdef MCBP < Loader & IcyPluginData
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
+            customChannelsUsed=this.look_for_custom_channels(samplePath);
+            if ~isempty(customChannelsUsed)
+                this.channelsUsed=customChannelsUsed;
+            end
             this.load_scan_info(samplePath);
             this.preload_tiff_headers(samplePath);
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
