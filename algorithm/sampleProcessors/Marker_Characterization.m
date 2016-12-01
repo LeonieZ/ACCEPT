@@ -27,7 +27,7 @@ classdef Marker_Characterization < SampleProcessor
             end  
             
             if ~isempty(inputSample.results.features)
-                inputSample.results.features(find(inputSample.results.features.ch_3_Area==0),:) = [];
+                inputSample.results.features(find(inputSample.results.features.ch_3_Size==0),:) = [];
                 notNec = find(~ismember(linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)),inputSample.results.features{:,1}));
                 for i = 1:size(notNec,2)
                     inputSample.results.thumbnail_images{1,notNec(i)} = [];
@@ -44,7 +44,7 @@ classdef Marker_Characterization < SampleProcessor
         function pipeline = make_sample_pipeline(this)
             pipeline = cell(0);
             sol = SampleOverviewLoading();
-            fc = FeatureCollection(this.dataframeProcessor,IO,1);
+            fc = FeatureCollection(this.dataframeProcessor,1);
             pipeline{1} = sol;
             pipeline{2} = fc;
         end

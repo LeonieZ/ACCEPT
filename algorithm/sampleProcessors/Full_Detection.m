@@ -45,7 +45,7 @@ classdef Full_Detection < SampleProcessor
             pipeline = cell(0);
             sol = SampleOverviewLoading();
             md = MaskDetermination();
-            fc = FeatureCollection(this.dataframeProcessor,IO);
+            fc = FeatureCollection(this.dataframeProcessor);
             pipeline{1} = sol;
             pipeline{2} = md;
             pipeline{3} = fc;
