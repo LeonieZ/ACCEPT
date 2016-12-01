@@ -360,7 +360,7 @@ GuiSampleHandle.axesBottom.XAxis.Exponent = 0;
 bottomFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_4_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
 if isempty(bottomFeatureIndex2)
-    bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_3_Area', s)), sampleFeatures.Properties.VariableNames));
+    bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_3_Size', s)), sampleFeatures.Properties.VariableNames));
 end
 
 XData = sampleFeatures.(bottomFeatureIndex1);
