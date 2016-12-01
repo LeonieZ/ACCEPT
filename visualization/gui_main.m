@@ -2,17 +2,35 @@ function gui = gui_main(base,installDir)
 
 % global gui
 
-tasks = [];
 set(0,'units','characters');  
 screensz = get(0,'screensize');
 
 % Update chooseButton for tasks via available sampleProcessors
 gui.tasks_raw = cellfun(@(s) s.name,base.availableSampleProcessors,'UniformOutput',false);
 
+% select DEFAULT sampleProcessor number (in alphabetical order) for visualization
+defaultSampleProcessorNumber = 1;
+
+if(exist([installDir,filesep,'input_output',filesep,'LatestSettings.mat'], 'file') == 2)
+   load([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor')
+   if exist(inputPath, 'dir')
+        base.sampleList.inputPath = inputPath;
+   end
+   if exist(resultPath, 'dir')
+        base.sampleList.resultPath = resultPath;
+   end
+
+   proc = find(cellfun(@(s) strcmp(processor, s.name), base.availableSampleProcessors));
+   if ~isempty(proc)
+       base.sampleProcessor = base.availableSampleProcessors{proc};
+       base.sampleList.sampleProcessorId = base.sampleProcessor.id();
+   end
+end
+
 % get current sampleProcessor number from base for visualization
 currentProcessorIndex=find(cellfun(@(s) strcmp(base.sampleProcessor.name, s.name), base.availableSampleProcessors));
 if isempty(currentProcessorIndex)
-    currentProcessorIndex = 1;
+    currentProcessorIndex = defaultSampleProcessorNumber;
     base.sampleProcessor = base.availableSampleProcessors{1};
     base.sampleList.sampleProcessorId=base.sampleProcessor.id();
 end

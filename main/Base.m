@@ -47,28 +47,6 @@ classdef Base < handle
                 this.pool=parpool;    
             end
             
-            
-            % try to load previous settings
-            file = which('ACCEPT.m');
-            installDir = fileparts(file);
-            if(exist([installDir,filesep,'input_output',filesep,'LatestSettings.mat'], 'file') == 2)
-                load([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor')
-                if exist(inputPath, 'dir')
-                    inputString = inputPath;
-                    this.sampleList.inputPath = inputPath;
-                end
-                if exist(resultPath, 'dir')
-                    resultString = resultPath;
-                    this.sampleList.resultPath = resultPath;
-                end
-
-                proc = find(cellfun(@(s) strcmp(processor, s.name), this.availableSampleProcessors));
-                if ~isempty(proc)
-                    this.sampleProcessor = this.availableSampleProcessors{proc};
-                    this.sampleList.sampleProcessorId = this.sampleProcessor.id();
-                end
-            end
-            
             % adding log listeners
             addlistener(this.sampleList,'logMessage',@(src,event)this.logger.entry(src,event));
             
@@ -80,21 +58,25 @@ classdef Base < handle
             this.busy=true;
             nbrSamples = size(this.sampleList.toBeProcessed,2);
             this.nrProcessed = 0;
-            if ~isempty(find(this.sampleList.isProcessed(find(this.sampleList.toBeProcessed)))) %#ok<EFIND,FNDSB>
-                set(0,'defaultUicontrolFontSize', 14)
-                choice = questdlg('Some selected samples are already processed. Do you want to process them again?', ...
-                                'Processed Sample', 'Yes','No','No');
-                set(0,'defaultUicontrolFontSize', 12)
-            else
-                choice = 'No';
-            end
-            if strcmp(choice,'No')
-                this.sampleList.toBeProcessed(this.sampleList.isProcessed)= false
+            if ~isa(this.sampleProcessor,'rescore_using_gate')
+                if ~isempty(find(this.sampleList.isProcessed(find(this.sampleList.toBeProcessed))))  %#ok<EFIND,FNDSB>
+                    set(0,'defaultUicontrolFontSize', 14)
+                    choice = questdlg('Some selected samples are already processed. Do you want to process them again?', ...
+                                    'Processed Sample', 'Yes','No','No');
+                    set(0,'defaultUicontrolFontSize', 12)
+                else
+                    choice = 'No';
+                end
+                if strcmp(choice,'No')
+                    this.sampleList.toBeProcessed(this.sampleList.isProcessed)= false;
+                end
             end
             for k=1:nbrSamples
                 if this.sampleList.toBeProcessed(k)
                     sample = IO.load_sample(this.sampleList,k);
-                    % sample.results=Result(); 
+                    if ~isa(this.sampleProcessor,'rescore_using_gate')
+                        sample.results=Result(); 
+                    end
                     this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
                     this.sampleProcessor.run(sample);
                     IO.save_sample(sample);
