@@ -29,6 +29,10 @@ classdef Dataframe < handle
         channelEdgeRemoval = [];
     end
     
+    properties (SetAccess={?Loader})
+        pixelSize = 1;
+    end
+    
     properties(Access = public)
         adjacentFrames = [];
         preProcessedImage = [];

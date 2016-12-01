@@ -61,6 +61,7 @@ classdef CellTracks < Loader
             this.does_frame_have_edge(frameNr),...
             this.channelEdgeRemoval,...
             this.read_im_and_scale(frameNr,varargin{:}));
+            dataFrame.pixelSize = this.sample.pixelSize;
             if ~isempty(this.sample.mask)
                 [row, col] = this.frameNr_to_row_col(frameNr);
                 [size_x_mask, size_y_mask] = size(this.sample.mask);

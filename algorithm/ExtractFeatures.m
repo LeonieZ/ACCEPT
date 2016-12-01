@@ -25,8 +25,8 @@ classdef ExtractFeatures < DataframeProcessorObject
                         StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
                         Mass = arrayfun(@(x) sum(x.PixelValues), MsrTemp);
                         P2A = arrayfun(@(x) x.Perimeter^2/(4*pi*x.Area), MsrTemp);
-
-                        MsrTemp=rmfield(MsrTemp,'PixelValues');
+                        Size = arrayfun(@(x) x.Area *(inputFrame.pixelSize)^2 , MsrTemp);
+                        MsrTemp=rmfield(MsrTemp,{'PixelValues','Area'});
 
                         names = strcat('ch_',num2str(ch),'_',fieldnames(MsrTemp));
                         tmpTable = struct2table(MsrTemp);
@@ -34,7 +34,8 @@ classdef ExtractFeatures < DataframeProcessorObject
                         tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat('ch_',num2str(ch),'_StandardDeviation')});
                         tmpMass = array2table(Mass,'VariableNames',{strcat('ch_',num2str(ch),'_Mass')});
                         tmpP2A = array2table(P2A,'VariableNames',{strcat('ch_',num2str(ch),'_P2A')});
-                        returnFrame.features = [returnFrame.features tmpTable tmpStandardDeviation tmpMass tmpP2A];
+                        tmpSize = array2table(Size,'VariableNames',{strcat('ch_',num2str(ch),'_Size')});
+                        returnFrame.features = [returnFrame.features tmpTable tmpSize tmpStandardDeviation tmpMass tmpP2A];
                     end
                               
                     %% VERY TIME CONSUMING DUE TO COMPLEXITY (not needed?)
@@ -49,7 +50,16 @@ classdef ExtractFeatures < DataframeProcessorObject
 %                             returnFrame.features = [returnFrame.features tmpTbl];
 %                         end
 %                     end
-                    
+                    %% smaller variant
+                    for ch_two = 1:2:3
+                        tmpTbl = table();
+                        for i = 1:this.nrObjects
+                            tmpImg = returnFrame.labelImage == i;
+                            tmpTbl = [tmpTbl; array2table(sum(sum(tmpImg(:,:,2) & tmpImg(:,:,ch_two)))/sum(sum(tmpImg(:,:,2))),...
+                                'VariableNames',{strcat('Overlay_ch_',num2str(2),'_ch_',num2str(ch_two))})]; 
+                        end
+                        returnFrame.features = [returnFrame.features tmpTbl];
+                    end
                 end
             elseif isa(inputFrame,'double')
                 if mod(size(inputFrame,3),2) ~= 0
