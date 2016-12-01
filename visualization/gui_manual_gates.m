@@ -5,7 +5,7 @@ screensz = get(0,'screensize');
 
 nrofGates = 4;
 
-feature_list = {'','Area', 'Eccentricity', 'Perimeter', 'MeanIntensity', 'MaxIntensity', 'StandardDeviation', 'Mass', 'P2A'};
+feature_list = {'','Size', 'Eccentricity', 'Perimeter', 'MeanIntensity', 'MaxIntensity', 'StandardDeviation', 'Mass', 'P2A', 'Overlay CD45','Overlay CK'};
 
 gui.fig_main = figure('Units','characters','Position',[(screensz(3)-95)/2 (screensz(4)-20)/2 95 23],'Name','ACCEPT - Set Manual Gates','MenuBar','none',...
     'NumberTitle','off','Color', [1 1 1],'Resize','off','Visible','on');
@@ -106,6 +106,14 @@ function gates = exportgates(~,~)
         if (~isempty(gui.channel_nr(i).String) && gui.feature_list(i).Value ~= 1 && ...
                 gui.largerThan(i).Value ~= gui.smallerThan(i).Value && ~isempty(gui.value(i).String))
             gates{i,1} = ['ch_' regexprep(gui.channel_nr(i).String,' ','') '_' feature_list{gui.feature_list(i).Value}];
+            if strcmp(feature_list{gui.feature_list(i).Value},'Overlay CD45') || strcmp(feature_list{gui.feature_list(i).Value},'Overlay CK')
+                if str2double(gui.channel_nr(i).String) == 2
+                    gates{i,1} = strrep(gates{i,1}, 'Overlay CD45', 'Overlay_ch_1');
+                    gates{i,1} = strrep(gates{i,1}, 'Overlay CK', 'Overlay_ch_3');
+                else
+                    gates{i,1} = [];
+                end
+            end
             if gui.largerThan(i).Value == 1 && gui.smallerThan(i).Value == 0
                 gates{i,2} = 'lower';
             elseif gui.largerThan(i).Value == 0 && gui.smallerThan(i).Value == 1

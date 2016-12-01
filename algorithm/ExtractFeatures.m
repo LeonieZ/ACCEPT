@@ -56,7 +56,7 @@ classdef ExtractFeatures < DataframeProcessorObject
                         for i = 1:this.nrObjects
                             tmpImg = returnFrame.labelImage == i;
                             tmpTbl = [tmpTbl; array2table(sum(sum(tmpImg(:,:,2) & tmpImg(:,:,ch_two)))/sum(sum(tmpImg(:,:,2))),...
-                                'VariableNames',{strcat('Overlay_ch_',num2str(2),'_ch_',num2str(ch_two))})]; 
+                                'VariableNames',{strcat('ch_', num2str(2),'_Overlay_ch_',num2str(ch_two))})]; 
                         end
                         returnFrame.features = [returnFrame.features tmpTbl];
                     end

@@ -1037,7 +1037,10 @@ function load_gates(handle,~)
     set(handle,'backg',color)
 end
 
-function design_manual_classifier(~,~)
+function design_manual_classifier(handle,~)
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5])
+    drawnow;
     mc = ManualClassification(cell(0),'ManualGates');
 
     gui_gates = gui_manual_gates();
@@ -1067,6 +1070,7 @@ function design_manual_classifier(~,~)
     num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
     val = round(get(GuiSampleHandle.slider, 'Value'));
     plot_thumbnails(-val); 
+    set(handle,'backg',color)
 end
 
 function export_thumbs(handle,~)
