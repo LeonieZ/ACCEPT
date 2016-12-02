@@ -41,7 +41,7 @@
         else
             base.sampleList.resultPath = parser.Results.outputFolder;
         end
-        base.io.update_sample_list(base.sampleList)
+        IO.update_sample_list(base.sampleList)
         if isempty(parser.Results.sampleName)
             base.sampleList.toBeProcessed = ~base.sampleList.isProcessed;
         else

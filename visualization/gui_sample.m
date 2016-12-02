@@ -976,8 +976,8 @@ function export_gates(handle,~)
     end
     if ~isempty(name)
         currentSample.results.classification = [currentSample.results.classification array2table(selectedCells,'VariableNames',{name{1}})];
-        base.io.save_sample(currentSample);
-        base.io.save_results_as_xls(currentSample)
+        IO.save_sample(currentSample);
+        IO.save_results_as_xls(currentSample)
     end
     set(0,'defaultUicontrolFontSize', 12)
     set(handle,'backg',color)
@@ -1077,7 +1077,7 @@ function export_thumbs(handle,~)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
-    base.io.save_thumbnail(currentSample)
+    IO.save_thumbnail(currentSample)
     set(handle,'backg',color)
 end
 
