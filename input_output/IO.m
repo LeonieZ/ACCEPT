@@ -56,7 +56,7 @@ classdef IO < handle
             % loads a sample from a sampleList. First checks if this sample
             % has been saved before. If not we look up the loader handle
             % and construct the sample. 
-            if exist(IO.saved_sample_path(sampleList,sampleNr),'file');
+            if exist(IO.saved_sample_path(sampleList,sampleNr),'file')
                 load(IO.saved_sample_path(sampleList,sampleNr));
                 currentSample.savePath=sampleList.save_path;
                 outputSample = currentSample;
@@ -83,9 +83,9 @@ classdef IO < handle
         end
         
         function save_results_as_xls(currentSample)
-            %export results to a csv file. 
+            %export results to a xls/csv file. 
              tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
-             writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.csv']);
+             writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xls']);
         end
         
         %% DataFrame handeling functions
