@@ -45,7 +45,7 @@ classdef IO < handle
             %the first one on the list. 
             loaderFound=false;
             i=0;
-            while ~loaderFound
+            while ~loaderFound && i < size(loaderTypesAvailable,2)
                 i=i+1; 
                 loaderFound = loaderTypesAvailable{i}.can_load_this_folder(samplePath);
             end
