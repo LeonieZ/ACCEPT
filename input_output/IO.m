@@ -85,7 +85,7 @@ classdef IO < handle
         function save_results_as_xls(currentSample)
             %export results to a xls/csv file. 
              tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
-             writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xls']);
+             writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xlsx']);
         end
         
         %% DataFrame handeling functions
