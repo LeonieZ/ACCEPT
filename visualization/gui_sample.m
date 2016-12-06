@@ -206,7 +206,7 @@ if  nrUsedThumbs>5
     set(GuiSampleHandle.slider,'Max',-3,'Min',-nrUsedThumbs+2,...
         'Value',-3,'SliderStep', [1, 1] / (nrUsedThumbs - 5));
 else
-    set(GuiSampleHandle.slider,'enable','off');
+    set(GuiSampleHandle.slider,'Max',-3,'Min',-3,'enable','off','Value',-3);
 end
 
 GuiSampleHandle.sortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
@@ -244,6 +244,9 @@ YData = sampleFeatures.(topFeatureIndex2);
 index = find(~isnan(XData+YData+selectedCells));
 if mod(length(index),2) == 1
     index(end+1) = index(end);
+end
+if length(index) == 2
+    index(end+1:end+2) = index(1:2);
 end
 index = reshape(index,2,[]);
 
@@ -314,6 +317,9 @@ index = find(~isnan(XData+YData+selectedCells));
 if mod(length(index),2) == 1
     index(end+1) = index(end);
 end
+if length(index) == 2
+    index(end+1:end+2) = index(1:2);
+end
 index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterMiddle = mesh(GuiSampleHandle.axesMiddle,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
@@ -369,6 +375,9 @@ YData = sampleFeatures.(bottomFeatureIndex2);
 index = find(~isnan(XData+YData+selectedCells));
 if mod(length(index),2) == 1
     index(end+1) = index(end);
+end
+if length(index) == 2
+    index(end+1:end+2) = index(1:2);
 end
 index = reshape(index,2,[]);
 
@@ -443,6 +452,9 @@ function popupFeatureTopIndex1_Callback(hObject,~,~)
     if mod(length(index),2) == 1
         index(end+1) = index(end);
     end
+    if length(index) == 2
+        index(end+1:end+2) = index(1:2);
+    end
     index = reshape(index,2,[]);
     zoom_factor_x(1) = 1.1;
     set(GuiSampleHandle.axesScatterTop,'XData',newXData(index)); 
@@ -458,6 +470,9 @@ function popupFeatureTopIndex2_Callback(hObject,~,~)
     index = find(~isnan(newYData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
+    end
+    if length(index) == 2
+        index(end+1:end+2) = index(1:2);
     end
     index = reshape(index,2,[]);
     zoom_factor_y(1) = 1.1;
@@ -475,6 +490,9 @@ function popupFeatureMiddleIndex1_Callback(hObject,~,~)
     if mod(length(index),2) == 1
         index(end+1) = index(end);
     end
+    if length(index) == 2
+        index(end+1:end+2) = index(1:2);
+    end
     index = reshape(index,2,[]);
     zoom_factor_x(2) = 1.1;
     set(GuiSampleHandle.axesScatterMiddle,'XData',newXData(index)); 
@@ -490,6 +508,9 @@ function popupFeatureMiddleIndex2_Callback(hObject,~,~)
     index = find(~isnan(newYData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
+    end
+    if length(index) == 2
+        index(end+1:end+2) = index(1:2);
     end
     index = reshape(index,2,[]);
     zoom_factor_y(2) = 1.1;
@@ -507,6 +528,9 @@ function popupFeatureBottomIndex1_Callback(hObject,~,~)
     if mod(length(index),2) == 1
         index(end+1) = index(end);
     end
+    if length(index) == 2
+        index(end+1:end+2) = index(1:2);
+    end
     index = reshape(index,2,[]);
     zoom_factor_x(3) = 1.1;
     set(GuiSampleHandle.axesScatterBottom,'XData',newXData(index)); 
@@ -522,6 +546,9 @@ function popupFeatureBottomIndex2_Callback(hObject,~,~)
     index = find(~isnan(newYData));
     if mod(length(index),2) == 1
         index(end+1) = index(end);
+    end
+    if length(index) == 2
+        index(end+1:end+2) = index(1:2);
     end
     index = reshape(index,2,[]);
     zoom_factor_y(3) = 1.1;
@@ -671,6 +698,9 @@ function openSpecificImage(~,~,row)
 %                 if mod(length(index),2) == 1
 %                     index(end+1) = index(end);
 %                 end
+%                 if length(index) == 2
+%                     index(end+1:end+2) = index(1:2);
+%                 end
 %                 index = reshape(index,2,[]);
 % 
 %                 GuiSampleHandle.axesScatterTop = mesh(GuiSampleHandle.axesTop,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
@@ -749,7 +779,8 @@ function gate_scatter(handle,~,plotnr)
     pos = getPosition(h);
     [in,~] = inpolygon(xtest,ytest,pos(:,1),pos(:,2));
     selectedCells(in) = 1;
-    selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
+%     selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
+    selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(unique(index(in))))) = 1;
     % update all scatter plots with new manual clustering
     set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
@@ -769,13 +800,13 @@ function gate_scatter(handle,~,plotnr)
     if isequal(currPos,linspace(1,nrUsedThumbs,nrUsedThumbs))
         selectedFrames_nr = find(selectedFrames);
         [~, ii] = min(abs(-selectedFrames_nr-val));       
-        closestValue = selectedFrames_nr(ii(1)); 
+        closestValue = max(3,min(selectedFrames_nr(ii(1)),nrUsedThumbs-2)); 
         plot_thumbnails(closestValue);
         set(GuiSampleHandle.slider, 'Value',-closestValue);
     else
         selectedFrames_nr = find(ismember(currPos,find(selectedFrames)));
         [~, ii] = min(abs(-selectedFrames_nr-val));        
-        closestValue = selectedFrames_nr(ii(1)); 
+        closestValue = max(3,min(selectedFrames_nr(ii(1)),nrUsedThumbs-2)); 
         plot_thumbnails(closestValue);
         set(GuiSampleHandle.slider, 'Value',-closestValue);
     end
@@ -841,8 +872,9 @@ function select_event(handle,~,plotnr)
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
             num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update view to selected thumbnail
-        plot_thumbnails(find(currPos == find(usedThumbs == sampleFeatures.ThumbNr(in))));
-        set(GuiSampleHandle.slider, 'Value',-find(currPos == find(usedThumbs == sampleFeatures.ThumbNr(in))));
+        newPos = max(3,min(find(currPos == find(usedThumbs == sampleFeatures.ThumbNr(in))),nrUsedThumbs-2));
+        plot_thumbnails(newPos);
+        set(GuiSampleHandle.slider, 'Value',-newPos);
     else
         selectedCells(in) = 0;
         if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(logical(selectedCells)) == sampleFeatures.ThumbNr(in), 1))
