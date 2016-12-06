@@ -52,12 +52,19 @@ classdef IO < handle
             loaderHandle=loaderTypesAvailable{i};
         end
         
-        function outputSample = load_sample(sampleList,sampleNr)
+        function outputSample = load_sample(sampleList,sampleNr,forProc)
             % loads a sample from a sampleList. First checks if this sample
             % has been saved before. If not we look up the loader handle
             % and construct the sample. 
+            if nargin < 3
+                forProc = 1;
+            end
             if exist(IO.saved_sample_path(sampleList,sampleNr),'file')
                 load(IO.saved_sample_path(sampleList,sampleNr));
+                if forProc == 1
+                    loader = currentSample.loader();
+                    loader.update_prior_infos(currentSample,[sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
+                end
                 currentSample.savePath=sampleList.save_path;
                 outputSample = currentSample;
             else
@@ -85,7 +92,9 @@ classdef IO < handle
         function save_results_as_xls(currentSample)
             %export results to a xls/csv file. 
              tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
-             writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xlsx']);
+             if size(tempTable,1) > 0
+                 writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xlsx']);
+             end
         end
         
         %% DataFrame handeling functions

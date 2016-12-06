@@ -16,6 +16,9 @@ classdef DepArray < Loader
         
         end
         
+        function update_prior_infos(this,currentSample,samplePath)
+        end
+        
         function dataFrame = load_data_frame(this,frameNr)
         
         end

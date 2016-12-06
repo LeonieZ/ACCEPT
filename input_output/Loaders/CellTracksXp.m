@@ -54,6 +54,15 @@ classdef CellTracksXp < Loader
             this.sample.histogram = [];
             this.sample.mask = [];
         end
+        
+        function update_prior_infos(this,currentSample,samplePath)
+            this.sample = currentSample;
+            if ~exist(currentSample.imagePath,'dir')
+                [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100); 
+                [this.sample.priorPath,~] = this.find_dir(samplePath,'xml',1);
+                this.preload_tiff_headers();         
+            end
+        end
    
         function dataFrame = load_data_frame(this,frameNr,varargin)
             dataFrame = Dataframe(frameNr,...

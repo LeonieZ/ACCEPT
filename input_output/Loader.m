@@ -20,6 +20,7 @@ classdef (Abstract) Loader < handle
     
     methods(Abstract)
         new_sample_path(this,samplePath)
+        update_prior_infos(this,currentSample,samplePath)
         dataFrame = load_data_frame(this,frameNr)
 %         dataFrame = load_thumb_frame(this,frameNr,option)
         frameOrder = calculate_frame_nr_order(this)

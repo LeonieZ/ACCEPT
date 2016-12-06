@@ -52,7 +52,15 @@ classdef VyCAP < Loader & IcyPluginData
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
             this.calculate_frame_nr_order();
             keyboard
-
+        end
+        
+        function update_prior_infos(this,currentSample,samplePath)
+            this.sample = currentSample;
+            if ~exist(currentSample.imagePath,'dir')
+                this.load_scan_info(samplePath);
+                this.preload_tiff_headers(samplePath);         
+            end
+            this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
         end
         
         function dataFrame = load_data_frame(this,frameNr,varargin)
