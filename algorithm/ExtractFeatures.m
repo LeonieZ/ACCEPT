@@ -22,7 +22,7 @@ classdef ExtractFeatures < DataframeProcessorObject
                         %fill structure so tables can be concatenated.
                         MsrTemp=fillStruct(this, MsrTemp);
 
-                        StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
+                        StandardDeviation = arrayfun(@(x) std2(x.PixelValues)/x.MeanIntensity, MsrTemp);
                         Mass = arrayfun(@(x) sum(x.PixelValues), MsrTemp);
                         P2A = arrayfun(@(x) x.Perimeter^2/(4*pi*x.Area), MsrTemp);
                         Size = arrayfun(@(x) x.Area *(inputFrame.pixelSize)^2 , MsrTemp);
