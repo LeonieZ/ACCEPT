@@ -50,8 +50,10 @@ classdef rescore_using_gate < SampleProcessor
             %create fileui popup to ask for file in which gate is stored
             gui_gates = gui_manual_gates();
             waitfor(gui_gates.fig_main,'UserData')
-            this.gates = get(gui_gates.fig_main,'UserData');
+            res = get(gui_gates.fig_main,'UserData');
+            this.gates = res.gates;
             this.pipeline{1}.gates=this.gates;
+            this.pipeline{1}.name = res.name;
         end
     end
     

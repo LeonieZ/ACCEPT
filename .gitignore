@@ -11,3 +11,4 @@ data/results/*
 *.prj
 
 input_output/LatestSettings.mat
+misc/saved_gates/*.mat

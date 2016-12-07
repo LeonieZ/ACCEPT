@@ -5,7 +5,7 @@ set(0,'units','characters');
 screensz = get(0,'screensize');
 GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-225)/2 (screensz(4)-65)/2 225 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off','CloseRequestFcn',@close_fcn);
-
+gate = struct('gates',cell(0),'name','');
 %% Set maximum intensity
 if strcmp(currentSample.dataTypeOriginalImage,'uint8')
     maxi = 255;
@@ -421,7 +421,7 @@ GuiSampleHandle.zoomOut3_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 
 %% Create export/load buttons----
 % export gates as manual classification
 GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Export Selection','FontUnits', 'normalized',...
-            'FontSize',.5,'Position', [5.1 61.2 27.5 2.6],'Callback', {@export_gates}); 
+            'FontSize',.5,'Position', [5.1 61.2 27.5 2.6],'Callback', {@export_selection}); 
         
 % design manual classification
 GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Multiple Gates','FontUnits', 'normalized',...
@@ -429,7 +429,7 @@ GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','charac
         
 % load gates as manual classification
 GuiSampleHandle.load_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Load Selection','FontUnits', 'normalized',...
-            'FontSize',.5,'Position', [33 61.2 26.4 2.6],'Callback', {@load_gates}); 
+            'FontSize',.5,'Position', [33 61.2 26.4 2.6],'Callback', {@load_selection}); 
         
 % export thumbnails
 GuiSampleHandle.export_thumbs = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Export Thumbnails','FontUnits', 'normalized',...
@@ -814,6 +814,7 @@ function gate_scatter(handle,~,plotnr)
 end
 
 function clear_selection(~,~)
+    gate = struct('gates',cell(0),'name','');
     selectedCells = zeros(size(selectedCells));
     selectedFrames = false(size(selectedFrames));
     colormap([0 0 1]);
@@ -982,17 +983,22 @@ function change_marker_size(~,~)
     GuiSampleHandle.axesScatterBottom.MarkerSize = marker_size;
 end
 
-function export_gates(handle,~)
+function export_selection(handle,~)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
     set(0,'defaultUicontrolFontSize', 14)
     exist = true;
-    name = inputdlg({''},...
-        'Please enter a name for your manual selection.', [1,75],{''},'on');
+    if isempty(gate)
+        default_name = '';
+    else
+        default_name = gate.name;
+    end
+    sel_name = inputdlg({''},...
+        'Please enter a name for your manual selection.', [1,75],{default_name},'on');
     classes = currentSample.results.classification.Properties.VariableNames;
     while exist 
-        [exist,loc] = ismember(name,classes);
+        [exist,loc] = ismember(sel_name,classes);
         if exist
             choice = questdlg('There exists a classification with this name. Do you want to overwrite it?', ...
                                     'Error', 'Yes','No','No');
@@ -1001,13 +1007,13 @@ function export_gates(handle,~)
                     currentSample.results.classification(:,loc) = [];
                     exist = false;
                 case 'No'
-                    name = inputdlg({''},...
-                        'Please enter a new name for your manual selection.', [1,75],{''},'on');            
+                    sel_name = inputdlg({''},...
+                        'Please enter a new name for your manual selection.', [1,75],{default_name},'on');            
             end
         end
     end
-    if ~isempty(name)
-        currentSample.results.classification = [currentSample.results.classification array2table(selectedCells,'VariableNames',{name{1}})];
+    if ~isempty(sel_name)
+        currentSample.results.classification = [currentSample.results.classification array2table(selectedCells,'VariableNames',{sel_name{1}})];
         IO.save_sample(currentSample);
         IO.save_results_as_xls(currentSample)
     end
@@ -1015,7 +1021,7 @@ function export_gates(handle,~)
     set(handle,'backg',color)
 end
 
-function load_gates(handle,~)
+function load_selection(handle,~)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
@@ -1077,7 +1083,14 @@ function design_manual_classifier(handle,~)
 
     gui_gates = gui_manual_gates();
     waitfor(gui_gates.fig_main,'UserData')
-    mc.gates = get(gui_gates.fig_main,'UserData');
+    try
+        gate = get(gui_gates.fig_main,'UserData');
+    catch 
+        set(handle,'backg',color);
+        return
+    end
+    mc.gates = gate.gates;
+    mc.name = gate.name;
     delete(gui_gates.fig_main)
     clear('gui_gates');
 

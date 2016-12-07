@@ -136,7 +136,9 @@ function process(handle,~,base)
     if isa(base.sampleProcessor,'Candidate_Selection') && isempty(base.sampleProcessor.pipeline{4}.gates)
         gui_gates = gui_manual_gates();
         waitfor(gui_gates.fig_main,'UserData')
-        base.sampleProcessor.pipeline{4}.gates = get(gui_gates.fig_main,'UserData');
+        res = get(gui_gates.fig_main,'UserData');
+        base.sampleProcessor.pipeline{4}.gates = res.gates;
+        base.sampleProcessor.pipeline{4}.name = res.name;
         delete(gui_gates.fig_main)
         clear('gui_gates');
     end
