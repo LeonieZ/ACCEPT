@@ -36,7 +36,7 @@ classdef ManualClassification < SampleProcessorObject
                     return
                 end
 
-                returnSample.results.classification = gate_objects(this,inputSample,this.gates);
+                returnSample.results.classification = gate_objects(this,inputSample);
             elseif isa(inputSample,'table')
                 if isempty(inputSample)
                     notify(this,'logMessage',logmessage(1,'No features available for classification.'));
@@ -44,13 +44,14 @@ classdef ManualClassification < SampleProcessorObject
                 end
 
 
-                returnSample = gate_objects(this,inputSample,this.gates);
+                returnSample = gate_objects(this,inputSample);
             else
                 error('Manual Classification can be only used with a sample or a table as input.')
             end
         end
 
-        function tbl = gate_objects(this,inputSample,gates)
+        function tbl = gate_objects(this,inputSample)
+            gates = this.gates;
             tbl = table();
             if isa(inputSample,'Sample')
                 nrObjects = size(inputSample.results.features,1);

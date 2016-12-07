@@ -1083,9 +1083,10 @@ function design_manual_classifier(handle,~)
     pos_button = get(GuiSampleHandle.multiplegates_button,'Position');
     pos_main = get(GuiSampleHandle.fig_main,'Position');
     d = dialog('Units','characters','Position',[pos_main(1)+pos_button(1)-16 pos_main(2)+pos_button(2)-8 60 5],'Name','Multiple Gates');
-    uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'String','Specify Gates.','Callback',@btn1_callback);
-    uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'String','Load existing Gates.','Callback',@btn2_callback);
+    uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'FontUnits','normalized','FontSize',0.3,'String','Specify Gates.','Callback',@btn1_callback);
+    uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'FontUnits','normalized','FontSize',0.3,'String','Load Existing Gates.','Callback',@btn2_callback);
     choice = 0;
+    waitfor(d);
     function btn1_callback(~,~)
         choice = 1;
         delete(gcf)
@@ -1113,8 +1114,13 @@ function design_manual_classifier(handle,~)
         file = which('ACCEPT.m');
         installDir = fileparts(file);
         [file_name, folder_name] = uigetfile([installDir filesep 'misc' filesep 'saved_gates' filesep '*.mat'],'Load gate.');
-        gate.gates = importdata([folder_name filesep file_name]);
-        gate.name = strrep(strrep(file_name,'.mat',''),'_',' ');
+        try
+            gate(1).gates = importdata([folder_name filesep file_name]);
+            gate(1).name = strrep(strrep(file_name,'.mat',''),'_',' ');
+        catch 
+            set(handle,'backg',color);
+            return
+        end
         mc.gates = gate.gates;
         mc.name = gate.name;
     else
