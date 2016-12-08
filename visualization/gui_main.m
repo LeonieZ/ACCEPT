@@ -35,24 +35,16 @@ else
     base.sampleList.sampleProcessorId=base.sampleProcessor.id();
 end
 
-% get current sampleProcessor number from base for visualization
-% currentProcessorIndex=find(cellfun(@(s) strcmp(base.sampleProcessor.name, s.name), base.availableSampleProcessors));
-% if isempty(currentProcessorIndex)
-%     currentProcessorIndex = defaultSampleProcessorNumber;
-%     base.sampleProcessor = base.availableSampleProcessors{defaultSampleProcessorNumber};
-%     base.sampleList.sampleProcessorId=base.sampleProcessor.id();
-% end
 
 uni_logo = imread('logoUT.png'); 
 cancerid_logo = imread('logoCancerID.png');
-% subtitle = imread('title2.tif'); [subtitle_x, subtitle_y, ~] = size(subtitle); subtitle_rel = subtitle_x / subtitle_y;
-
 
 gui.fig_main = figure('Units','characters','Position',[(screensz(3)-160)/2 12 160 60],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color', [1 1 1],'Resize','off','Visible','off','CloseRequestFcn',@close_fcn);
 
 gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','characters','Position',[35 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@process,base}); 
 gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','characters','Position',[90 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@visualize,base});
+gui.gate_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Gate','Units','characters','Position',[107 10.8 18 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@gate,base});
 gui.title_axes = axes('Parent',gui.fig_main,'Units','characters','Position',[80 50 29 3]); axis off;
 gui.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} ACCEPT','Units','characters','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','center','FontWeight','bold');
 
@@ -228,6 +220,56 @@ function visualize(handle,~,base)
     end
     set(gui.table,'data',dat);
     set(handle,'backg',color,'String','Visualize')
+end
+
+function gate(handle,~,base)
+color = get(handle,'backg');
+set(handle,'backgroundcolor',[1 .5 .5])
+drawnow;
+
+
+
+pos_button = get(gui.gate_button,'Position');
+pos_main = get(gui.fig_main,'Position');
+d = dialog('Units','characters','Position',[pos_main(1)+pos_button(1) pos_main(2)+pos_button(2)+pos_button(4)+0.5 60 5],'Name','Multiple Gates');
+uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'FontUnits','normalized','FontSize',0.3,'String','Specify Gates.','Callback',@btn1_callback);
+uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'FontUnits','normalized','FontSize',0.3,'String','Load Existing Gates.','Callback',@btn2_callback);
+savedGate = 2;
+waitfor(d);
+function btn1_callback(~,~)
+    savedGate = 0;
+    delete(gcf)
+end
+function btn2_callback(~,~)
+    savedGate = 1;
+    delete(gcf)
+end
+
+if savedGate == 0 || savedGate == 1
+    rug = Rescore_Using_Gate();
+    rug.previousProcessor = base.sampleProcessor;
+    rug.set_gates(savedGate); 
+
+    if ~isempty(rug.gate)
+        selectedCellsInTable = find(gui.selectedCells);
+        if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
+            if size(selectedCellsInTable,1) == 0
+                base.sampleList.toBeProcessed = ones(size(base.sampleList.toBeProcessed));
+            else
+                % clear current sampleList:
+                base.sampleList.toBeProcessed = zeros(size(base.sampleList.toBeProcessed));
+                % update the current sampleList: selected samples should be processed
+                base.sampleList.toBeProcessed(selectedCellsInTable(:,1)) = 1;
+            end
+        end
+        base.sampleProcessor = rug;
+        base.run;
+
+        base.sampleProcessor = rug.previousProcessor;
+        update_list(base)
+    end
+end
+set(handle,'backg',color)
 end
 
 function input_path(~,~,base)

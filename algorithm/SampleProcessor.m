@@ -46,9 +46,8 @@ classdef SampleProcessor < handle
         
         function run(this,inputSample)
 
-            if isempty(this.dataframeProcessor) || isempty(this.pipeline)
-                inputSample.id %only for testing!
-                %notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
+            if isempty(this.pipeline)
+                notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
             else
                 for i = 1:numel(this.pipeline)
                     this.pipeline{i}.run(inputSample);

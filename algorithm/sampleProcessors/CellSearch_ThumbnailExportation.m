@@ -12,6 +12,7 @@ classdef CellSearch_ThumbnailExportation < SampleProcessor
             this.version = '0.1'; 
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
+            this.showInList = false;
         end
         
         function run(this,inputSample)

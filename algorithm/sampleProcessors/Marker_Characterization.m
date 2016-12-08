@@ -34,7 +34,6 @@ classdef Marker_Characterization < SampleProcessor
                     inputSample.results.segmentation{1,notNec(i)} = [];
                 end
             end
-            IO.save_results_as_xls(inputSample);
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
 %             IO.save_thumbnail(inputSample,[],'prior');

@@ -32,7 +32,6 @@ classdef Candidate_Selection < SampleProcessor
                 this.pipeline{i}.run(inputSample);
             end  
             IO.save_thumbnail(inputSample,[],[],[],1);
-            IO.save_results_as_xls(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)

@@ -37,8 +37,6 @@ classdef Full_Detection_DLA < SampleProcessor
             for i = 3:numel(this.pipeline)
                 this.pipeline{i}.run(inputSample);
             end  
-            
-            IO.save_results_as_xls(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)

@@ -35,8 +35,14 @@ classdef ManualClassification < SampleProcessorObject
                     notify(this,'logMessage',logmessage(1,'No features available for classification.'));
                     return
                 end
+                
+                if sum(strcmp(returnSample.results.classification.Properties.VariableNames,this.name)) == 0
+                    returnSample.results.classification = [returnSample.results.classification gate_objects(this,inputSample)];
+                else
+                    returnSample.results.classification(:,strcmp(returnSample.results.classification.Properties.VariableNames,this.name)) = [];
+                    returnSample.results.classification = [returnSample.results.classification gate_objects(this,inputSample)];
+                end
 
-                returnSample.results.classification = gate_objects(this,inputSample);
             elseif isa(inputSample,'table')
                 if isempty(inputSample)
                     notify(this,'logMessage',logmessage(1,'No features available for classification.'));
@@ -131,6 +137,7 @@ classdef ManualClassification < SampleProcessorObject
                     end
                 end     
             end
+            bool = double(bool);
         end
 
     end

@@ -1055,7 +1055,7 @@ function load_selection(handle,~)
             selectedCells = zeros(size(selectedCells));
             selectedFrames = false(size(selectedFrames));
             selectedCells = currentSample.results.classification{:,s};
-            selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(selectedCells))) = 1; 
+            selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1; 
             set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
             set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
             set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));

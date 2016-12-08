@@ -58,7 +58,7 @@ classdef Base < handle
             this.busy=true;
             nbrSamples = size(this.sampleList.toBeProcessed,2);
             this.nrProcessed = 0;
-            if ~isa(this.sampleProcessor,'rescore_using_gate')
+            if ~isa(this.sampleProcessor,'Rescore_Using_Gate')
                 if ~isempty(find(this.sampleList.isProcessed(find(this.sampleList.toBeProcessed))))  %#ok<EFIND,FNDSB>
                     set(0,'defaultUicontrolFontSize', 14)
                     choice = questdlg('Some selected samples are already processed. Do you want to process them again?', ...
@@ -74,12 +74,13 @@ classdef Base < handle
             for k=1:nbrSamples
                 if this.sampleList.toBeProcessed(k)
                     sample = IO.load_sample(this.sampleList,k);
-                    if ~isa(this.sampleProcessor,'rescore_using_gate')
+                    if ~isa(this.sampleProcessor,'Rescore_Using_Gate')
                         sample.results=Result(); 
                     end
                     this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
                     this.sampleProcessor.run(sample);
                     IO.save_sample(sample);
+                    IO.save_results_as_xls(sample);
                     this.logger.entry(this,LogMessage(2,['Sample ',sample.id ,' is processed.']));
                     this.nrProcessed = this.nrProcessed + 1;
                     this.update_progress();
