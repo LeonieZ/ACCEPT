@@ -424,7 +424,7 @@ GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','charac
             'FontSize',.5,'Position', [5.1 61.2 27.5 2.6],'Callback', {@export_selection}); 
         
 % design manual classification
-GuiSampleHandle.export_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Multiple Gates','FontUnits', 'normalized',...
+GuiSampleHandle.multiplegates_button = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Multiple Gates','FontUnits', 'normalized',...
             'FontSize',.5,'Position', [158.8 61.2 27.5 2.6],'Callback', {@design_manual_classifier}); 
         
 % load gates as manual classification
@@ -1079,20 +1079,54 @@ function design_manual_classifier(handle,~)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
+    
+    pos_button = get(GuiSampleHandle.multiplegates_button,'Position');
+    pos_main = get(GuiSampleHandle.fig_main,'Position');
+    d = dialog('Units','characters','Position',[pos_main(1)+pos_button(1)-16 pos_main(2)+pos_button(2)-8 60 5],'Name','Multiple Gates');
+    uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'FontUnits','normalized','FontSize',0.3,'String','Specify Gates.','Callback',@btn1_callback);
+    uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'FontUnits','normalized','FontSize',0.3,'String','Load Existing Gates.','Callback',@btn2_callback);
+    choice = 0;
+    waitfor(d);
+    function btn1_callback(~,~)
+        choice = 1;
+        delete(gcf)
+    end
+    function btn2_callback(~,~)
+            choice = 2;
+            delete(gcf)
+    end
+    
     mc = ManualClassification(cell(0),'ManualGates');
-
-    gui_gates = gui_manual_gates();
-    waitfor(gui_gates.fig_main,'UserData')
-    try
-        gate = get(gui_gates.fig_main,'UserData');
-    catch 
+    if choice == 1
+        gui_gates = gui_manual_gates();
+        waitfor(gui_gates.fig_main,'UserData')
+        try
+            gate = get(gui_gates.fig_main,'UserData');
+        catch 
+            set(handle,'backg',color);
+            return
+        end
+        mc.gates = gate.gates;
+        mc.name = gate.name;
+        delete(gui_gates.fig_main)
+        clear('gui_gates');
+    elseif choice == 2
+        file = which('ACCEPT.m');
+        installDir = fileparts(file);
+        [file_name, folder_name] = uigetfile([installDir filesep 'misc' filesep 'saved_gates' filesep '*.mat'],'Load gate.');
+        try
+            gate(1).gates = importdata([folder_name filesep file_name]);
+            gate(1).name = strrep(file_name,'.mat','');
+        catch 
+            set(handle,'backg',color);
+            return
+        end
+        mc.gates = gate.gates;
+        mc.name = gate.name;
+    else
         set(handle,'backg',color);
         return
     end
-    mc.gates = gate.gates;
-    mc.name = gate.name;
-    delete(gui_gates.fig_main)
-    clear('gui_gates');
 
     gate_result = mc.run(sampleFeatures);
     
