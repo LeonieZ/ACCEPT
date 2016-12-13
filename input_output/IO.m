@@ -38,6 +38,34 @@ classdef IO < handle
         function save_sample_processor(smplLst,processor)
             save([smplLst.save_path(),'processed.mat'],'processor','-append','-v7.3');
         end
+        
+        function export_samplelist_results_summary(sampleList)
+            n=numel(sampleList.sampleNames);
+            results(1:n)=Result();
+            names={'sampleID'};
+            for i=1:n
+                currentSample=IO.load_sample(sampleList,i);
+                id{i}=currentSample.id;
+                results(i)=currentSample.results;
+                classifiers=results(i).classification.Properties.VariableNames;
+                if ~isempty(classifiers)
+                    names=cat(2,names,classifiers);
+                end
+            end
+            names=unique(names,'stable');
+            t=id';
+            for i=1:n
+                for j=2:numel(names)
+                    if any(strcmp(results(i).classification.Properties.VariableNames,names(j)))
+                        t{i,j}=sum(eval(['results(i).classification.', names{j}]));
+                    else
+                        t{i,j}=NaN;
+                    end
+                end
+            end
+            summary=array2table(t,'VariableNames',unique(names,'stable'));
+            writetable(summary,[sampleList.save_path(),'summaryTable.xlsx']);
+        end
 
         %% Sample handeling functions
         function loaderHandle = check_sample_type(samplePath,loaderTypesAvailable)

@@ -268,7 +268,9 @@ if savedGate == 0 || savedGate == 1
         base.sampleProcessor = rug.previousProcessor;
         update_list(base)
     end
+    
 end
+IO.export_samplelist_results_summary(base.sampleList);
 set(handle,'backg',color)
 end
 
