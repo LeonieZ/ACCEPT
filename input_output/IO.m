@@ -44,12 +44,15 @@ classdef IO < handle
             results(1:n)=Result();
             names={'sampleID'};
             for i=1:n
+                try
                 currentSample=IO.load_sample(sampleList,i);
                 id{i}=currentSample.id;
-                results(i)=currentSample.results;
+                results(i).classification=currentSample.results.classification;
                 classifiers=results(i).classification.Properties.VariableNames;
                 if ~isempty(classifiers)
                     names=cat(2,names,classifiers);
+                end
+                catch
                 end
             end
             names=unique(names,'stable');
