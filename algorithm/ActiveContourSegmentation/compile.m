@@ -17,6 +17,8 @@ if ismac
 end
 
 if isunix
-    % works on linux, TODO double-check
-    %mex bregman_cv_core.c CFLAGS="\$CFLAGS -fopenmp -Wall -O3" LDFLAGS="\$LDFLAGS -fopenmp"
+    % works on linux
+    %mex bregman_cv_core_mex.c CFLAGS="\$CFLAGS -fopenmp -Wall -O3" LDFLAGS="\$LDFLAGS -fopenmp";
+    mex -output bregman_cv_core_mex_openMP bregman_cv_core_mex.c COPTIMFLAGS='-O3' CFLAGS='\$CFLAGS -fopenmp -Wall' LDFLAGS='\$LDFLAGS -fopenmp';
+    mex bregman_cv_core_mex.c COPTIMFLAGS='-O3';
 end
