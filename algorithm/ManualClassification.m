@@ -107,7 +107,7 @@ classdef ManualClassification < SampleProcessorObject
                     end
                 else
                     bool = true(nrObjects,1);
-                    parfor j = 1:nrObjects
+                    for j = 1:nrObjects
                         for ii = 1:size(gateStr,1)
                             if ~isempty(gateStr{ii,1}) && sum(ismember(fieldnames(features),gateStr{ii,1}))>0
                                 include_event = features.(gateStr{ii,1})(j) > gate_valuesl(ii) & features.(gateStr{ii,1})(j) <= gate_valuesu(ii);

@@ -73,18 +73,21 @@ classdef Base < handle
             end
             for k=1:nbrSamples
                 if this.sampleList.toBeProcessed(k)
-                    sample = IO.load_sample(this.sampleList,k);
-                    if ~isa(this.sampleProcessor,'Rescore_Using_Gate')
-                        sample.results=Result(); 
+                    try 
+                        sample = IO.load_sample(this.sampleList,k);
+                        if ~isa(this.sampleProcessor,'Rescore_Using_Gate')
+                            sample.results=Result(); 
+                        end
+                        this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
+                        this.sampleProcessor.run(sample);
+                        IO.save_sample(sample);
+                        IO.save_results_as_xls(sample);
+                        this.logger.entry(this,LogMessage(2,['Sample ',sample.id ,' is processed.']));
+                        this.nrProcessed = this.nrProcessed + 1;
+                        this.update_progress();
+                    catch
+                        this.logger.entry(this,LogMessage(2,['Sample NR',num2str(k) ,' failed to load']));
                     end
-                    this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
-                    this.sampleProcessor.run(sample);
-                    IO.save_sample(sample);
-                    IO.save_results_as_xls(sample);
-                    this.logger.entry(this,LogMessage(2,['Sample ',sample.id ,' is processed.']));
-                    this.nrProcessed = this.nrProcessed + 1;
-                    this.update_progress();
-                    
                 end
             end
             if this.profiler
