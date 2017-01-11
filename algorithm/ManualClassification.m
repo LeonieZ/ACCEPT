@@ -107,12 +107,18 @@ classdef ManualClassification < SampleProcessorObject
                     end
                 else
                     bool = true(nrObjects,1);
-                    for j = 1:nrObjects
-                        for ii = 1:size(gateStr,1)
-                            if ~isempty(gateStr{ii,1}) && sum(ismember(fieldnames(features),gateStr{ii,1}))>0
-                                include_event = features.(gateStr{ii,1})(j) > gate_valuesl(ii) & features.(gateStr{ii,1})(j) <= gate_valuesu(ii);
-                                bool(j) = bool(j) & include_event;
-                            end
+%                     for j = 1:nrObjects
+%                         for ii = 1:size(gateStr,1)
+%                             if ~isempty(gateStr{ii,1}) && sum(ismember(fieldnames(features),gateStr{ii,1}))>0
+%                                 include_event = features.(gateStr{ii,1})(j) > gate_valuesl(ii) & features.(gateStr{ii,1})(j) <= gate_valuesu(ii);
+%                                 bool(j) = bool(j) & include_event;
+%                             end
+%                         end
+%                     end
+                    for ii = 1:size(gateStr,1)
+                        if ~isempty(gateStr{ii,1}) && sum(ismember(fieldnames(features),gateStr{ii,1}))>0
+                            include_event = features.(gateStr{ii,1}) > gate_valuesl(ii) & features.(gateStr{ii,1}) <= gate_valuesu(ii);
+                            bool = bool & include_event;
                         end
                     end
                 end
@@ -127,12 +133,18 @@ classdef ManualClassification < SampleProcessorObject
                     end
                 else
                     bool = true(nrObjects,1);
-                    for j = 1:nrObjects
-                        for ii = 1:size(gateStr,1)
-                            if ~isempty(gateStr{ii,1}) && sum(ismember(fieldnames(inputSample),gateStr{ii,1}))>0
-                                include_event = inputSample.(gateStr{ii,1})(j) > gate_valuesl(ii) & inputSample.(gateStr{ii,1})(j) <= gate_valuesu(ii);
-                                bool(j) = bool(j) & include_event;
-                            end
+%                     for j = 1:nrObjects
+%                         for ii = 1:size(gateStr,1)
+%                             if ~isempty(gateStr{ii,1}) && sum(ismember(fieldnames(inputSample),gateStr{ii,1}))>0
+%                                 include_event = inputSample.(gateStr{ii,1})(j) > gate_valuesl(ii) & inputSample.(gateStr{ii,1})(j) <= gate_valuesu(ii);
+%                                 bool(j) = bool(j) & include_event;
+%                             end
+%                         end
+%                     end
+                    for ii = 1:size(gateStr,1)
+                        if ~isempty(gateStr{ii,1}) && sum(ismember(fieldnames(inputSample),gateStr{ii,1}))>0
+                            include_event = inputSample.(gateStr{ii,1}) > gate_valuesl(ii) & inputSample.(gateStr{ii,1}) <= gate_valuesu(ii);
+                            bool = bool & include_event;
                         end
                     end
                 end     
