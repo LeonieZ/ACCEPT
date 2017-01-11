@@ -420,20 +420,20 @@ classdef IO < handle
         end
         
         function location=calculate_overview_location(inputSample,priorLocationNr)
-            x=mean(inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr));
-            y=mean(inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr));
+            x=mean([inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr)])
+            y=mean([inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr)])
             [rows,columns]=find(inputSample.priorLocations.frameNr(priorLocationNr)==inputSample.frameOrder);
             smallImageSize=ceil(inputSample.imageSize/8);
-            location(1)=smallImageSize(1)*rows+round(y/8);
-            location(2)=smallImageSize(2)*columns+round(x/8);
+            location(1)=smallImageSize(1)*(rows-1)+round(y/8);
+            location(2)=smallImageSize(2)*(columns-1)+round(x/8);
         end
         
         function location=calculate_location(inputSample,priorLocationNr)
-            x=mean(inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr));
-            y=mean(inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr));
+            x=mean([inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr)]);
+            y=mean([inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr)]);
             [rows,columns]=find(inputSample.priorLocations.frameNr(priorLocationNr)==inputSample.frameOrder);
-            location(1)=(inputSample.imageSize(1)*rows+y)*0.645;
-            location(2)=(inputSample.imageSize(2)*columns+x)*0.645;
+            location(1)=(inputSample.imageSize(1)*(rows-1)+y)*0.645;
+            location(2)=(inputSample.imageSize(2)*(columns-1)+x)*0.645;
         end
         
         function availableSampleProcessors=check_available_sample_processors()

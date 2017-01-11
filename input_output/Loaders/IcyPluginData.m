@@ -19,11 +19,12 @@ classdef IcyPluginData < handle
                         startLoc = find(ismember(raw(1,:),'Position X'));
                         for i=1:(size(raw,1)-offset)
                             eventNr=i;
+                            markersize = round(str2num(raw{offset+1,startLoc+5})/2);
                             frameNr=str2num(raw{i+offset,startLoc+3})+1;
-                            xBottomLeft=round(str2num(raw{i+offset,startLoc+1}))+10-(thumbSize(1)/2);
-                            yBottomLeft=round(str2num(raw{i+offset,startLoc}))+10-(thumbSize(2)/2);
-                            xTopRight=round(str2num(raw{i+offset,startLoc+1}))+9+(thumbSize(1)/2);
-                            yTopRight=round(str2num(raw{i+offset,startLoc}))+9+(thumbSize(2)/2);
+                            xBottomLeft=round(str2num(raw{i+offset,startLoc+1}))+markersize-(thumbSize(1)/2);
+                            yBottomLeft=round(str2num(raw{i+offset,startLoc}))+markersize-(thumbSize(2)/2);
+                            xTopRight=round(str2num(raw{i+offset,startLoc+1}))+markersize+(thumbSize(1)/2);
+                            yTopRight=round(str2num(raw{i+offset,startLoc}))+markersize+(thumbSize(2)/2);
                             location=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
                             locations(i,:)=location;
                         end
@@ -36,11 +37,12 @@ classdef IcyPluginData < handle
                         startLoc = find(ismember(raw(1,:),'Position X'));
                         for i=1:(size(T,1)-offset)
                             eventNr=i;
+                            markersize = round(str2num(T{1+offset,startLoc+5}{1})/2);
                             frameNr=str2num(T{i+offset,startLoc+3}{1})+1;
-                            xBottomLeft=round(str2num(T{i+offset,startLoc+1}{1}))+10-(thumbSize(1)/2);
-                            yBottomLeft=round(str2num(T{i+offset,startLoc}{1}))+10-(thumbSize(2)/2);
-                            xTopRight=round(str2num(T{i+offset,startLoc+1}{1}))+9+(thumbSize(1)/2);
-                            yTopRight=round(str2num(T{i+offset,startLoc}{1}))+9+(thumbSize(2)/2);
+                            xBottomLeft=round(str2num(T{i+offset,startLoc+1}{1}))+markersize-(thumbSize(1)/2);
+                            yBottomLeft=round(str2num(T{i+offset,startLoc}{1}))+markersize-(thumbSize(2)/2);
+                            xTopRight=round(str2num(T{i+offset,startLoc+1}{1}))+markersize+(thumbSize(1)/2);
+                            yTopRight=round(str2num(T{i+offset,startLoc}{1}))+markersize+(thumbSize(2)/2);
                             location=table(eventNr,frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
                             locations(i,:)=location;
                         end
