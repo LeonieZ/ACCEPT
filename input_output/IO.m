@@ -41,14 +41,15 @@ classdef IO < handle
         
         function export_samplelist_results_summary(sampleList)
             n=numel(sampleList.sampleNames);
-            results(1:n)=Result();
+            classifications={1:n};
             names={'sampleID'};
             for i=1:n
+                i
                 try
                 currentSample=IO.load_sample(sampleList,i);
                 id{i}=currentSample.id;
-                results(i).classification=currentSample.results.classification;
-                classifiers=results(i).classification.Properties.VariableNames;
+                classifications{i}=currentSample.results.classification;
+                classifiers=classifications{k}.Properties.VariableNames;
                 if ~isempty(classifiers)
                     names=cat(2,names,classifiers);
                 end
@@ -59,8 +60,8 @@ classdef IO < handle
             t=id';
             for i=1:n
                 for j=2:numel(names)
-                    if any(strcmp(results(i).classification.Properties.VariableNames,names(j)))
-                        t{i,j}=sum(eval(['results(i).classification.', names{j}]));
+                    if any(strcmp(classifications{i}.Properties.VariableNames,names(j)))
+                        t{i,j}=sum(eval(['classifications{i}.', names{j}]));
                     else
                         t{i,j}=NaN;
                     end
@@ -150,7 +151,7 @@ classdef IO < handle
         end
         
         %% Thumbnail functions
-         function outputFrame=load_thumbnail_frame(sample,thumbNr,option,rescaled)
+        function outputFrame=load_thumbnail_frame(sample,thumbNr,option,rescaled)
              % gets loader from sample and looks for a saved thumbnail. If no thumbnail was created before a new one is generated. 
             loader=sample.loader(sample);
             if exist('option','var') && strcmp('prior',option) && exist('rescaled','var')  && rescaled == false
@@ -183,8 +184,8 @@ classdef IO < handle
                 frameNr = sample.results.thumbnails.frameNr(thumbNr);
 %                 boundingBox = {[sample.results.thumbnails.yBottomLeft(thumbNr) sample.results.thumbnails.yTopRight(thumbNr)],...
 %                     [sample.results.thumbnails.xBottomLeft(thumbNr) sample.results.thumbnails.xTopRight(thumbNr)]};
-                boundingBox = {[sample.results.thumbnails.xBottomLeft(thumbNr) sample.results.thumbnails.xTopRight(thumbNr)],...
-                    [sample.results.thumbnails.yBottomLeft(thumbNr) sample.results.thumbnails.yTopRight(thumbNr)]};
+                boundingBox = {[sample.results.thumbnails.yBottomLeft(thumbNr) sample.results.thumbnails.yTopRight(thumbNr)],...
+                    [sample.results.thumbnails.xBottomLeft(thumbNr) sample.results.thumbnails.xTopRight(thumbNr)]};
 %                 if exist(this.saved_frame_path(sample,frameNr),'file');
 %                     load(this.saved_frame_path(sample,frameNr));
 %                     outputFrame=DataFrame(frameNr,currentDataFrame.frameHasEdge,...
@@ -196,8 +197,10 @@ classdef IO < handle
 %                     outputFrame.mask=currentDataFrame.mask(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
 %                 else
                     outputFrame=loader.load_data_frame(frameNr,boundingBox);
-                    
-%                 end
+                if exist([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],'file');
+                   outputFrame.segmentedImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],...
+                   'PixelRegion',boundingBox);
+                end
             end
         end
         
@@ -213,7 +216,7 @@ classdef IO < handle
             if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
                 mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
             end
-            t=Tiff([currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'_seg.tif'],'w');
+            t=Tiff([currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr,'%03.0f'),'_seg.tif'],'w');
             t.setTag('Photometric',t.Photometric.MinIsBlack);
             t.setTag('Compression',t.Compression.LZW);
             t.setTag('ImageLength',size(currentDataFrame.segmentedImage,1));
@@ -447,6 +450,26 @@ classdef IO < handle
                 removeLines(i)=~availableSampleProcessors{i}.showInList;
             end
             availableSampleProcessors(removeLines)=[];
+        end
+        
+        function convert_thumbnails_in_sample(inputSample)
+            frames=unique(inputSample.results.thumbnails.frameNr);
+            for i=1:numel(frames)
+                currentDataFrame=IO.load_data_frame(inputSample,frames(i));
+                currentDataFrame.segmentedImage=zeros(size(currentDataFrame.rawImage));
+                thumbsInFrame=find(inputSample.results.thumbnails.frameNr==frames(i));
+                for j=1:numel(thumbsInFrame)
+                    locations=[inputSample.results.thumbnails.yBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.yTopRight(thumbsInFrame(j)),...
+                        inputSample.results.thumbnails.xBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.xTopRight(thumbsInFrame(j))];
+                    currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:)=inputSample.results.segmentation{thumbsInFrame(j)}...
+                        + currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:);
+                end
+                IO.save_data_frame_segmentation(inputSample,currentDataFrame);
+               
+            end
+            inputSample.results.thumbnail_images=[];
+            inputSample.results.segmentation=[];  
+            IO.save_sample(inputSample);
         end
     end
 end

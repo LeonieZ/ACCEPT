@@ -25,7 +25,7 @@ classdef (Abstract) Loader < handle
 %         dataFrame = load_thumb_frame(this,frameNr,option)
         frameOrder = calculate_frame_nr_order(this)
     end
-     
+   
     methods(Static)
         function bool = can_load_this_folder(path)
             %function that must be present in all loader types to test

@@ -96,6 +96,74 @@ classdef Base < handle
             this.busy=false;
         end
         
+        function run_sanne(this)
+        % run SampleProcessor with each sample marked as toBeProcessed
+            this.busy=true;
+            nbrSamples = size(this.sampleList.toBeProcessed,2);
+            this.nrProcessed = 0;
+            classifications={1:nbrSamples};
+            names={'sampleID'};
+            if ~isa(this.sampleProcessor,'Rescore_Using_Gate')
+                if ~isempty(find(this.sampleList.isProcessed(find(this.sampleList.toBeProcessed))))  %#ok<EFIND,FNDSB>
+                    set(0,'defaultUicontrolFontSize', 14)
+                    choice = questdlg('Some selected samples are already processed. Do you want to process them again?', ...
+                                    'Processed Sample', 'Yes','No','No');
+                    set(0,'defaultUicontrolFontSize', 12)
+                else
+                    choice = 'No';
+                end
+                if strcmp(choice,'No')
+                    this.sampleList.toBeProcessed(this.sampleList.isProcessed)= false;
+                end
+            end
+            for k=1:nbrSamples
+                if this.sampleList.toBeProcessed(k)
+                    try 
+                        sample = IO.load_sample(this.sampleList,k);
+                        if ~isa(this.sampleProcessor,'Rescore_Using_Gate')
+                            sample.results=Result(); 
+                        end
+                        this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
+                        this.sampleProcessor.run(sample);
+                        id{k}=sample.id;
+                        classifications{k}=sample.results.classification;
+                        classifiers=classifications{k}.Properties.VariableNames;
+                        if ~isempty(classifiers)
+                            names=cat(2,names,classifiers);
+                        end
+                        this.logger.entry(this,LogMessage(2,['Sample ',sample.id ,' is processed.']));
+                        this.nrProcessed = this.nrProcessed + 1;
+                        this.update_progress();
+                    catch
+                        this.logger.entry(this,LogMessage(2,['Sample NR',num2str(k) ,' failed to load']));
+                    end
+                end
+            end
+            names=unique(names,'stable');
+            t=id';
+            for i=1:nbrSamples
+                for j=2:numel(names)
+                    if ~isempty(classifications{i}) 
+                        if any(strcmp(classifications{i}.Properties.VariableNames,names(j)))
+                            t{i,j}=sum(eval(['classifications{i}.', names{j}]));
+                        else
+                        t{i,j}=NaN;
+                        end
+                    else
+                        t{i,j}=NaN;
+                    end
+                end
+            end
+            summary=array2table(t,'VariableNames',unique(names,'stable'));
+            writetable(summary,[this.sampleList.save_path(),'summaryTable.xlsx']);
+      
+            if this.profiler
+                profile viewer
+            end
+            this.busy=false;
+        end
+            
+            
         function update_progress(this)
         % Update the progress variable. 
         this.progress = this.nrProcessed / sum(this.sampleList.toBeProcessed);

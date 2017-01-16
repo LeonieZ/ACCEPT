@@ -30,6 +30,7 @@ classdef FeatureCollection < SampleProcessorObject
                     this.dataProcessor.run(dataFrame);
                     objectsfoundearlier = size(inputSample.results.features,1);
                     objectsfound = size(dataFrame.features,1);
+                    IO.save_data_frame_segmentation(inputSample,dataFrame);
                     if objectsfound > 0
                         thumbNr = array2table(linspace(objectsfoundearlier+1,objectsfoundearlier+size(dataFrame.features,1),...
                             size(dataFrame.features,1))','VariableNames',{'ThumbNr'});
