@@ -22,6 +22,11 @@ classdef DepArray < Loader
         function dataFrame = load_data_frame(this,frameNr)
         
         end
+        
+        function rawImage = load_raw_image(this,frameNr)
+
+        end
+        
         function dataFrame = load_thumb_frame(this,frameNr,option)
         end
         function frameOrder = calculate_frame_nr_order(this)    

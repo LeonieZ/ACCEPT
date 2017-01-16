@@ -141,6 +141,12 @@ classdef IO < handle
             end
         end
         
+        function rawImage = load_raw_image(sample,frameNr)
+            % Load data frame using loader linked to sample
+            loader = sample.loader(sample);
+            rawImage = loader.load_raw_image(frameNr);      
+        end
+        
         function save_data_frame(currentSample,currentDataFrame)
             % Save DataFrame 
             % Check why we dont use the savepath function? /G

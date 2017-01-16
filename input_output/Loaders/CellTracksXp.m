@@ -81,6 +81,10 @@ classdef CellTracksXp < Loader
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
         
+        function rawImage = load_raw_image(this,frameNr)
+            rawImage = this.read_im_and_scale(frameNr);
+        end
+        
         function dataFrame = load_thumb_frame(this,thumbNr,option)
             if exist('option','var')
                 if strcmp('prior',option)
@@ -353,7 +357,7 @@ classdef CellTracksXp < Loader
         
         function priorEvents=read_cells_dlm(this,path,frame)
             fileId=fopen(path);
-            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','¦');
+            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','?');
             nrOfEvents=numel(temp{1});
             priorEvents.eventNr=zeros(nrOfEvents,1);
             priorEvents.selected=zeros(nrOfEvents,1);
@@ -392,7 +396,7 @@ classdef CellTracksXp < Loader
         
         function frame=read_pic_dlm(~,path)
             fileId=fopen(path);
-            temp=textscan(fileId,'%s%s%s%f%s','delimiter','¦');
+            temp=textscan(fileId,'%s%s%s%f%s','delimiter','?');
             frame.timeStamp=temp{1};
             frame.frameNr=temp{4};
             frame.timeStamp=strrep(frame.timeStamp,'"','');

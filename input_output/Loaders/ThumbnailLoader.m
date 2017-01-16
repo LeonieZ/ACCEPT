@@ -84,6 +84,10 @@ classdef ThumbnailLoader < Loader
             end
         end
         
+        function rawImage = load_raw_image(this,frameNr)
+            rawImage = this.read_im(frameNr);
+        end
+        
         
        function frameOrder = calculate_frame_nr_order(this)
        end

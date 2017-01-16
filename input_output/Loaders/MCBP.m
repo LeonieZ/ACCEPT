@@ -84,6 +84,10 @@ classdef MCBP < Loader & IcyPluginData & CustomCsv
             dataFrame.adjacentFrames=this.calculate_neigbouring_frames(frameNr);
             addlistener(dataFrame,'loadNeigbouringFrames',@this.load_neigbouring_frames);
         end
+        
+        function rawImage = load_raw_image(this,frameNr)
+            rawImage = this.read_im(frameNr);
+        end
 
         function dataFrame = load_thumb_frame(this,thumbNr,option)
             if exist('option','var')

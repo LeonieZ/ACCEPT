@@ -198,7 +198,8 @@ function visualize(handle,~,base)
     elseif size(selectedCellsInTable,1) == 1
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
             % load selected sample
-            currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1),0);
+%             currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1),0);
+            currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1));
             if size(currentSample.results.thumbnails,1)<1 || isempty(currentSample.results.features)
                msgbox('Empty Sample.')
             else

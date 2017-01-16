@@ -64,6 +64,10 @@ classdef CellTracks < Loader
                 this.preload_tiff_headers();         
             end
         end
+        
+        function rawImage = load_raw_image(this,frameNr)
+            rawImage = this.read_im_and_scale(frameNr);
+        end
    
         function dataFrame = load_data_frame(this,frameNr,varargin)
             dataFrame = Dataframe(frameNr,...
