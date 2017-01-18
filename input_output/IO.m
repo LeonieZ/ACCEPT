@@ -49,7 +49,7 @@ classdef IO < handle
                 currentSample=IO.load_sample(sampleList,i);
                 id{i}=currentSample.id;
                 classifications{i}=currentSample.results.classification;
-                classifiers=classifications{k}.Properties.VariableNames;
+                classifiers=classifications{i}.Properties.VariableNames;
                 if ~isempty(classifiers)
                     names=cat(2,names,classifiers);
                 end
@@ -209,15 +209,22 @@ classdef IO < handle
                 end
             end
         end
-        
+                
         function load_thumbs_to_results(sample)
             %special function that allows for a specific loader.
            loader=sample.loader(sample);
            if isa(loader,'ThumbnailLoader')
                loader.load_thumbs_to_results();
            end
-       end
-             
+        end
+        
+        function [thumbnail_images,segmentation]=load_thumbnail(inputSample)
+        loader=sample.loader(sample);
+        
+            
+        end
+        
+        
         function save_data_frame_segmentation(currentSample,currentDataFrame)
             if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
                 mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
