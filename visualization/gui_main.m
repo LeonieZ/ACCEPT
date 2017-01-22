@@ -44,7 +44,7 @@ gui.fig_main = figure('Units','characters','Position',[(screensz(3)-160)/2 12 16
 
 gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','characters','Position',[35 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@process,base}); 
 gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','characters','Position',[90 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@visualize,base});
-gui.gate_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Gate','Units','characters','Position',[107 10.8 18 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@gate,base});
+gui.gate_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Gate','Units','characters','Position',[110 10.8 15 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@gate,base});
 gui.title_axes = axes('Parent',gui.fig_main,'Units','characters','Position',[80 50 29 3]); axis off;
 gui.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} ACCEPT','Units','characters','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','center','FontWeight','bold');
 
@@ -107,7 +107,7 @@ f=size_pixels(3:4)./size_characters(3:4);
 gui.table = uitable('Parent', gui.fig_main, 'Data', [],'ColumnName', {'Sample name','Select'},'ColumnFormat', {'char','logical'},'ColumnEditable', [false,true],'RowName',[],'Units','characters',...
     'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.695*51.2*f(1) 0.295*51.2*f(1)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt));
 gui.slider = uicontrol('Style','Slider','Parent',gui.fig_main,'Units','characters','Position',[105.6 10.8 3.2 19.6],'Min',-1,'Max',0,'Value',0,...
-    'SliderStep', [1, 1] ,'Visible','off','Callback',{@update_table,base});
+    'SliderStep', [1, 1] ,'Visible','on','Enable','off','Callback',{@update_table,base});
 set(gui.fig_main,'Visible','on');
 update_list(base);
 
@@ -271,7 +271,7 @@ if savedGate == 0 || savedGate == 1
     end
     
 end
-IO.export_samplelist_results_summary(base.sampleList);
+% IO.export_samplelist_results_summary(base.sampleList);
 set(handle,'backg',color)
 end
 
@@ -333,6 +333,7 @@ function update_list(base)
         pos_cur = get(gui.table,'Position');
         if size_nd(3) > pos_cur(3)
             set(gui.table, 'Position',[(160 - size_nd(3))/2, pos_cur(2), size_nd(3), pos_cur(4)]);
+            set(gui.gate_button,'Position',[(160 + size_nd(3))/2+4.4, pos_cur(2), 15, 3]); 
         end
         set(gui.table,'Visible','on');
     else
@@ -374,9 +375,13 @@ function update_list(base)
             set(gui.table,'FontSize',get(gui.table,'FontSize')*pos_cur(4)/size_nd(4));
             slider_pos = get(gui.slider,'Position');
             set(gui.slider,'Position',[(160 + size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
+            slider_pos = get(gui.slider,'Position');
+            set(gui.gate_button,'Position',[slider_pos(1)+slider_pos(3)+1.2, slider_pos(2), 15, 3]);
         end
         if nbrSamples > nbrRows
-            set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Visible','on');
+            set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Enable','on');
+        else
+            set(gui.slider,'Min',-1,'Max',0,'Value',0,'SliderStep', [1, 1] ,'Enable','off');
         end
         set(gui.table,'Visible','on');
     end
