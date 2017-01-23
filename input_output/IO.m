@@ -105,6 +105,7 @@ classdef IO < handle
                 outputSample = loader.sample;
                 outputSample.savePath=sampleList.save_path();
             end
+            % Check if this is sample still contains thumbnails...
         end
         
         function save_sample(currentSample)
@@ -209,7 +210,15 @@ classdef IO < handle
                 end
             end
         end
-                
+              
+        function outputImage = load_segmented_image(sample,frameNr)
+            if exist([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],'file');
+               outputImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif']);
+            else
+               outputImage=[];
+            end
+        end
+        
         function load_thumbs_to_results(sample)
             %special function that allows for a specific loader.
            loader=sample.loader(sample);
@@ -218,11 +227,11 @@ classdef IO < handle
            end
         end
         
-        function [thumbnail_images,segmentation]=load_thumbnail(inputSample)
-        loader=sample.loader(sample);
-        
-            
-        end
+%         function [thumbnail_images,segmentation]=load_thumbnail(inputSample)
+%         
+%         
+%             
+%         end
         
         
         function save_data_frame_segmentation(currentSample,currentDataFrame)
@@ -419,7 +428,31 @@ classdef IO < handle
                 end
            end
         end
-                              
+        
+        function outputImage = load_overview_image(sample)
+            if exist([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],'file');
+               outputImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif']);
+            else
+               outputImage=[];
+            end   
+        end
+        
+        function save_overview_image(currentSample,inputImage)
+            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
+            end
+            t=Tiff([currentSample.savePath,'frames',filesep,currentSample.id,filesep,'overview_thumbnail.tif'],'w');
+            t.setTag('Photometric',t.Photometric.MinIsBlack);
+            t.setTag('Compression',t.Compression.LZW);
+            t.setTag('ImageLength',size(currentDataFrame.segmentedImage,1));
+            t.setTag('ImageWidth',size(currentDataFrame.segmentedImage,2));
+            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Separate);
+            t.setTag('BitsPerSample',16);
+            t.setTag('SamplesPerPixel',currentSample.nrOfChannels);
+            t.write(inputImage);
+            t.close;
+        end
+        
         
         %% Utility functions        
         function check_save_path(savePath)
@@ -439,8 +472,8 @@ classdef IO < handle
         end
         
         function location=calculate_overview_location(inputSample,priorLocationNr)
-            x=mean([inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr)])
-            y=mean([inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr)])
+            x=mean([inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr)]);
+            y=mean([inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr)]);
             [rows,columns]=find(inputSample.priorLocations.frameNr(priorLocationNr)==inputSample.frameOrder);
             smallImageSize=ceil(inputSample.imageSize/8);
             location(1)=smallImageSize(1)*(rows-1)+round(y/8);
@@ -482,7 +515,16 @@ classdef IO < handle
             end
             inputSample.results.thumbnail_images=[];
             inputSample.results.segmentation=[];  
-            IO.save_sample(inputSample);
+         end
+        
+        function check_sample_for_thumbnails(inputSample)
+            if ~isempty(inputSample.results.segmentation)
+                IO.convert_thumbnails_in_sample(inputSample);
+            end
+            if ~isempty(inputSample.overviewImage)
+                IO.save_overview_image(inputSample);
+                inputSample.overview_image=[];
+            end
         end
     end
 end
