@@ -9,6 +9,7 @@ classdef ThumbContainer < handle
         thumbnails = {};
         segmentation = {};
         overviewImage = [];
+        overviewMask = [];
     end
     
     methods
@@ -17,12 +18,13 @@ classdef ThumbContainer < handle
                 this.currentSample = inputSample ;
                 this.nrOfEvents = numel(inputSample.results.thumbnails);
                 if this.nrOfEvents >= 1
-                    this.thumbnails{1:this.nrOfEvents} = [];
-                    this.segmentation{1:this.nrOfEvents} =[];
+                    this.thumbnails = cell(this.nrOfEvents,1);
+                    this.segmentation = cell(this.nrOfEvents,1);
                     this.load_all_thumbs();
                     
                 end
                 this.overviewImage=IO.load_overview_image(inputSample);
+                this.overviewMask=IO.load_overview_mask(inputSample);
             else
                 error('incorrect input type when constructing Thumb container. Please provide Sample');
             end

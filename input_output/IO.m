@@ -430,8 +430,16 @@ classdef IO < handle
         end
         
         function outputImage = load_overview_image(sample)
-            if exist([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],'file');
-               outputImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif']);
+            if exist([sample.savePath,'frames',filesep,sample.id,filesep,'overview_thumbnail.tif'],'file');
+               outputImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,'overview_thumbnail.tif']);
+            else
+               outputImage=[];
+            end   
+        end
+        
+        function outputImage = load_overview_mask(sample)
+            if exist([sample.savePath,'frames',filesep,sample.id,filesep,'overview_mask.tif'],'file');
+               outputImage=logical(imread([sample.savePath,'frames',filesep,sample.id,filesep,'overview_mask.tif']));
             else
                outputImage=[];
             end   
@@ -444,15 +452,30 @@ classdef IO < handle
             t=Tiff([currentSample.savePath,'frames',filesep,currentSample.id,filesep,'overview_thumbnail.tif'],'w');
             t.setTag('Photometric',t.Photometric.MinIsBlack);
             t.setTag('Compression',t.Compression.LZW);
-            t.setTag('ImageLength',size(currentDataFrame.segmentedImage,1));
-            t.setTag('ImageWidth',size(currentDataFrame.segmentedImage,2));
+            t.setTag('ImageLength',size(inputImage,1));
+            t.setTag('ImageWidth',size(inputImage,2));
             t.setTag('PlanarConfiguration',t.PlanarConfiguration.Separate);
             t.setTag('BitsPerSample',16);
             t.setTag('SamplesPerPixel',currentSample.nrOfChannels);
             t.write(inputImage);
             t.close;
         end
-        
+       
+        function save_overview_mask(currentSample,inputImage)
+            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
+            end
+            t=Tiff([currentSample.savePath,'frames',filesep,currentSample.id,filesep,'overview_mask.tif'],'w');
+            t.setTag('Photometric',t.Photometric.MinIsBlack);
+            t.setTag('Compression',t.Compression.LZW);
+            t.setTag('ImageLength',size(inputImage,1));
+            t.setTag('ImageWidth',size(inputImage,2));
+            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+            t.setTag('BitsPerSample',8);
+            t.setTag('SamplesPerPixel',1);
+            t.write(uint8(inputImage));
+            t.close;
+        end
         
         %% Utility functions        
         function check_save_path(savePath)
@@ -522,8 +545,12 @@ classdef IO < handle
                 IO.convert_thumbnails_in_sample(inputSample);
             end
             if ~isempty(inputSample.overviewImage)
-                IO.save_overview_image(inputSample);
-                inputSample.overview_image=[];
+                IO.save_overview_image(inputSample,inputSample.overviewImage);
+                inputSample.overviewImage=[];
+            end
+            if ~isempty(inputSample.mask)
+                IO.save_overview_mask(inputSample,inputSample.mask);
+                inputSample.mask=[];
             end
         end
     end
