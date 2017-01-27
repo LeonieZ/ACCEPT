@@ -39,27 +39,34 @@ classdef IO < handle
             save([smplLst.save_path(),'processed.mat'],'processor','-append','-v7.3');
         end
         
-        function export_samplelist_results_summary(sampleList)
-            n=numel(sampleList.sampleNames);
-            classifications={1:n};
+        function t = export_samplelist_results_summary(sampleList,selectedCellsInTable,file)
+            n = size(selectedCellsInTable,2);
+            classifications = cell(1,n);
+            id = cell(1,n);
             names={'sampleID'};
-            for i=1:n
-                i
-                try
-                currentSample=IO.load_sample(sampleList,i);
-                id{i}=currentSample.id;
-                classifications{i}=currentSample.results.classification;
-                classifiers=classifications{i}.Properties.VariableNames;
-                if ~isempty(classifiers)
-                    names=cat(2,names,classifiers);
-                end
-                catch
+            for j=1:n
+                i = selectedCellsInTable(j);
+                if sampleList.isProcessed(i) == 1
+                    try
+                        currentSample = IO.load_sample(sampleList,i);
+                        id{j} = currentSample.id;
+                        classifications{j} = currentSample.results.classification;
+                        classifiers = classifications{j}.Properties.VariableNames;
+                        if ~isempty(classifiers)
+                            names=cat(2,names,classifiers);
+                        end
+                    catch
+                    end
                 end
             end
-            names=unique(names,'stable');
-            t=id';
-            for i=1:n
-                for j=2:numel(names)
+            empty = cellfun(@isempty, classifications);
+            classifications = classifications(~empty);
+            id = id(~empty);
+            n = size(classifications,2);
+            names = unique(names,'stable');
+            t = id';
+            for i = 1:n
+                for j = 2:numel(names)
                     if any(strcmp(classifications{i}.Properties.VariableNames,names(j)))
                         t{i,j}=sum(eval(['classifications{i}.', names{j}]));
                     else
@@ -67,10 +74,60 @@ classdef IO < handle
                     end
                 end
             end
-            summary=array2table(t,'VariableNames',unique(names,'stable'));
-            writetable(summary,[sampleList.save_path(),'summaryTable.xlsx']);
+            if ~isempty(t)
+                summary = array2table(t,'VariableNames',unique(names,'stable'));
+                delete(file);
+                writetable(summary,file);
+            end
         end
-
+        
+        function attach_results_summary(currentSample)
+            names={'sampleID'};
+            id=currentSample.id;
+            classifications=currentSample.results.classification;
+            classifiers=classifications.Properties.VariableNames;
+            if ~isempty(classifiers)
+                names=cat(2,names,classifiers);
+            end
+            if exist([currentSample.savePath(),'summaryTable.xlsx'],'file') == 2
+                currExcel = readtable([currentSample.savePath(),'summaryTable.xlsx']);
+                exist_names = currExcel.Properties.VariableNames; 
+                new_names = setdiff(names,exist_names);
+                T_new = array2table(nan(size(currExcel,1),size(new_names,2)),'VariableNames',new_names);
+                currExcel = [currExcel, T_new];
+            else 
+                start = [];
+                start{1,1} = id;
+                for j = 2:size(names,2)
+                    start{1,j} = NaN;
+                end
+                currExcel = cell2table(start,'VariableNames',names);
+            end
+            
+            pos_name = find(strcmp(currExcel{:,1},id));
+            if isempty(pos_name)
+                column_ind = size(currExcel,1)+1;
+                start = [];
+                start{1,1} = id;
+                for j = 2:size(names,2)
+                    start{1,j} = NaN;
+                end
+                currExcel = [currExcel;cell2table(start,'VariableNames',names)];
+            else
+                column_ind = pos_name;
+            end
+            for i = 2:size(currExcel,2)
+                pos = find(strcmp(currExcel.Properties.VariableNames{i},classifiers));
+                if ~isempty(pos)
+                    currExcel{column_ind,i} = sum(eval(['classifications.', classifiers{pos}]));
+                else
+                    currExcel{column_ind,i} = NaN;
+                end
+            end
+            delete([currentSample.savePath(),'summaryTable.xlsx']);
+            writetable(currExcel,[currentSample.savePath(),'summaryTable.xlsx']);
+        end
+        
         %% Sample handeling functions
         function loaderHandle = check_sample_type(samplePath,loaderTypesAvailable)
             %Checks which loader types can load the sample path and chooses
