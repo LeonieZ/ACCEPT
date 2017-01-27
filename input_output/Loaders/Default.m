@@ -1,4 +1,4 @@
-classdef Default < Loader
+classdef Default < Loader & IcyPluginData & CustomCsv
     %DEFAULT Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -6,13 +6,11 @@ classdef Default < Loader
         name='Default'
         hasEdges='false'
         pixelSize=0.64
-        channelNames={};
+        channelNames={'APC','DAPI','PE'};
         channelEdgeRemoval=1;
         sample=Sample();
-        channelRemapping=[];
         tiffHeaders
-        filtersUsed
-        channelsUsed=[] ;
+        channelsUsed={'APC','DAPI','PE'};
     end
     
     events
@@ -45,11 +43,15 @@ classdef Default < Loader
             else
                 this.sample.id=splitPath{end};
             end
+            customChannelsUsed=this.look_for_custom_channels(samplePath);
+            if ~isempty(customChannelsUsed)
+                this.channelsUsed=customChannelsUsed;
+            end
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
-            this.load_scan_info(samplePath);
             this.preload_tiff_headers(samplePath);
+            this.guess_scan_info(samplePath);
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
             this.calculate_frame_nr_order();
 
@@ -125,70 +127,33 @@ classdef Default < Loader
     end
    
     methods(Access=private)
-        function load_scan_info(this,samplePath)
-            %find text files to extract metadata
-            [txtDir,dirFound]=Loader.find_dir(samplePath,'txt',4);
-            this.sample.priorPath=samplePath;
-            if dirFound
-                %When files are found check their names
-                tempTxtFileNames = dir([txtDir filesep '*.txt']);
-                for i=1:numel(tempTxtFileNames)
-                    nameArray{i}=tempTxtFileNames(i).name;
-                end
-                                
-                bool=strcmp(nameArray(:),'Parameters.txt');
-                %Try and open Parameters.txt
-                i=find(bool,true);
-                if bool(i)
-                    fid=fopen(strcat(txtDir,filesep,'Parameters.txt'));
-                    tline = fgetl(fid);
-                    i=1;
-                    while ischar(tline)
-                        parameters{i}=tline;
-                        tline = fgetl(fid);
-                        i=i+1;
-                    end
-                    fclose(fid);
-                    tempFiltersUsed=dlmread(strcat(txtDir,filesep,'Used Filters.txt'),'\t');
-                    this.filtersUsed=find(tempFiltersUsed==true);
-                end
-               this.sample.columns=str2num(parameters{29}(19:end));
-               this.sample.rows=str2num(parameters{30}(19:end));
-               this.channelNames{1}=parameters{31}(11:end);
-               this.channelNames{2}=parameters{32}(11:end);
-               this.channelNames{3}=parameters{33}(11:end);
-               this.channelNames{4}=parameters{34}(11:end);
-               this.channelRemapping=[0,0,0,0];
-               this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{1}))=1;
-               this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{2}))=2;
-               this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{3}))=3;
-               this.channelRemapping(this.channelRemapping==0)=4;
-               if ~(sum(this.channelRemapping(1:4))==10)
-                   %error
-               end
-            else
-                %error
-            end
-        end
         
-        function preload_tiff_headers(this,samplePath)
+        function guess_scan_info(this,samplePath)
+            %find text files to extract metadata
+               D=[1; unique(cumprod(perms(factor(this.sample.nrOfFrames)),2))];
+               this.sample.columns=D(ceil(numel(D)/2));
+               this.sample.rows=this.sample.nrOfFrames/this.sample.columns; 
+
+       
+                %error
+         end
+         function preload_tiff_headers(this,samplePath)
             [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',100);    
             if bool
-                for j=1:numel(this.channelRemapping)
-                    if any(this.filtersUsed==j)
-                        tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{j} '.tif']);
-                        for i=1:numel(tempImageFileNames)
-                            this.sample.imageFileNames{i,this.channelRemapping(j)} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
-                            this.sample.tiffHeaders{i,this.channelRemapping(j)}=imfinfo(this.sample.imageFileNames{i,this.channelRemapping(j)});
-                        end
+                for j=1:numel(this.channelNames)
+                    tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{j} '*.tif']);
+                    for i=1:numel(tempImageFileNames)
+                        this.sample.imageFileNames{i,j} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+                        this.sample.tiffHeaders{i,j}=imfinfo(this.sample.imageFileNames{i,j});
                     end
+
                     %function to fill the dataP.temp.imageinfos variable
                 end
          %Have to add a check for the 2^15 offset.
                     %dataP.temp.imagesHaveOffset=false;
-                this.sample.imageSize=[this.sample.tiffHeaders{1,1}(1).Height this.sample.tiffHeaders{1,1}(1).Width numel(this.filtersUsed)];
+                this.sample.imageSize=[this.sample.tiffHeaders{1,1}(1).Height this.sample.tiffHeaders{1,1}(1).Width numel(this.channelNames)];
                 this.sample.nrOfFrames=numel(tempImageFileNames);
-                this.sample.nrOfChannels=numel(this.filtersUsed);
+                this.sample.nrOfChannels=numel(this.channelNames);
             else
                 %throw error
             end
@@ -276,17 +241,22 @@ classdef Default < Loader
             %function that must be present in all loader types to test
             %if the current sample can be loaded by this class. 
             
-            [txtDir,dirFound]=Loader.find_dir(path,'txt',4);
-            if dirFound
-                tempTxtFileNames = dir([txtDir filesep '*.txt']);
+            [txtDir,cvsdirFound]=Loader.find_dir(path,'csv',1);
+            [tifDir,tifdirFound]=Loader.find_dir(path,'tif',100);
+            if cvsdirFound
+                tempTxtFileNames = dir([txtDir filesep '*.csv']);
                 for i=1:numel(tempTxtFileNames)
                     nameArray{i}=tempTxtFileNames(i).name;
                 end
-                test=strcmp(nameArray(:),'Parameters.txt');
+                test=strcmp(nameArray(:),'customChannels.csv');
                 bool=any(test);
+            elseif tifdirFound
+                tempImageFileNames = dir([tifDir filesep '*APC*'  '.tif']);
+                bool=50<numel(tempImageFileNames);
             else
                 bool = false;
             end    
+            
         end
     end
 end

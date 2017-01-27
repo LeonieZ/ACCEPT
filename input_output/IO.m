@@ -111,6 +111,9 @@ classdef IO < handle
         function save_sample(currentSample)
             % Function to save the sample in a .mat file for later reuse.
             % and mark the sample sample as processed. 
+            if ~exist([currentSample.savePath,'output',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,'output',filesep,currentSample.id]);
+            end
             save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
             %do we split this in a seperate function? /g
             load([currentSample.savePath,'processed.mat'],'samplesProcessed');
@@ -151,8 +154,8 @@ classdef IO < handle
         function save_data_frame(currentSample,currentDataFrame)
             % Save DataFrame 
             % Check why we dont use the savepath function? /G
-            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
-                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
+            if ~exist([currentSample.savePath,'frames',filesep],'dir')
+                mkdir([currentSample.savePath,'frames',filesep]);
             end
             save([currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame','-v7.3');            
         end
@@ -245,7 +248,7 @@ classdef IO < handle
             t.setTag('ImageWidth',size(currentDataFrame.segmentedImage,2));
             t.setTag('PlanarConfiguration',t.PlanarConfiguration.Separate);
             t.setTag('BitsPerSample',8);
-            t.setTag('SamplesPerPixel',5);
+            t.setTag('SamplesPerPixel',currentSample.nrOfChannels);
             t.write(uint8(currentDataFrame.segmentedImage));
             t.close;
         end
