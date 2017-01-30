@@ -30,8 +30,7 @@ classdef Marker_Characterization < SampleProcessor
                 inputSample.results.features(find(inputSample.results.features.ch_3_Size==0),:) = [];
                 notNec = find(~ismember(linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)),inputSample.results.features{:,1}));
                 for i = 1:size(notNec,2)
-                    inputSample.results.thumbnail_images{1,notNec(i)} = [];
-                    inputSample.results.segmentation{1,notNec(i)} = [];
+                    inputSample.results.thumbnails = [];
                 end
             end
             this.dataframeProcessor =[];

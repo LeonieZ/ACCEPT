@@ -3,6 +3,9 @@ function GuiSampleHandle = gui_sample(base,currentSample)
 % Main figure: create and set properies (relative size, color)
 set(0,'units','characters');  
 screensz = get(0,'screensize');
+tic
+thumbContainer=ThumbContainer(currentSample);
+toc
 GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-225)/2 (screensz(4)-65)/2 225 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off','CloseRequestFcn',@close_fcn);
 gate = struct('gates',cell(0),'name','');
@@ -18,8 +21,8 @@ else
 end
 
 %handle empty thumbs
-usedThumbs = find(ismember(linspace(1,size(currentSample.results.thumbnail_images,2),size(currentSample.results.thumbnail_images,2)),currentSample.results.features{:,1}));
-% usedThumbs = linspace(1,size(currentSample.results.thumbnail_images,2),size(currentSample.results.thumbnail_images,2));
+usedThumbs = find(ismember(linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents),currentSample.results.features{:,1}));
+% usedThumbs = linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents);
 nrUsedThumbs = size(usedThumbs,2);
 
 %replace NaN values with zeros
@@ -573,10 +576,8 @@ function plot_thumbnails(val)
     if ~isempty(thumbIndex)
         for j=1:numel(thumbIndex)
             thumbInd=thumbIndex(j);
-%             rawImage = currentSample.results.thumbnail_images{usedThumbs(thumbInd)};
-%             segmentedImage = currentSample.results.segmentation{usedThumbs(thumbInd)};
-            rawImage = currentSample.results.thumbnail_images{usedThumbs(currPos(thumbInd))};
-            segmentedImage = currentSample.results.segmentation{usedThumbs(currPos(thumbInd))};
+            rawImage = thumbContainer.thumbnails{usedThumbs(currPos(thumbInd))};
+            segmentedImage = thumbContainer.segmentation{usedThumbs(currPos(thumbInd))};
             k = (j-1)*cols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
 %             plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
@@ -1156,7 +1157,7 @@ function export_thumbs(handle,~)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
-    IO.save_thumbnail(currentSample)
+    IO.save_thumbnail(currentSample,[],[],[],[],thumbContainer)
     set(handle,'backg',color)
 end
 

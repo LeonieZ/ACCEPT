@@ -55,16 +55,6 @@ classdef FeatureCollection < SampleProcessorObject
                         end                      
                         returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(dataFrame.frameNr * ones(size(xBottomLeft,2),1),xBottomLeft',...
                             yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
-                        thumbnail_images = cell(1,size(dataFrame.features,1));
-                        segmentation = cell(1,size(dataFrame.features,1));
-                        for n = 1:size(xBottomLeft,2)
-                            thumbnail_images{n} = dataFrame.rawImage(yBottomLeft(n):yTopRight(n),...
-                                xBottomLeft(n):xTopRight(n),:);
-                            segmentation{n} = dataFrame.segmentedImage(yBottomLeft(n):yTopRight(n),...
-                                xBottomLeft(n):xTopRight(n),:);
-                        end
-                        returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbnail_images);
-                        returnSample.results.segmentation = horzcat(returnSample.results.segmentation, segmentation);
                     end
                 end
             
@@ -131,8 +121,6 @@ classdef FeatureCollection < SampleProcessorObject
                         returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, returnSample.priorLocations(k,:));
                     end
                     returnSample.results.features = vertcat(returnSample.results.features,featureTables{k});
-                    returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFramesProcessed{k}.segmentedImage);
-                    returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFramesProcessed{k}.rawImage);
                 end
                 
             %------------------
@@ -143,18 +131,13 @@ classdef FeatureCollection < SampleProcessorObject
                     i
                     thumbFrame = IO.load_thumbnail_frame(inputSample,i,this.priorLocations); 
                     this.dataProcessor.run(thumbFrame);
-%                     thumbsfoundearlier = size(returnSample.results.thumbnails,1);
                     objectsfound = size(thumbFrame.features,1);
                     if objectsfound > 0
-%                         thumbNr = array2table((thumbsfoundearlier+1)*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
                         thumbNr = array2table(i*(ones(size(objectsfound,1),1)),'VariableNames',{'ThumbNr'});
                         thumbFrame.features = [thumbNr thumbFrame.features];
                         returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                     end
                     returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, this.priorLocations(i,:));
-                    returnSample.results.segmentation = horzcat(returnSample.results.segmentation, thumbFrame.segmentedImage);
-                    %delete later!?
-                    returnSample.results.thumbnail_images = horzcat(returnSample.results.thumbnail_images, thumbFrame.rawImage);
                 end
             end
         end

@@ -168,9 +168,6 @@ classdef IO < handle
         function save_sample(currentSample)
             % Function to save the sample in a .mat file for later reuse.
             % and mark the sample sample as processed. 
-            if ~exist([currentSample.savePath,'output',filesep,currentSample.id],'dir')
-                mkdir([currentSample.savePath,'output',filesep,currentSample.id]);
-            end
             save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
             %do we split this in a seperate function? /g
             load([currentSample.savePath,'processed.mat'],'samplesProcessed');
@@ -310,10 +307,10 @@ classdef IO < handle
             t.close;
         end
         
-        function save_thumbnail(currentSample,eventNr,option,rescaled,class)
-           [id,~] = strtok(currentSample.id,'.');
+        function save_thumbnail(currentSample,eventNr,option,rescaled,class,thumbContainer)
+           id = currentSample.id;
            
-           if ~exist('class','var')
+           if ~exist('class','var') || isempty(class)
                class = 0;
            end
            
@@ -337,13 +334,10 @@ classdef IO < handle
             end
            end
            
-           if ~exist('rescaled','var')
+           if ~exist('rescaled','var') || isempty(rescaled)
                rescaled = true;
            end
-           
-           if ~exist('class','var')
-               class = 0;
-           end
+          
 
            if exist('option','var') && strcmp('prior',option)
                 if exist('eventNr','var') && ~isempty(eventNr)
@@ -406,14 +400,22 @@ classdef IO < handle
                 end
            else
                 if exist('eventNr','var') && ~isempty(eventNr)
-                    if ~isempty(currentSample.results.thumbnail_images{eventNr})
-                        data = currentSample.results.thumbnail_images{eventNr}(:,:,1);
-    %                     t=Tiff([currentSample.savePath,'frames',filesep,id,filesep, num2str(eventNr),'_thumb.tif'],'w');
+                    if exist('thumbContainer','var') && isa(thumbContainer,'ThumbContainer') && thumbContainer.nrOfEvents == size(currentSample.results.thumbnails,1)
+                        rawIm = thumbContainer.thumbnails{eventNr};
+                        segmIm = thumbContainer.segmentation{eventNr};
+                    else
+                        thumbContainer = ThumbContainer(currentSample,eventNr);
+                        rawIm = thumbContainer.thumbnails{1};
+                        segmIm = thumbContainer.segmentation{1};
+                    end
+                        
+                    if ~isempty(rawIm)
+                        data = rawIm(:,:,1);
                         t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(eventNr),'_thumb.tif'],'w');
                         t.setTag('Photometric',t.Photometric.MinIsBlack);
                         t.setTag('Compression',t.Compression.LZW);
-                        t.setTag('ImageLength',size(currentSample.results.thumbnail_images{eventNr},1));
-                        t.setTag('ImageWidth',size(currentSample.results.thumbnail_images{eventNr},2));
+                        t.setTag('ImageLength',size(data,1));
+                        t.setTag('ImageWidth',size(data,2));
                         t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
                         t.setTag('BitsPerSample',16);
                         t.setTag('SamplesPerPixel',1);
@@ -427,17 +429,25 @@ classdef IO < handle
                         s.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
                         s.setTag('BitsPerSample',1);
                         s.setTag('SamplesPerPixel',1);
-                        s.write(currentSample.results.segmentation{eventNr}(:,:,1));
+                        s.write(segmIm(:,:,1));
                         s.close;
                         for j = 2:currentSample.nrOfChannels
-                              imwrite(uint16(currentSample.results.thumbnail_images{eventNr}(:,:,j)), [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(eventNr),'_thumb.tif'], 'writemode', 'append');
-                              imwrite(currentSample.results.segmentation{eventNr}(:,:,j), [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(eventNr),'_thumb_segm.tif'], 'writemode', 'append');     
+                              imwrite(uint16(rawIm(:,:,j)), [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(eventNr),'_thumb.tif'], 'writemode', 'append');
+                              imwrite(segmIm(:,:,j), [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(eventNr),'_thumb_segm.tif'], 'writemode', 'append');     
                         end
                     end
                 else
-                    for i = 1:size(currentSample.results.thumbnail_images,2)
-                        if ~isempty(currentSample.results.thumbnail_images{i}) && (class == 0 || currentSample.results.classification{i,class} == 1)
-                            data = currentSample.results.thumbnail_images{i}(:,:,1);
+                    if exist('thumbContainer','var') && isa(thumbContainer,'ThumbContainer') && thumbContainer.nrOfEvents == size(currentSample.results.thumbnails,1)
+                        thumbnail_images = thumbContainer.thumbnails;
+                        segmentation = thumbContainer.segmentation;
+                    else
+                        thumbContainer = ThumbContainer(currentSample);
+                        thumbnail_images = thumbContainer.thumbnails;
+                        segmentation = thumbContainer.segmentation;
+                    end
+                    for i = 1:size(thumbnail_images,1)
+                        if ~isempty(thumbnail_images{i}) && (class == 0 || currentSample.results.classification{i,class} == 1)
+                            data = thumbnail_images{i}(:,:,1);
                             if class == 0
                                 t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'],'w');
                             else
@@ -446,8 +456,8 @@ classdef IO < handle
                             end
                             t.setTag('Photometric',t.Photometric.MinIsBlack);
                             t.setTag('Compression',t.Compression.LZW);
-                            t.setTag('ImageLength',size(currentSample.results.thumbnail_images{i},1));
-                            t.setTag('ImageWidth',size(currentSample.results.thumbnail_images{i},2));
+                            t.setTag('ImageLength',size(thumbnail_images{i},1));
+                            t.setTag('ImageWidth',size(thumbnail_images{i},2));
                             t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
                             t.setTag('BitsPerSample',16);
                             t.setTag('SamplesPerPixel',1);
@@ -466,19 +476,19 @@ classdef IO < handle
                             s.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
                             s.setTag('BitsPerSample',1);
                             s.setTag('SamplesPerPixel',1);
-                            s.write(currentSample.results.segmentation{i}(:,:,1));
+                            s.write(segmentation{i}(:,:,1));
                             s.close;
                             for j = 2:currentSample.nrOfChannels
                                 if class == 0 
-                                   imwrite(uint16(currentSample.results.thumbnail_images{i}(:,:,j)), ...
+                                   imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'], 'writemode', 'append');
-                                   imwrite(currentSample.results.segmentation{i}(:,:,j), ...
+                                   imwrite(segmentation{i}(:,:,j), ...
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'], 'writemode', 'append'); 
                                 else
-                                   imwrite(uint16(currentSample.results.thumbnail_images{i}(:,:,j)), ...
+                                   imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified' filesep num2str(i)...
                                        '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '.tif'],'writemode', 'append');
-                                   imwrite(currentSample.results.segmentation{i}(:,:,j), ...
+                                   imwrite(segmentation{i}(:,:,j), ...
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep,num2str(i),...
                                     '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '_segm.tif'], 'writemode', 'append');
                                 end
