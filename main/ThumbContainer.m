@@ -8,34 +8,21 @@ classdef ThumbContainer < handle
         nrOfEvents = []; 
         thumbnails = {};
         segmentation = {};
+        thumbnailLoaded = [];
         overviewImage = [];
         overviewMask = [];
     end
     
     methods
-        function this = ThumbContainer(inputSample,thumbNr)
-            if isa(inputSample,'Sample') && ~exist('thumbNr','var')
+        function this = ThumbContainer(inputSample)
+            if isa(inputSample,'Sample')
                 this.currentSample = inputSample ;
                 this.nrOfEvents = size(inputSample.results.thumbnails,1);
                 if this.nrOfEvents >= 1
                     this.thumbnails = cell(this.nrOfEvents,1);
                     this.segmentation = cell(this.nrOfEvents,1);
-                    this.load_all_thumbs();
-                    
+                    this.thumbnailLoaded = false(this.nrOfEvents,1);
                 end
-                this.overviewImage=IO.load_overview_image(inputSample);
-                this.overviewMask=IO.load_overview_mask(inputSample);
-            elseif isa(inputSample,'Sample') && exist('thumbNr','var') && isnumeric(thumbNr)
-                this.currentSample = inputSample ;
-                this.nrOfEvents = size(inputSample.results.thumbnails,1);
-                if this.nrOfEvents >= 1
-                    this.thumbnails = cell(this.nrOfEvents,1);
-                    this.segmentation = cell(this.nrOfEvents,1);
-                    this.load_all_thumbs(thumbNr);
-                    
-                end
-                this.overviewImage=IO.load_overview_image(inputSample);
-                this.overviewMask=IO.load_overview_mask(inputSample);
             else
                 error('Incorrect input type when constructing ThumbContainer. Please provide Sample');
             end
@@ -48,9 +35,23 @@ classdef ThumbContainer < handle
             outputImage = this.overviewImage;
         end
         
-        function load_all_thumbs(this,thumbNr)
+        function  outputImage = get.overviewMask(this)
+            if isempty(this.overviewImage)
+                this.overviewImage = IO.load_overview_mask(this.currentSample);
+            end
+            outputImage = this.overviewMask;
+        end
+         
+        function load_thumbs(this,thumbNr)
+            frames=[];
             if ~exist('thumbNr','var')
-                frames=unique(this.currentSample.results.thumbnails.frameNr);
+                frames=unique(this.currentSample.results.thumbnails.frameNr(~this.thumbnailLoaded));
+            elseif exist('thumbNr','var') && isnumeric(thumbNr)
+                if  ~this.thumbnailLoaded(thumbNr)
+                    frames=this.currentSample.results.thumbnails.frameNr(thumbNr);
+                end
+            end
+            if ~isempty(frames)    
                 for i = 1 : numel(frames)
                     rawIm = IO.load_raw_image(this.currentSample,frames(i));
                     rawSeg = IO.load_segmented_image(this.currentSample,frames(i));
@@ -62,20 +63,50 @@ classdef ThumbContainer < handle
                         this.segmentation{curr_loc} = logical(rawSeg(this.currentSample.results.thumbnails.yBottomLeft(curr_loc):this.currentSample.results.thumbnails.yTopRight(curr_loc),...
                         this.currentSample.results.thumbnails.xBottomLeft(curr_loc):this.currentSample.results.thumbnails.xTopRight(curr_loc),:));
                     end
+                    this.thumbnailLoaded(feature_loc)=true;
                 end
-            elseif exist('thumbNr','var') && isnumeric(thumbNr)
-                frame = this.currentSample.results.thumbnails.frameNr(thumbNr);
-                rawIm = IO.load_raw_image(this.currentSample,frame);
-                rawSeg = IO.load_segmented_image(this.currentSample,frame);
-                this.thumbnails{1} = rawIm(this.currentSample.results.thumbnails.yBottomLeft(thumbNr):this.currentSample.results.thumbnails.yTopRight(thumbNr),...
-                    this.currentSample.results.thumbnails.xBottomLeft(thumbNr):this.currentSample.results.thumbnails.xTopRight(thumbNr),:);
-                this.segmentation{1} = logical(rawSeg(this.currentSample.results.thumbnails.yBottomLeft(thumbNr):this.currentSample.results.thumbnails.yTopRight(thumbNr),...
-                    this.currentSample.results.thumbnails.xBottomLeft(thumbNr):this.currentSample.results.thumbnails.xTopRight(thumbNr),:));                
             end
-                
-                
         end
         
+        function varargout = subsref(obj,s)
+            %subrefs implementation from template \g see code patterns for 
+            %subsref and subsagn method in matlab documentation 
+            switch s(1).type
+                case '.'
+                 if length(s) == 1 
+                    % Implement obj.thumbnails
+                    prop=s(1).subs;
+                    if (strcmp(prop,'thumbnails') || strcmp(prop,'segmentation'))
+                        obj.load_thumbs();
+                    end
+                    varargout = {obj.(prop)};
+                 elseif length(s) == 2 && strcmp(s(2).type,'{}') && (strcmp(s(1).subs,'thumbnails') || strcmp(s(1).subs,'segmentation'))
+                    % Implement obj.PropertyName(indices)
+                    prop=s(1).subs;
+                    index=s(2).subs;
+                    if numel(index)==1
+                      obj.load_thumbs(index{1});
+                    else
+                        error('Not a supported indexing expression')
+                    end
+                    if numel(s(2).subs{1})==1
+                        varargout = obj.(prop)(s(2).subs{1});
+                    else
+                        varargout = {obj.(prop)(s(2).subs{1})};    
+                    end
+                 else
+                    varargout = {builtin('subsref',obj,s)};
+                 end
+              case '()'
+                    % Use built-in for any other expression
+                    varargout = {builtin('subsref',obj,s)};
+              case '{}'
+                    % Use built-in for any other expression
+                    varargout = {builtin('subsref',obj,s)};
+               otherwise
+                 error('Not a valid indexing expression')
+            end
+        end
     end
     
 end
