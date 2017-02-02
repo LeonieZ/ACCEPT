@@ -87,8 +87,10 @@ classdef FeatureCollection < SampleProcessorObject
 %                     end
 %                 end
                 if strcmp(inputSample.type,'ThumbnailLoader')
-                    for i = 1:nPriorLoc
-                        thumbFrame = IO.load_data_frame(inputSample,i);                
+                   
+                    parfor i = 1:nPriorLoc
+                        thumbFrame = IO.load_data_frame(inputSample,i);
+                        framesize(i,:) = [size(thumbFrame.rawImage,1),size(thumbFrame.rawImage,2)];
                         this.dataProcessor.run(thumbFrame);
                         % for the parallel version we need an explicit update
                         % of the i-th dataFrame called thumbFrames{i}
@@ -119,6 +121,12 @@ classdef FeatureCollection < SampleProcessorObject
                     % add extracted features to current sample result
                     if ~strcmp(inputSample.type,'ThumbnailLoader')
                         returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, returnSample.priorLocations(k,:));
+                    else
+%                         returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(k * ones(size(featureTables{k},1),1),ones(size(featureTables{k},1),1),...
+%                             ones(size(featureTables{k},1),1),framesize(k,1)*ones(size(featureTables{k},1),1),framesize(k,2)*ones(size(featureTables{k},1),1),...
+%                             'VariableNames',{'frameNr' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
+                        returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(k,1,1,framesize(k,1),framesize(k,2),...
+                            'VariableNames',{'frameNr' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
                     end
                     returnSample.results.features = vertcat(returnSample.results.features,featureTables{k});
                 end
