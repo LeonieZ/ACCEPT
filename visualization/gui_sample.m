@@ -3,9 +3,12 @@ function GuiSampleHandle = gui_sample(base,currentSample)
 % Main figure: create and set properies (relative size, color)
 set(0,'units','characters');  
 screensz = get(0,'screensize');
-tic
+
+if ~isempty(currentSample.results.segmentation)
+    IO.save_sample(currentSample)
+end
 thumbContainer=ThumbContainer(currentSample);
-toc
+
 GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-225)/2 (screensz(4)-65)/2 225 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off','CloseRequestFcn',@close_fcn);
 gate = struct('gates',cell(0),'name','');

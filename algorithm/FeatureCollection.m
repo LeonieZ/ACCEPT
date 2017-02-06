@@ -52,9 +52,10 @@ classdef FeatureCollection < SampleProcessorObject
                             yBottomLeft(ind) = [];
                             xTopRight(ind) = [];
                             yTopRight(ind) = [];
-                        end                      
-                        returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(dataFrame.frameNr * ones(size(xBottomLeft,2),1),xBottomLeft',...
-                            yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
+                        end  
+                        label = [1:1:objectsfound];
+                        returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(dataFrame.frameNr * ones(size(xBottomLeft,2),1),...
+                            label',xBottomLeft',yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'label' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
                     end
                 end
             
@@ -65,9 +66,9 @@ classdef FeatureCollection < SampleProcessorObject
                 else 
                     nPriorLoc = size(inputSample.priorLocations,1)
                 end
-                thumbFramesProcessed = cell(nPriorLoc,1);
                 featureTables = cell(nPriorLoc,1);
-        
+                thumbnails = cell(nPriorLoc,1);
+                segmentation = cell(nPriorLoc,1);
                 % parallelized
                 
 %                 parfor i = 1:nPriorLoc
@@ -86,50 +87,45 @@ classdef FeatureCollection < SampleProcessorObject
 %                         featureTables{i} = [thumbNr thumbFrame.features];
 %                     end
 %                 end
-                if strcmp(inputSample.type,'ThumbnailLoader')
+                
                    
-                    parfor i = 1:nPriorLoc
-                        thumbFrame = IO.load_data_frame(inputSample,i);
-                        framesize(i,:) = [size(thumbFrame.rawImage,1),size(thumbFrame.rawImage,2)];
+                    for i = 1:nPriorLoc
+                        if strcmp(inputSample.type,'ThumbnailLoader')
+                            thumbFrame = IO.load_data_frame(inputSample,i);
+                        else
+                            thumbFrame = IO.load_thumbnail_frame(inputSample,i,'prior');  
+                        end
                         this.dataProcessor.run(thumbFrame);
                         % for the parallel version we need an explicit update
                         % of the i-th dataFrame called thumbFrames{i}
-                        thumbFramesProcessed{i} = thumbFrame;
                         objectsfound = size(thumbFrame.features,1);
                         if objectsfound > 0
                             thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
                             featureTables{i} = [thumbNr thumbFrame.features];
+                            frameNr = inputSample.priorLocations.frameNr(i)* ones(objectsfound,1);
+                            label = [1:1:objectsfound];
+                            xBottomLeft = inputSample.priorLocations.xBottomLeft(i)* ones(objectsfound,1);
+                            yBottomLeft = inputSample.priorLocations.yBottomLeft(i)* ones(objectsfound,1);
+                            xTopRight = inputSample.priorLocations.xTopRight(i) * ones(objectsfound,1);
+                            yTopRight = inputSample.priorLocations.yTopRight(i)* ones(objectsfound,1);
+                            thumbnails{i}= table(frameNr ,label', xBottomLeft, yBottomLeft, xTopRight, yTopRight); 
+                            segmentation{i}=thumbFrame.segmentedImage;
                         end
-                    end         
-                else
-                   parfor i = 1:nPriorLoc
-                        thumbFrame = IO.load_thumbnail_frame(inputSample,i,'prior');                 
-                        this.dataProcessor.run(thumbFrame);
-                        % for the parallel version we need an explicit update
-                        % of the i-th dataFrame called thumbFrames{i}
-                        thumbFramesProcessed{i} = thumbFrame;
-                        objectsfound = size(thumbFrame.features,1);
-                        if objectsfound > 0
-                            thumbNr = array2table(i*ones(objectsfound,1),'VariableNames',{'ThumbNr'});
-                            featureTables{i} = [thumbNr thumbFrame.features];
-                        end
-                    end 
-                        
-                end
-              
-                for k = 1:nPriorLoc
-                    % add extracted features to current sample result
-                    if ~strcmp(inputSample.type,'ThumbnailLoader')
-                        returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, returnSample.priorLocations(k,:));
-                    else
-%                         returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(k * ones(size(featureTables{k},1),1),ones(size(featureTables{k},1),1),...
-%                             ones(size(featureTables{k},1),1),framesize(k,1)*ones(size(featureTables{k},1),1),framesize(k,2)*ones(size(featureTables{k},1),1),...
-%                             'VariableNames',{'frameNr' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
-                        returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(k,1,1,framesize(k,1),framesize(k,2),...
-                            'VariableNames',{'frameNr' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
+                       
                     end
-                    returnSample.results.features = vertcat(returnSample.results.features,featureTables{k});
-                end
+                    
+                    
+                    
+                    for k = 1:nPriorLoc
+                        % add extracted features to current sample result
+                        if ~isempty(thumbnails{k})
+                            returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, thumbnails{k});
+                            returnSample.results.features = vertcat(returnSample.results.features,featureTables{k});
+                            for j=1:size(thumbnails{k},1)
+                                returnSample.results.segmentation{end+1} = segmentation{k};
+                            end
+                        end
+                    end
                 
             %------------------
             elseif this.use_thumbs == 1 && ~isempty(this.priorLocations)
@@ -141,11 +137,21 @@ classdef FeatureCollection < SampleProcessorObject
                     this.dataProcessor.run(thumbFrame);
                     objectsfound = size(thumbFrame.features,1);
                     if objectsfound > 0
-                        thumbNr = array2table(i*(ones(size(objectsfound,1),1)),'VariableNames',{'ThumbNr'});
+                        thumbNr = array2table(i*(ones(objectsfound,1)),'VariableNames',{'ThumbNr'});
                         thumbFrame.features = [thumbNr thumbFrame.features];
                         returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
+                        frameNr = inputSample.priorLocations.frameNr(i)* ones(objectsfound,1);
+                        label = [1:1:objectsfound];
+                        xBottomLeft = inputSample.priorLocations.xBottomLeft(i)* ones(objectsfound,1);
+                        yBottomLeft = inputSample.priorLocations.yBottomLeft(i)* ones(objectsfound,1);
+                        xTopRight = inputSample.priorLocations.xTopRight(i) * ones(objectsfound,1);
+                        yTopRight = inputSample.priorLocations.yTopRight(i)* ones(objectsfound,1);
+                        thumbnails= table(frameNr ,label', xBottomLeft, yBottomLeft, xTopRight, yTopRight); 
+                        returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails,thumbnails);
+                        for j=1:objectsfound
+                            returnSample.results.segmentation{end+1} = thumbFrame.segmentedImage;
+                        end
                     end
-                    returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails, this.priorLocations(i,:));
                 end
             end
         end

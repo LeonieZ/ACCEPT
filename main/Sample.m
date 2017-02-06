@@ -47,7 +47,7 @@ classdef Sample < handle
         mask=[];
     end
     
-    properties (Access={?IO,?Loader,?SampleOverviewLoading})
+    properties (Access={?Loader,?IO,?SampleOverviewLoading})
         loader
         savePath
         rows
@@ -55,11 +55,13 @@ classdef Sample < handle
         frameOrder
     end
     
-    properties (Access={?Loader})
+    properties (Access={?Loader, ?IO})
         imagePath
         priorPath
         imageFileNames
         tiffHeaders
+        segmentationHeaders
+        segmentationFileNames
     end
     
     methods
@@ -76,9 +78,6 @@ classdef Sample < handle
                 this.priorLocations=priorLocations;
             end      
         end
-
-        function save_results(this)
-            notify(this,'saveResults');
-        end
+       
     end
 end

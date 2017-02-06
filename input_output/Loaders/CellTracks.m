@@ -7,7 +7,6 @@ classdef CellTracks < Loader
         hasEdges=true;
         rescaleTiffs=true;
         pixelSize=0.64;
-        tiffHeaders;
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
         channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
         channelEdgeRemoval=2;

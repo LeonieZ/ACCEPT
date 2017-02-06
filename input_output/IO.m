@@ -141,26 +141,32 @@ classdef IO < handle
             loaderHandle=loaderTypesAvailable{i};
         end
         
-        function outputSample = load_sample(sampleList,sampleNr,forProc)
+        function outputSample = load_sample(sampleList,sampleNr,tiff_update)
             % loads a sample from a sampleList. First checks if this sample
             % has been saved before. If not we look up the loader handle
             % and construct the sample. 
             if nargin < 3
-                forProc = 1;
+                tiff_update = true;
             end
+            
             if exist(IO.saved_sample_path(sampleList,sampleNr),'file')
                 load(IO.saved_sample_path(sampleList,sampleNr));
-                if forProc == 1
+                if tiff_update
                     loader = currentSample.loader();
                     loader.update_prior_infos(currentSample,[sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
+                    currentSample.savePath = sampleList.save_path;
+                    IO.preload_segmentation_tiffs(currentSample);
+                else
+                    currentSample.savePath = sampleList.save_path;
                 end
-                currentSample.savePath=sampleList.save_path;
+                
+                
                 outputSample = currentSample;
             else
                 loader = sampleList.loaderToBeUsed{sampleNr};
                 loader.new_sample_path([sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
                 outputSample = loader.sample;
-                outputSample.savePath=sampleList.save_path();
+                outputSample.savePath = sampleList.save_path();
             end
             % Check if this is sample still contains thumbnails...
         end
@@ -168,6 +174,11 @@ classdef IO < handle
         function save_sample(currentSample)
             % Function to save the sample in a .mat file for later reuse.
             % and mark the sample sample as processed. 
+            % Check if for oldstyle sample and save segmentation if needed
+            IO.check_sample_for_thumbnails(currentSample)
+            % Remove tiff headers from sample
+            currentSample.tiffHeaders=[];
+            currentSample.segmentationHeaders=[];
             save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
             %do we split this in a seperate function? /g
             load([currentSample.savePath,'processed.mat'],'samplesProcessed');
@@ -187,6 +198,15 @@ classdef IO < handle
              end
         end
         
+        function preload_segmentation_tiffs(currentSample)
+            for i = 1:currentSample.nrOfFrames
+                currentSample.segmentationFileNames{i} = [currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(i,'%03.0f'),'_seg.tif'];
+                if exist(currentSample.segmentationFileNames{i},'file')
+                    currentSample.segmentationHeaders{i}=imfinfo(currentSample.segmentationFileNames{i});
+                end
+            end
+        end
+            
         %% DataFrame handeling functions
         function outputFrame = load_data_frame(sample,frameNr)
             % Load data frame using loader linked to sample
@@ -269,8 +289,8 @@ classdef IO < handle
         end
               
         function outputImage = load_segmented_image(sample,frameNr)
-            if exist([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],'file');
-               outputImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif']);
+            if exist(sample.segmentationFileNames{frameNr},'file');
+               outputImage=imread(sample.segmentationFileNames{frameNr},'info',sample.segmentationHeaders{frameNr});
             else
                outputImage=[];
             end
@@ -592,6 +612,7 @@ classdef IO < handle
         end
         
         function convert_thumbnails_in_sample(inputSample)
+            disp('detected old style converting to save disk space');
             frames=unique(inputSample.results.thumbnails.frameNr);
             for i=1:numel(frames)
                 currentDataFrame=IO.load_data_frame(inputSample,frames(i));

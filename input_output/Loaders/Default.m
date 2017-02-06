@@ -9,7 +9,6 @@ classdef Default < Loader & IcyPluginData & CustomCsv
         channelNames={'APC','DAPI','PE'};
         channelEdgeRemoval=1;
         sample=Sample();
-        tiffHeaders
         channelsUsed={'APC','DAPI','PE'};
     end
     
