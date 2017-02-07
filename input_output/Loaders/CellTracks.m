@@ -57,7 +57,7 @@ classdef CellTracks < Loader
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            if ~exist(currentSample.imagePath,'dir')
+            if isempty(currentSample.tiffHeaders)
                 [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100); 
                 [this.sample.priorPath,~] = this.find_dir(samplePath,'xml',1);
                 this.preload_tiff_headers();         
