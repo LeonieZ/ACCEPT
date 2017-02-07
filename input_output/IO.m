@@ -163,13 +163,18 @@ classdef IO < handle
                 
                 outputSample = currentSample;
             else
+                outputSample = load_sample_path(sampleList,sampleNr)
+            end
+            % Check if this is sample still contains thumbnails...
+        end
+        
+        function outputSample = load_sample_path(sampleList,sampleNr)
                 loader = sampleList.loaderToBeUsed{sampleNr};
                 loader.new_sample_path([sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
                 outputSample = loader.sample;
                 outputSample.savePath = sampleList.save_path();
-            end
-            % Check if this is sample still contains thumbnails...
         end
+        
         
         function save_sample(currentSample)
             % Function to save the sample in a .mat file for later reuse.
@@ -614,7 +619,7 @@ classdef IO < handle
         function convert_thumbnails_in_sample(inputSample)
             disp('detected old style converting to save disk space');
             frames=unique(inputSample.results.thumbnails.frameNr);
-            for i=1:numel(frames)
+            parfor i=1:numel(frames)
                 currentDataFrame=IO.load_data_frame(inputSample,frames(i));
                 currentDataFrame.segmentedImage=zeros(size(currentDataFrame.rawImage));
                 thumbsInFrame=find(inputSample.results.thumbnails.frameNr==frames(i));

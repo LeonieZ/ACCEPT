@@ -111,18 +111,18 @@ GuiSampleHandle.tableDetails = uicontrol('Style','text','Parent',GuiSampleHandle
 tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
 
 
-if ~isempty(currentSample.overviewImage) 
+if ~isempty(thumbContainer.overviewImage) 
     % % create overview image per channel
      GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
                                     'Units','characters','Position',[tabPosition(1)+tabPosition(3)+1.5 1 151.6-(tabPosition(1)+tabPosition(3)+3) 12.7]);
     %                            
      defCh = 2; % default channel for overview when starting the sample visualizer
 
-     blank=zeros(size(currentSample.overviewImage(:,:,defCh)));
+     blank=zeros(size(thumbContainer.overviewImage(:,:,defCh)));
      GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
      colormap(GuiSampleHandle.axesOverview,parula(4096));
-     high=prctile(reshape(currentSample.overviewImage(:,:,defCh),[1,size(currentSample.overviewImage,1)*size(currentSample.overviewImage,2)]),99);
-     plotImInAxis(currentSample.overviewImage(:,:,defCh).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+     high=prctile(reshape(thumbContainer.overviewImage(:,:,defCh),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),99);
+     plotImInAxis(thumbContainer.overviewImage(:,:,defCh).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
 
 
     % % create choose button to switch color channel
@@ -460,8 +460,8 @@ GuiSampleHandle.export_thumbs = uicontrol('Style', 'pushbutton', 'Units','charac
 % --- Executes on selection in popupChannel.
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
-    high=prctile(reshape(currentSample.overviewImage(:,:,selectedChannel),[1,size(currentSample.overviewImage,1)*size(currentSample.overviewImage,2)]),99);
-    plotImInAxis(currentSample.overviewImage(:,:,selectedChannel).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+    high=prctile(reshape(thumbContainer.overviewImage(:,:,selectedChannel),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),99);
+    plotImInAxis(thumbContainer.overviewImage(:,:,selectedChannel).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
 end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)

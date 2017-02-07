@@ -24,8 +24,9 @@ classdef FeatureCollection < SampleProcessorObject
             returnSample = inputSample;
             
             if this.use_thumbs == 0
-                for i = 1:inputSample.nrOfFrames
-                    i
+                featureTables = cell(inputSample.nrOfFrames,1);
+                thumbnails = cell(inputSample.nrOfFrames,1);
+                parfor i = 1:inputSample.nrOfFrames
                     dataFrame = IO.load_data_frame(inputSample,i);
                     this.dataProcessor.run(dataFrame);
                     objectsfoundearlier = size(inputSample.results.features,1);
@@ -35,8 +36,7 @@ classdef FeatureCollection < SampleProcessorObject
                         thumbNr = array2table(linspace(objectsfoundearlier+1,objectsfoundearlier+size(dataFrame.features,1),...
                             size(dataFrame.features,1))','VariableNames',{'ThumbNr'});
                         
-                        dataFrame.features = [thumbNr dataFrame.features]; %maybe change like below?!
-                        inputSample.results.features=vertcat(inputSample.results.features, dataFrame.features);
+                        featureTables{i} = [thumbNr dataFrame.features]; %maybe change like below?!
                         bb = struct2cell(regionprops(dataFrame.labelImage,'BoundingBox'));
                         yBottomLeft = cellfun(@(x) min(max(floor(x(2)) - round(0.2*x(5)),1),size(dataFrame.rawImage,1)),bb);
                         xBottomLeft = cellfun(@(x) min(max(floor(x(1)) - round(0.2*x(4)),1),size(dataFrame.rawImage,2)),bb);
@@ -54,11 +54,19 @@ classdef FeatureCollection < SampleProcessorObject
                             yTopRight(ind) = [];
                         end  
                         label = [1:1:objectsfound];
-                        returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, table(dataFrame.frameNr * ones(size(xBottomLeft,2),1),...
-                            label',xBottomLeft',yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'label' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'}));
+                        thumbnails{i} = table(dataFrame.frameNr * ones(size(xBottomLeft,2),1),...
+                            label',xBottomLeft',yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'label' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'});
                     end
                 end
-            
+                    
+                for k = 1:inputSample.nrOfFrames
+                        % add extracted features to current sample result
+                        if ~isempty(thumbnails{k})
+                            returnSample.results.thumbnails = vertcat(returnSample.results.thumbnails, thumbnails{k});
+                            returnSample.results.features = vertcat(returnSample.results.features,featureTables{k});
+                        end
+                 end
+                         
             elseif this.use_thumbs == 1 && isempty(this.priorLocations)
 
                 if strcmp(inputSample.type,'ThumbnailLoader')
@@ -89,7 +97,7 @@ classdef FeatureCollection < SampleProcessorObject
 %                 end
                 
                    
-                    for i = 1:nPriorLoc
+                    parfor i = 1:nPriorLoc
                         if strcmp(inputSample.type,'ThumbnailLoader')
                             thumbFrame = IO.load_data_frame(inputSample,i);
                         else

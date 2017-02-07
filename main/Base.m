@@ -90,7 +90,9 @@ classdef Base < handle
                         % continue to next sample if loading failed maybe
                         % we should add a reanalyse step. /g
                         this.logger.entry(this,LogMessage(2,['Sample NR',num2str(k) ,' failed to load']));
-                        continue
+                        this.logger.entry(this,LogMessage(2,['Sample NR',num2str(k) ,' is reprocessed']));
+                        sample = IO.load_sample_path(this.sampleList,k);
+                        this.sampleProcessor.previousProcessor.run(sample);
                     end
                         
                         this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
