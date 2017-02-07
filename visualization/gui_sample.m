@@ -1124,7 +1124,25 @@ function export_thumbs(handle,~)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
-    IO.save_thumbnail(currentSample,[],[],[],[],thumbContainer)
+    choice = NaN;
+    pos_button = get(GuiSampleHandle.export_thumbs,'Position');
+    pos_main = get(GuiSampleHandle.fig_main,'Position');
+    d = dialog('Units','characters','Position',[pos_main(1)+pos_button(1)-16 pos_main(2)+pos_button(2)-8 60 5],'Name','Export Thumbnail Images');
+    uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'FontUnits','normalized','FontSize',0.28,'String','All Thumbnails.','Callback',@btn1_callback);
+    uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'FontUnits','normalized','FontSize',0.28,'String','Selected Thumbnails.','Callback',@btn2_callback);
+    waitfor(d);
+    
+    function btn1_callback(~,~)
+        choice = 0;
+        delete(gcf)
+    end
+    function btn2_callback(~,~)
+            choice = selectedCells;
+            delete(gcf)
+    end
+    if ~isnan(choice)
+        IO.save_thumbnail(currentSample,[],[],[],choice,thumbContainer)
+    end
     set(handle,'backg',color)
 end
 

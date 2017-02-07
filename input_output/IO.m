@@ -339,16 +339,20 @@ classdef IO < handle
                class = 0;
            end
            
+           if size(class,1) == 1 && class ~= 0 
+               class = currentSample.results.classification{:,class};
+           end
+               
            if exist('option','var') && strcmp('prior',option)
             if ~exist([currentSample.savePath,'frames',filesep,id,filesep,'priorThumbs'],'dir')
                 mkdir([currentSample.savePath,'frames',filesep,id,filesep,'priorThumbs']);
                 fid=fopen([currentSample.savePath,'frames',filesep,id,filesep,'priorThumbs',filesep,'ACCEPTThumbnails.txt'],'w');
                 fclose(fid);
             end
-           elseif class ~= 0
-            if ~exist([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified'],'dir')
-               mkdir([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified']);
-               fid=fopen([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep,'ACCEPTThumbnails.txt'],'w');
+           elseif size(class,1) > 1
+            if ~exist([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs'],'dir')
+               mkdir([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs']);
+               fid=fopen([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,'ACCEPTThumbnails.txt'],'w');
                fclose(fid);
             end
            else
@@ -471,13 +475,13 @@ classdef IO < handle
                         segmentation = thumbContainer.segmentation;
                     end
                     for i = 1:size(thumbnail_images,1)
-                        if ~isempty(thumbnail_images{i}) && (class == 0 || currentSample.results.classification{i,class} == 1)
+                        if ~isempty(thumbnail_images{i}) && ((size(class,1)== 1&& class == 0) || class(i) == 1)
                             data = thumbnail_images{i}(:,:,1);
-                            if class == 0
+                            if (size(class,1)== 1 && class == 0)
                                 t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'],'w');
                             else
-                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep, num2str(i),...
-                                    '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '.tif'],'w');
+                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep, num2str(i),...
+                                    '_thumb.tif'],'w');
                             end
                             t.setTag('Photometric',t.Photometric.MinIsBlack);
                             t.setTag('Compression',t.Compression.LZW);
@@ -488,11 +492,11 @@ classdef IO < handle
                             t.setTag('SamplesPerPixel',1);
                             t.write(uint16(data));
                             t.close;
-                            if class == 0
+                            if (size(class,1)== 1 && class == 0)
                                 s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'],'w');
                             else
-                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep,num2str(i),...
-                                    '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '_segm.tif'],'w');
+                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,num2str(i),...
+                                    '_thumb_segm.tif'],'w');
                             end
                             s.setTag('Photometric',t.Photometric.MinIsBlack);
                             s.setTag('Compression',t.Compression.LZW);
@@ -504,18 +508,18 @@ classdef IO < handle
                             s.write(segmentation{i}(:,:,1));
                             s.close;
                             for j = 2:currentSample.nrOfChannels
-                                if class == 0 
+                                if (size(class,1)== 1 && class == 0)
                                    imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'], 'writemode', 'append');
                                    imwrite(segmentation{i}(:,:,j), ...
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'], 'writemode', 'append'); 
                                 else
                                    imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified' filesep num2str(i)...
-                                       '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '.tif'],'writemode', 'append');
+                                       [currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs' filesep num2str(i)...
+                                       '_thumb.tif'],'writemode', 'append');
                                    imwrite(segmentation{i}(:,:,j), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep,num2str(i),...
-                                    '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '_segm.tif'], 'writemode', 'append');
+                                       [currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,num2str(i),...
+                                    '_thumb_segm.tif'], 'writemode', 'append');
                                 end
                             end
                         end
