@@ -8,6 +8,8 @@ classdef ThumbContainer < handle
         nrOfEvents = []; 
         thumbnails = {};
         segmentation = {};
+        labelFullImage = {};
+        labelThumbImage = {};
         thumbnailLoaded = [];
         overviewImage = [];
         overviewMask = [];
@@ -55,18 +57,28 @@ classdef ThumbContainer < handle
                 for i = 1 : numel(frames)
                     rawIm = IO.load_raw_image(this.currentSample,frames(i));
                     rawSeg = IO.load_segmented_image(this.currentSample,frames(i));
+                    sumImage = sum(rawSeg,3);
+                    labels = repmat(bwlabel(sumImage,4),1,1,size(rawSeg,3));
+                    rawLabelImage = labels.*double(rawSeg);
+
                     feature_loc = find(this.currentSample.results.thumbnails.frameNr == frames(i));
                     for j = 1:size(feature_loc,1)
                         curr_loc = feature_loc(j);
                         this.thumbnails{curr_loc} = rawIm(this.currentSample.results.thumbnails.yBottomLeft(curr_loc):this.currentSample.results.thumbnails.yTopRight(curr_loc),...
-                        this.currentSample.results.thumbnails.xBottomLeft(curr_loc):this.currentSample.results.thumbnails.xTopRight(curr_loc),:);
+                                this.currentSample.results.thumbnails.xBottomLeft(curr_loc):this.currentSample.results.thumbnails.xTopRight(curr_loc),:);
                         this.segmentation{curr_loc} = logical(rawSeg(this.currentSample.results.thumbnails.yBottomLeft(curr_loc):this.currentSample.results.thumbnails.yTopRight(curr_loc),...
-                        this.currentSample.results.thumbnails.xBottomLeft(curr_loc):this.currentSample.results.thumbnails.xTopRight(curr_loc),:));
+                                this.currentSample.results.thumbnails.xBottomLeft(curr_loc):this.currentSample.results.thumbnails.xTopRight(curr_loc),:));   
+                        this.labelFullImage{curr_loc} = rawLabelImage(this.currentSample.results.thumbnails.yBottomLeft(curr_loc):this.currentSample.results.thumbnails.yTopRight(curr_loc),...
+                                this.currentSample.results.thumbnails.xBottomLeft(curr_loc):this.currentSample.results.thumbnails.xTopRight(curr_loc),:);
+                        sumImageSmall = sum(this.segmentation{curr_loc},3);
+                        labelsSmall = repmat(bwlabel(sumImageSmall,4),1,1,size(this.segmentation{curr_loc},3));
+                        this.labelThumbImage{curr_loc} = labelsSmall.*double(this.segmentation{curr_loc});
                     end
                     this.thumbnailLoaded(feature_loc)=true;
                 end
             end
         end
+     
         
         function varargout = subsref(obj,s)
             %subrefs implementation from template \g see code patterns for 
@@ -76,11 +88,15 @@ classdef ThumbContainer < handle
                  if length(s) == 1 
                     % Implement obj.thumbnails
                     prop=s(1).subs;
-                    if (strcmp(prop,'thumbnails') || strcmp(prop,'segmentation'))
+                    if (strcmp(prop,'thumbnails') || strcmp(prop,'segmentation') || strcmp(prop,'labelFullImage') || strcmp(prop,'labelThumbImage'))
                         obj.load_thumbs();
+                    elseif strcmp(prop,'labelThumbImage')
+                        obj.load_thumb_label();
                     end
+                    
                     varargout = {obj.(prop)};
-                 elseif length(s) == 2 && strcmp(s(2).type,'{}') && (strcmp(s(1).subs,'thumbnails') || strcmp(s(1).subs,'segmentation'))
+                 elseif length(s) == 2 && strcmp(s(2).type,'{}') && (strcmp(s(1).subs,'thumbnails') || strcmp(s(1).subs,'segmentation') ||...
+                         strcmp(s(1).subs,'labelFullImage') || strcmp(s(1).subs,'labelThumbImage'))
                     % Implement obj.PropertyName(indices)
                     prop=s(1).subs;
                     index=s(2).subs;

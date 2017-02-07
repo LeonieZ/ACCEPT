@@ -23,10 +23,23 @@ else
     maxi = 4095;
 end
 
-%handle empty thumbs
+% %handle empty thumbs
+% usedThumbs = find(ismember(linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents),currentSample.results.features{:,1}));
+% % usedThumbs = linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents);
+% nrUsedThumbs = size(usedThumbs,2);
+% 
+% %replace NaN values with zeros
+% sampleFeatures = currentSample.results.features;
+% sampleFeatures_noNaN = sampleFeatures{:,:};
+% sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
+% sampleFeatures{:,:} = sampleFeatures_noNaN; 
+% %handle selections
+% selectedFrames = false(nrUsedThumbs,1);
+% currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
+% selectedCells = zeros(size(sampleFeatures,1),1);
+
 usedThumbs = find(ismember(linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents),currentSample.results.features{:,1}));
-% usedThumbs = linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents);
-nrUsedThumbs = size(usedThumbs,2);
+nrUsedThumbs = thumbContainer.nrOfEvents;
 
 %replace NaN values with zeros
 sampleFeatures = currentSample.results.features;
@@ -34,9 +47,10 @@ sampleFeatures_noNaN = sampleFeatures{:,:};
 sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
 sampleFeatures{:,:} = sampleFeatures_noNaN; 
 %handle selections
-selectedFrames = false(nrUsedThumbs,1);
+% selectedFrames = false(nrUsedThumbs,1);
 currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
-selectedCells = zeros(size(sampleFeatures,1),1);
+selectedCells = zeros(nrUsedThumbs,1);
+
 
 zoom_factor_x(1:3) = 1.1;
 zoom_factor_y(1:3) = 1.1;
@@ -580,15 +594,20 @@ function plot_thumbnails(val)
         for j=1:numel(thumbIndex)
             thumbInd=thumbIndex(j);
             rawImage = thumbContainer.thumbnails{usedThumbs(currPos(thumbInd))};
-            segmentedImage = thumbContainer.segmentation{usedThumbs(currPos(thumbInd))};
+%             segmentedImage = thumbContainer.segmentation{usedThumbs(currPos(thumbInd))};
+            label = currentSample.results.thumbnails.label(usedThumbs(currPos(thumbInd)));
+            if ~isa(base.sampleProcessor,'Marker_Characterization')
+                segmentedImage = thumbContainer.labelFullImage{usedThumbs(currPos(thumbInd))} == label;
+            else 
+                segmentedImage = thumbContainer.labelThumbImage{usedThumbs(currPos(thumbInd))} == label;
+            end
             k = (j-1)*cols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
-%             plotImInAxis(dataFrame.rawImage,[],hAxes(k),hImages(k));
             plotImInAxis(rawImage,segmentedImage,hAxes(k),hImages(k));
             
             % update visual selection dependent on selectedFrames array
 %             if selectedFrames(thumbInd) == 1
-            if selectedFrames(currPos(thumbInd)) == 1
+            if selectedCells(currPos(thumbInd)) == 1
 %                 set(hImages(k),'Selected','on');
                 set(hAxes(k),'XTick',[]);
                 set(hAxes(k),'yTick',[]);
@@ -603,7 +622,6 @@ function plot_thumbnails(val)
             % plot image for each color channel in column 2 till nbrChannels
             for chan = 1:cols-1
                 l = ((j-1)*cols + chan + 1);
-%                 plotImInAxis(dataFrame.rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
                 plotImInAxis(rawImage(:,:,chan),segmentedImage(:,:,chan),hAxes(l),hImages(l));
             end
         end
@@ -632,10 +650,8 @@ function plotImInAxis(im,segm,hAx,hIm)
         end
         % create overlay image here
         if three_channel_overlay == false
-    %         overlay(:,:,1) = im(:,:,2)/maxi; overlay(:,:,3) = im(:,:,2)/maxi; overlay(:,:,2) = im(:,:,3)/maxi;
             overlay(:,:,1) = im(:,:,2)/max_ch2; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
             overlay(end-1,2:6,:) = 1;
-    %         overlay(:,:,1) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,3) = im(:,:,2)/max(max(im(:,:,2))); overlay(:,:,2) = im(:,:,3)/max(max(im(:,:,3)));
         else
             overlay(:,:,1) = im(:,:,1)/max_ch1; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
             overlay(end-1,2:6,:) = 1;
@@ -680,58 +696,6 @@ function openSpecificImage(~,~,row)
                     updateScatterPlots(currPos(pos),0);
                 end
             end
-        case 'extend' % shift & left mouse button action
-%             FEHLERHAFT! (ausserdem zoom factor hinzufuegen)
-%             if size(get(gcbo,'cdata'),3) > 1 % only allow selection for first overlay column elements
-%                 pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
-%                 posToDelete = sampleFeatures.ThumbNr == usedThumbs(currPos(pos));
-%                 sampleFeatures{posToDelete,:} = NaN;
-%                 selectedFrames(currPos(pos)) = [];
-%                 selectedCells(posToDelete) = 0;
-%                 usedThumbs(currPos(pos)) = [];
-%                 nrUsedThumbs = size(usedThumbs,2);
-%                 set(GuiSampleHandle.slider,'Min',-nrUsedThumbs+2,'SliderStep', [1, 1] / (nrUsedThumbs - 5));
-%                 currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
-%                 plot_thumbnails(-get(GuiSampleHandle.slider,'Value'));
-%                 
-%                 axes(GuiSampleHandle.axesTop)
-%                 XData = sampleFeatures.(topFeatureIndex1);
-%                 YData = sampleFeatures.(topFeatureIndex2);    
-%     
-%                 index = find(~isnan(XData+YData+selectedCells));
-%                 if mod(length(index),2) == 1
-%                     index(end+1) = index(end);
-%                 end
-%                 if length(index) == 2
-%                     index(end+1:end+2) = index(1:2);
-%                 end
-%                 index = reshape(index,2,[]);
-% 
-%                 GuiSampleHandle.axesScatterTop = mesh(GuiSampleHandle.axesTop,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-%                 view(2); xlim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(topFeatureIndex2))),1)]);
-%                 
-%                 
-%                 axes(GuiSampleHandle.axesMiddle) 
-%                 XData = sampleFeatures.(middleFeatureIndex1);
-%                 YData = sampleFeatures.(middleFeatureIndex2); 
-%                 GuiSampleHandle.axesScatterMiddle = mesh(GuiSampleHandle.axesMiddle,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-%                 view(2); xlim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(middleFeatureIndex2))),1)]);
-%                 
-%                 axes(GuiSampleHandle.axesBottom)
-%                 XData = sampleFeatures.(bottomFeatureIndex1);
-%                 YData = sampleFeatures.(bottomFeatureIndex2); 
-%                 GuiSampleHandle.axesScatterBottom = mesh(GuiSampleHandle.axesBottom,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-%                 view(2); xlim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(1.1*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
-%                   
-%                 if sum(selectedCells) > 0
-%                     colormap([0 0 1; 1 .5 0]);
-%                 else
-%                     colormap([0 0 1]);
-%                 end
-%                 
-%                 set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
-%                                         num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
-%             end
         case 'alt' % right mouse button action
             im = get(gcbo,'cdata');
             true_max_int = max(im(im~=1));
@@ -743,7 +707,7 @@ end
 
 % --- Helper function to update scatter plots
 function updateScatterPlots(pos,booleanOnOff)
-    selectedFrames(pos) = booleanOnOff;
+%     selectedFrames(pos) = booleanOnOff;
     selectedCells(sampleFeatures.ThumbNr == usedThumbs(pos)) = booleanOnOff;
 
     % update all scatter plots with new manual clustering
@@ -784,7 +748,7 @@ function gate_scatter(handle,~,plotnr)
     [in,~] = inpolygon(xtest,ytest,pos(:,1),pos(:,2));
     selectedCells(in) = 1;
 %     selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
-    selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(unique(index(in))))) = 1;
+%     selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(unique(index(in))))) = 1;
     % update all scatter plots with new manual clustering
     set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
@@ -802,15 +766,15 @@ function gate_scatter(handle,~,plotnr)
     % update view to selected thumbnail closest to current view
     val = round(get(GuiSampleHandle.slider, 'Value'));    
     if isequal(currPos,linspace(1,nrUsedThumbs,nrUsedThumbs))
-        selectedFrames_nr = find(selectedFrames);
-        [~, ii] = min(abs(-selectedFrames_nr-val));       
-        closestValue = max(3,min(selectedFrames_nr(ii(1)),nrUsedThumbs-2)); 
+        selectedCells_nr = find(selectedCells);
+        [~, ii] = min(abs(-selectedCells_nr-val));       
+        closestValue = max(3,min(selectedCells_nr(ii(1)),nrUsedThumbs-2)); 
         plot_thumbnails(closestValue);
         set(GuiSampleHandle.slider, 'Value',-closestValue);
     else
-        selectedFrames_nr = find(ismember(currPos,find(selectedFrames)));
-        [~, ii] = min(abs(-selectedFrames_nr-val));        
-        closestValue = max(3,min(selectedFrames_nr(ii(1)),nrUsedThumbs-2)); 
+        selectedCells_nr = find(ismember(currPos,find(selectedCells)));
+        [~, ii] = min(abs(-selectedCells_nr-val));        
+        closestValue = max(3,min(selectedCells_nr(ii(1)),nrUsedThumbs-2)); 
         plot_thumbnails(closestValue);
         set(GuiSampleHandle.slider, 'Value',-closestValue);
     end
@@ -820,14 +784,14 @@ end
 function clear_selection(~,~)
     gate = struct('gates',cell(0),'name','');
     selectedCells = zeros(size(selectedCells));
-    selectedFrames = false(size(selectedFrames));
+%     selectedFrames = false(size(selectedFrames));
     colormap([0 0 1]);
     set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
     num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
-    currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
+    currPos = [sort(find(selectedCells),'ascend'); sort(find(~selectedCells),'ascend')];
     val = round(get(GuiSampleHandle.slider, 'Value'));
     plot_thumbnails(-val);
 end
@@ -860,8 +824,8 @@ function select_event(handle,~,plotnr)
     end
     if selectedCells(in) == 0
         selectedCells(in) = 1;
-        selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
-
+%         selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 1;
+% 
         % update all scatter plots with new manual clustering
         set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
         set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
@@ -882,9 +846,9 @@ function select_event(handle,~,plotnr)
         set(GuiSampleHandle.slider, 'Value',-newPos);
     else
         selectedCells(in) = 0;
-        if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(logical(selectedCells)) == sampleFeatures.ThumbNr(in), 1))
-            selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0;
-        end
+%         if ~isempty(selectedCells(in)) && isempty(find(sampleFeatures.ThumbNr(logical(selectedCells)) == sampleFeatures.ThumbNr(in), 1))
+%             selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(in))) = 0;
+%         end
         % update all scatter plots with new manual clustering
         set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
         set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
@@ -963,7 +927,7 @@ function zoom_out(~,~,plot_nr,axis)
 end
 
 function sort_cells(~,~)
-    currPos = [sort(find(selectedFrames),'ascend'); sort(find(~selectedFrames),'ascend')];
+    currPos = [sort(find(selectedCells),'ascend'); sort(find(~selectedCells),'ascend')];
     plot_thumbnails(3); 
     set(GuiSampleHandle.slider, 'Value',-3);
 end
@@ -1034,9 +998,9 @@ function load_selection(handle,~)
         msgbox('No prior selection avaliable.')
     elseif size(classes,2)==1
         selectedCells = zeros(size(selectedCells));
-        selectedFrames = false(size(selectedFrames));
+%         selectedFrames = false(size(selectedFrames));
         selectedCells = double(currentSample.results.classification{:,1});
-        selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1; 
+%         selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1; 
         set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
         set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
         set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
@@ -1057,9 +1021,9 @@ function load_selection(handle,~)
                 'ListString',classes,'ListSize',[250,150]);
         if v == 1
             selectedCells = zeros(size(selectedCells));
-            selectedFrames = false(size(selectedFrames));
+%             selectedFrames = false(size(selectedFrames));
             selectedCells = currentSample.results.classification{:,s};
-            selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1; 
+%             selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1; 
             set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
             set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
             set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
@@ -1135,9 +1099,9 @@ function design_manual_classifier(handle,~)
     gate_result = mc.run(sampleFeatures);
     
     selectedCells = zeros(size(selectedCells));
-    selectedFrames = false(size(selectedFrames));   
+%     selectedFrames = false(size(selectedFrames));   
     selectedCells = double(gate_result{:,1});
-    selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1;
+%     selectedFrames(ismember(usedThumbs,sampleFeatures.ThumbNr(logical(selectedCells)))) = 1;
     
     set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
