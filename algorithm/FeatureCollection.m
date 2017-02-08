@@ -53,9 +53,9 @@ classdef FeatureCollection < SampleProcessorObject
                             xTopRight(ind) = [];
                             yTopRight(ind) = [];
                         end  
-                        label = [1:1:objectsfound];
+                        label = [1:1:objectsfound]';
                         thumbnails{i} = table(dataFrame.frameNr * ones(size(xBottomLeft,2),1),...
-                            label',xBottomLeft',yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'label' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'});
+                            label,xBottomLeft',yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'label' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'});
                     end
                 end
                     
@@ -149,12 +149,12 @@ classdef FeatureCollection < SampleProcessorObject
                         thumbFrame.features = [thumbNr thumbFrame.features];
                         returnSample.results.features=vertcat(returnSample.results.features, thumbFrame.features);
                         frameNr = inputSample.priorLocations.frameNr(i)* ones(objectsfound,1);
-                        label = [1:1:objectsfound];
+                        label = [1:1:objectsfound]';
                         xBottomLeft = inputSample.priorLocations.xBottomLeft(i)* ones(objectsfound,1);
                         yBottomLeft = inputSample.priorLocations.yBottomLeft(i)* ones(objectsfound,1);
                         xTopRight = inputSample.priorLocations.xTopRight(i) * ones(objectsfound,1);
                         yTopRight = inputSample.priorLocations.yTopRight(i)* ones(objectsfound,1);
-                        thumbnails= table(frameNr ,label', xBottomLeft, yBottomLeft, xTopRight, yTopRight); 
+                        thumbnails= table(frameNr ,label, xBottomLeft, yBottomLeft, xTopRight, yTopRight); 
                         returnSample.results.thumbnails=vertcat(returnSample.results.thumbnails,thumbnails);
                         for j=1:objectsfound
                             returnSample.results.segmentation{end+1} = thumbFrame.segmentedImage;
