@@ -7,8 +7,9 @@ screensz = get(0,'screensize');
 if ~isempty(currentSample.results.segmentation)
     IO.save_sample(currentSample);
     IO.preload_segmentation_tiffs(currentSample);
+    load([base.sampleList.resultPath,filesep,base.sampleList.sampleProcessorId,filesep,'output',filesep,currentSample.id,'.mat'])
 end
-thumbContainer=ThumbContainer(currentSample);
+thumbContainer = ThumbContainer(currentSample);
 
 GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-225)/2 (screensz(4)-65)/2 225 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off','CloseRequestFcn',@close_fcn);
