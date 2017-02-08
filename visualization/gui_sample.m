@@ -38,7 +38,7 @@ end
 % currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
 % selectedCells = zeros(size(sampleFeatures,1),1);
 
-usedThumbs = find(ismember(linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents),currentSample.results.features{:,1}));
+% usedThumbs = find(ismember(linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents),currentSample.results.features{:,1}));
 nrUsedThumbs = thumbContainer.nrOfEvents;
 
 %replace NaN values with zeros
@@ -593,13 +593,12 @@ function plot_thumbnails(val)
     if ~isempty(thumbIndex)
         for j=1:numel(thumbIndex)
             thumbInd=thumbIndex(j);
-            rawImage = thumbContainer.thumbnails{usedThumbs(currPos(thumbInd))};
-%             segmentedImage = thumbContainer.segmentation{usedThumbs(currPos(thumbInd))};
-            label = currentSample.results.thumbnails.label(usedThumbs(currPos(thumbInd)));
+            rawImage = thumbContainer.thumbnails{(currPos(thumbInd))};
+            label = currentSample.results.thumbnails.label((currPos(thumbInd)));
             if ~isa(base.sampleProcessor,'Marker_Characterization')
-                segmentedImage = thumbContainer.labelFullImage{usedThumbs(currPos(thumbInd))} == label;
+                segmentedImage = thumbContainer.labelFullImage{(currPos(thumbInd))} == label;
             else 
-                segmentedImage = thumbContainer.labelThumbImage{usedThumbs(currPos(thumbInd))} == label;
+                segmentedImage = thumbContainer.labelThumbImage{(currPos(thumbInd))} == label;
             end
             k = (j-1)*cols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
@@ -708,7 +707,7 @@ end
 % --- Helper function to update scatter plots
 function updateScatterPlots(pos,booleanOnOff)
 %     selectedFrames(pos) = booleanOnOff;
-    selectedCells(sampleFeatures.ThumbNr == usedThumbs(pos)) = booleanOnOff;
+    selectedCells(pos) = booleanOnOff;
 
     % update all scatter plots with new manual clustering
     set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
@@ -841,7 +840,8 @@ function select_event(handle,~,plotnr)
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
             num2str(sum(selectedCells)) '/' num2str(size(sampleFeatures,1))]);
         % update view to selected thumbnail
-        newPos = max(3,min(find(currPos == find(usedThumbs == sampleFeatures.ThumbNr(in))),nrUsedThumbs-2));
+%         newPos = max(3,min(find(currPos == find(usedThumbs == sampleFeatures.ThumbNr(in))),nrUsedThumbs-2));
+        newPos = max(3,min(find(currPos == find(in)),nrUsedThumbs-2));
         plot_thumbnails(newPos);
         set(GuiSampleHandle.slider, 'Value',-newPos);
     else
