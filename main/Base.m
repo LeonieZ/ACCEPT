@@ -92,7 +92,11 @@ classdef Base < handle
                         this.logger.entry(this,LogMessage(2,['Sample NR',num2str(k) ,' failed to load']));
                         this.logger.entry(this,LogMessage(2,['Sample NR',num2str(k) ,' is reprocessed']));
                         sample = IO.load_sample_path(this.sampleList,k);
-                        this.sampleProcessor.previousProcessor.run(sample);
+                        if isa(this.sampleProcessor,'Rescore_Using_Gate')
+                            this.sampleProcessor.previousProcessor.run(sample);
+                        else
+                            this.sampleProcessor.run(sample);
+                        end
                     end
                         
                         this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));

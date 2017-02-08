@@ -5,7 +5,8 @@ set(0,'units','characters');
 screensz = get(0,'screensize');
 
 if ~isempty(currentSample.results.segmentation)
-    IO.save_sample(currentSample)
+    IO.save_sample(currentSample);
+    IO.preload_segmentation_tiffs(currentSample);
 end
 thumbContainer=ThumbContainer(currentSample);
 
