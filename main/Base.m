@@ -98,7 +98,7 @@ classdef Base < handle
                         this.logger.entry(this,LogMessage(2,['Processing sample ',sample.id ,'...']));
                         this.sampleProcessor.run(sample);
                         IO.save_sample(sample);
-                        IO.save_results_as_xls(sample);
+                        %IO.save_results_as_xls(sample);
                         this.logger.entry(this,LogMessage(2,['Sample ',sample.id ,' is processed.']));
                         this.nrProcessed = this.nrProcessed + 1;
                         this.update_progress();

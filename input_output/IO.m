@@ -621,9 +621,9 @@ classdef IO < handle
         end
         
         function convert_thumbnails_in_sample(inputSample)
-            disp('detected old style converting to save disk space');
+            disp('detected old style sample converting to save disk space');
             frames=unique(inputSample.results.thumbnails.frameNr);
-            parfor i=1:numel(frames)
+            for i=1:numel(frames)
                 currentDataFrame=IO.load_data_frame(inputSample,frames(i));
                 currentDataFrame.segmentedImage=zeros(size(currentDataFrame.rawImage));
                 thumbsInFrame=find(inputSample.results.thumbnails.frameNr==frames(i));
