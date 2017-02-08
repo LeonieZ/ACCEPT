@@ -163,7 +163,7 @@ classdef IO < handle
                 
                 outputSample = currentSample;
             else
-                outputSample = load_sample_path(sampleList,sampleNr)
+                outputSample = IO.load_sample_path(sampleList,sampleNr);
             end
             % Check if this is sample still contains thumbnails...
         end
