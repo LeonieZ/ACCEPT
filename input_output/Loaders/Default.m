@@ -58,8 +58,8 @@ classdef Default < Loader & IcyPluginData & CustomCsv
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            if isempty(currentSample.tiffHeaders)
-                this.load_scan_info(samplePath);
+            if ~exist(currentSample.imagePath,'dir')
+                %this.load_scan_info(samplePath);
                 this.preload_tiff_headers(samplePath);         
             end
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
