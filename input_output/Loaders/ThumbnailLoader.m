@@ -92,11 +92,6 @@ classdef ThumbnailLoader < Loader
        function frameOrder = calculate_frame_nr_order(this)
        end
        
-       function load_thumbs_to_results(this)
-           for i = 1:this.sample.nrOfFrames
-                   this.sample.results.thumbnail_images{i} = this.read_im(i);
-           end
-       end
     end
 
     methods(Access=private)

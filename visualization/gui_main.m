@@ -44,7 +44,8 @@ gui.fig_main = figure('Units','characters','Position',[(screensz(3)-160)/2 12 16
 
 gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Process','Units','characters','Position',[35 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@process,base}); 
 gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','characters','Position',[90 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@visualize,base});
-gui.gate_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Gate','Units','characters','Position',[110 10.8 15 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@gate,base});
+gui.gate_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Gate','Units','characters','Position',[110 14 15 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@gate,base});
+gui.export_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Summary','Units','characters','Position',[110 10.8 15 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@export_summary,base});
 gui.title_axes = axes('Parent',gui.fig_main,'Units','characters','Position',[80 50 29 3]); axis off;
 gui.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} ACCEPT','Units','characters','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','center','FontWeight','bold');
 
@@ -176,7 +177,7 @@ function process(handle,~,base)
             
             base.run();
         else
-            msgbox('no dirs selected');
+            msgbox('No directories selected.');
         end
     end
     %     gui.selectedCells = false(size(base.sampleList.sampleNames,2),1);
@@ -194,12 +195,16 @@ function visualize(handle,~,base)
     drawnow;
     selectedCellsInTable = find(gui.selectedCells);
     if size(selectedCellsInTable,1) == 0
-        msgbox('No sample selected.')
+        msgbox('No sample selected.');
     elseif size(selectedCellsInTable,1) == 1
         if and(~isempty(base.sampleList.inputPath),~isempty(base.sampleList.resultPath))
             % load selected sample
 %             currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1),0);
             currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1));
+            if ~isempty(currentSample.results.segmentation)
+                IO.save_sample(currentSample);
+                currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1));
+            end
             if size(currentSample.results.thumbnails,1)<1 || isempty(currentSample.results.features)
                msgbox('Empty Sample.')
             else
@@ -271,7 +276,52 @@ if savedGate == 0 || savedGate == 1
     end
     
 end
-% IO.export_samplelist_results_summary(base.sampleList);
+set(handle,'backg',color)
+end
+
+function export_summary(handle,~,base)
+color = get(handle,'backg');
+set(handle,'backgroundcolor',[1 .5 .5])
+drawnow;
+
+
+pos_button = get(gui.export_button,'Position');
+pos_main = get(gui.fig_main,'Position');
+d = dialog('Units','characters','Position',[pos_main(1)+pos_button(1) pos_main(2)+pos_button(2)+pos_button(4)+0.5 60 5],'Name','Export Summary Table');
+uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'FontUnits','normalized','FontSize',0.25,'String','All Samples.','Callback',@exp2_callback);
+uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'FontUnits','normalized','FontSize',0.25,'String','Only Selected Samples.','Callback',@exp1_callback);
+allSamples = 2;
+waitfor(d);
+function exp1_callback(~,~)
+    allSamples = 0;
+    delete(gcf)
+end
+function exp2_callback(~,~)
+    allSamples = 1;
+    delete(gcf)
+end
+
+if allSamples == 0 || allSamples == 1
+    [file,path] = uiputfile([base.sampleList.resultPath filesep base.sampleList.sampleProcessorId filesep 'summaryTable.xlsx'],'Save summary file.');
+    if ischar(file)
+        if allSamples == 1
+            selectedCellsInTable = linspace(1,size(base.sampleList.sampleNames,2),size(base.sampleList.sampleNames,2));
+        elseif allSamples == 0
+            selectedCellsInTable = find(gui.selectedCells);
+        end        
+        t = IO.export_samplelist_results_summary(base.sampleList, selectedCellsInTable,[path,file]); 
+        if isempty(t)
+                msgbox('Empty summary. No file saved.');
+        end
+        gui.selectedCells = false(size(base.sampleList.sampleNames,2),1);
+        dat = get(gui.table,'data');
+        for r=1:size(dat,1)
+            dat{r,2} = 0;     
+        end
+        set(gui.table,'data',dat);
+    end
+end
+
 set(handle,'backg',color)
 end
 
@@ -333,7 +383,8 @@ function update_list(base)
         pos_cur = get(gui.table,'Position');
         if size_nd(3) > pos_cur(3)
             set(gui.table, 'Position',[(160 - size_nd(3))/2, pos_cur(2), size_nd(3), pos_cur(4)]);
-            set(gui.gate_button,'Position',[(160 + size_nd(3))/2+4.4, pos_cur(2), 15, 3]); 
+            set(gui.gate_button,'Position',[(160 + size_nd(3))/2+4.4, pos_cur(2), 15, 3]);
+            set(gui.export_button,'Position',[(160 + size_nd(3))/2+4.4, pos_cur(2)+3.2, 15, 3]);
         end
         set(gui.table,'Visible','on');
     else
@@ -377,6 +428,7 @@ function update_list(base)
             set(gui.slider,'Position',[(160 + size_nd(3))/2, 9 + (23.2 - size_nd(4))/2, slider_pos(3), size_nd(4)]);
             slider_pos = get(gui.slider,'Position');
             set(gui.gate_button,'Position',[slider_pos(1)+slider_pos(3)+1.2, slider_pos(2), 15, 3]);
+            set(gui.export_button,'Position',[slider_pos(1)+slider_pos(3)+1.2, slider_pos(2)+3.2, 15, 3]);
         end
         if nbrSamples > nbrRows
             set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Enable','on');

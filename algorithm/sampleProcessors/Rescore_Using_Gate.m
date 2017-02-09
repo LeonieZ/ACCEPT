@@ -59,7 +59,9 @@ classdef Rescore_Using_Gate < SampleProcessor
             end
             
             %apply gate
-            this.pipeline{1}.run(inputSample);          
+            this.pipeline{1}.run(inputSample);  
+%             IO.attach_results_summary(inputSample)
+
         end
     end
     

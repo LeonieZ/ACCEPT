@@ -7,7 +7,6 @@ classdef CellTracks < Loader
         hasEdges=true;
         rescaleTiffs=true;
         pixelSize=0.64;
-        tiffHeaders;
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
         channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
         channelEdgeRemoval=2;
@@ -58,7 +57,7 @@ classdef CellTracks < Loader
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            if ~exist(currentSample.imagePath,'dir')
+            if isempty(currentSample.tiffHeaders)
                 [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100); 
                 [this.sample.priorPath,~] = this.find_dir(samplePath,'xml',1);
                 this.preload_tiff_headers();         

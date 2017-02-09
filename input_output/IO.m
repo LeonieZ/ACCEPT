@@ -39,27 +39,34 @@ classdef IO < handle
             save([smplLst.save_path(),'processed.mat'],'processor','-append','-v7.3');
         end
         
-        function export_samplelist_results_summary(sampleList)
-            n=numel(sampleList.sampleNames);
-            classifications={1:n};
+        function t = export_samplelist_results_summary(sampleList,selectedCellsInTable,file)
+            n = size(selectedCellsInTable,2);
+            classifications = cell(1,n);
+            id = cell(1,n);
             names={'sampleID'};
-            for i=1:n
-                i
-                try
-                currentSample=IO.load_sample(sampleList,i);
-                id{i}=currentSample.id;
-                classifications{i}=currentSample.results.classification;
-                classifiers=classifications{i}.Properties.VariableNames;
-                if ~isempty(classifiers)
-                    names=cat(2,names,classifiers);
-                end
-                catch
+            for j=1:n
+                i = selectedCellsInTable(j);
+                if sampleList.isProcessed(i) == 1
+                    try
+                        currentSample = IO.load_sample(sampleList,i);
+                        id{j} = currentSample.id;
+                        classifications{j} = currentSample.results.classification;
+                        classifiers = classifications{j}.Properties.VariableNames;
+                        if ~isempty(classifiers)
+                            names=cat(2,names,classifiers);
+                        end
+                    catch
+                    end
                 end
             end
-            names=unique(names,'stable');
-            t=id';
-            for i=1:n
-                for j=2:numel(names)
+            empty = cellfun(@isempty, classifications);
+            classifications = classifications(~empty);
+            id = id(~empty);
+            n = size(classifications,2);
+            names = unique(names,'stable');
+            t = id';
+            for i = 1:n
+                for j = 2:numel(names)
                     if any(strcmp(classifications{i}.Properties.VariableNames,names(j)))
                         t{i,j}=sum(eval(['classifications{i}.', names{j}]));
                     else
@@ -67,10 +74,60 @@ classdef IO < handle
                     end
                 end
             end
-            summary=array2table(t,'VariableNames',unique(names,'stable'));
-            writetable(summary,[sampleList.save_path(),'summaryTable.xlsx']);
+            if ~isempty(t)
+                summary = array2table(t,'VariableNames',unique(names,'stable'));
+                delete(file);
+                writetable(summary,file);
+            end
         end
-
+        
+        function attach_results_summary(currentSample)
+            names={'sampleID'};
+            id=currentSample.id;
+            classifications=currentSample.results.classification;
+            classifiers=classifications.Properties.VariableNames;
+            if ~isempty(classifiers)
+                names=cat(2,names,classifiers);
+            end
+            if exist([currentSample.savePath(),'summaryTable.xlsx'],'file') == 2
+                currExcel = readtable([currentSample.savePath(),'summaryTable.xlsx']);
+                exist_names = currExcel.Properties.VariableNames; 
+                new_names = setdiff(names,exist_names);
+                T_new = array2table(nan(size(currExcel,1),size(new_names,2)),'VariableNames',new_names);
+                currExcel = [currExcel, T_new];
+            else 
+                start = [];
+                start{1,1} = id;
+                for j = 2:size(names,2)
+                    start{1,j} = NaN;
+                end
+                currExcel = cell2table(start,'VariableNames',names);
+            end
+            
+            pos_name = find(strcmp(currExcel{:,1},id));
+            if isempty(pos_name)
+                column_ind = size(currExcel,1)+1;
+                start = [];
+                start{1,1} = id;
+                for j = 2:size(names,2)
+                    start{1,j} = NaN;
+                end
+                currExcel = [currExcel;cell2table(start,'VariableNames',names)];
+            else
+                column_ind = pos_name;
+            end
+            for i = 2:size(currExcel,2)
+                pos = find(strcmp(currExcel.Properties.VariableNames{i},classifiers));
+                if ~isempty(pos)
+                    currExcel{column_ind,i} = sum(eval(['classifications.', classifiers{pos}]));
+                else
+                    currExcel{column_ind,i} = NaN;
+                end
+            end
+            delete([currentSample.savePath(),'summaryTable.xlsx']);
+            writetable(currExcel,[currentSample.savePath(),'summaryTable.xlsx']);
+        end
+        
         %% Sample handeling functions
         function loaderHandle = check_sample_type(samplePath,loaderTypesAvailable)
             %Checks which loader types can load the sample path and chooses
@@ -84,35 +141,49 @@ classdef IO < handle
             loaderHandle=loaderTypesAvailable{i};
         end
         
-        function outputSample = load_sample(sampleList,sampleNr,forProc)
+        function outputSample = load_sample(sampleList,sampleNr,tiff_update)
             % loads a sample from a sampleList. First checks if this sample
             % has been saved before. If not we look up the loader handle
             % and construct the sample. 
             if nargin < 3
-                forProc = 1;
+                tiff_update = true;
             end
+            
             if exist(IO.saved_sample_path(sampleList,sampleNr),'file')
                 load(IO.saved_sample_path(sampleList,sampleNr));
-                if forProc == 1
+                if tiff_update
                     loader = currentSample.loader();
                     loader.update_prior_infos(currentSample,[sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
+                    currentSample.savePath = sampleList.save_path;
+                    IO.preload_segmentation_tiffs(currentSample);
+                else
+                    currentSample.savePath = sampleList.save_path;
                 end
-                currentSample.savePath=sampleList.save_path;
+                
+                
                 outputSample = currentSample;
             else
+                outputSample = IO.load_sample_path(sampleList,sampleNr);
+            end
+            % Check if this is sample still contains thumbnails...
+        end
+        
+        function outputSample = load_sample_path(sampleList,sampleNr)
                 loader = sampleList.loaderToBeUsed{sampleNr};
                 loader.new_sample_path([sampleList.inputPath filesep sampleList.sampleNames{sampleNr}]);
                 outputSample = loader.sample;
-                outputSample.savePath=sampleList.save_path();
-            end
+                outputSample.savePath = sampleList.save_path();
         end
+        
         
         function save_sample(currentSample)
             % Function to save the sample in a .mat file for later reuse.
             % and mark the sample sample as processed. 
-            if ~exist([currentSample.savePath,'output',filesep,currentSample.id],'dir')
-                mkdir([currentSample.savePath,'output',filesep,currentSample.id]);
-            end
+            % Check if for oldstyle sample and save segmentation if needed
+            IO.check_sample_for_thumbnails(currentSample)
+            % Remove tiff headers from sample
+            currentSample.tiffHeaders=[];
+            currentSample.segmentationHeaders=[];
             save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
             %do we split this in a seperate function? /g
             load([currentSample.savePath,'processed.mat'],'samplesProcessed');
@@ -132,6 +203,15 @@ classdef IO < handle
              end
         end
         
+        function preload_segmentation_tiffs(currentSample)
+            for i = 1:currentSample.nrOfFrames
+                currentSample.segmentationFileNames{i} = [currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(i,'%03.0f'),'_seg.tif'];
+                if exist(currentSample.segmentationFileNames{i},'file')
+                    currentSample.segmentationHeaders{i}=imfinfo(currentSample.segmentationFileNames{i});
+                end
+            end
+        end
+            
         %% DataFrame handeling functions
         function outputFrame = load_data_frame(sample,frameNr)
             % Load data frame using loader linked to sample
@@ -212,7 +292,15 @@ classdef IO < handle
                 end
             end
         end
-                
+              
+        function outputImage = load_segmented_image(sample,frameNr)
+            if exist(sample.segmentationFileNames{frameNr},'file');
+               outputImage=imread(sample.segmentationFileNames{frameNr},'info',sample.segmentationHeaders{frameNr});
+            else
+               outputImage=[];
+            end
+        end
+        
         function load_thumbs_to_results(sample)
             %special function that allows for a specific loader.
            loader=sample.loader(sample);
@@ -221,11 +309,11 @@ classdef IO < handle
            end
         end
         
-        function [thumbnail_images,segmentation]=load_thumbnail(inputSample)
-        loader=sample.loader(sample);
-        
-            
-        end
+%         function [thumbnail_images,segmentation]=load_thumbnail(inputSample)
+%         
+%         
+%             
+%         end
         
         
         function save_data_frame_segmentation(currentSample,currentDataFrame)
@@ -244,23 +332,27 @@ classdef IO < handle
             t.close;
         end
         
-        function save_thumbnail(currentSample,eventNr,option,rescaled,class)
-           [id,~] = strtok(currentSample.id,'.');
+        function save_thumbnail(currentSample,eventNr,option,rescaled,class,thumbContainer)
+           id = currentSample.id;
            
-           if ~exist('class','var')
+           if ~exist('class','var') || isempty(class)
                class = 0;
            end
            
+           if size(class,1) == 1 && class ~= 0 
+               class = currentSample.results.classification{:,class};
+           end
+               
            if exist('option','var') && strcmp('prior',option)
             if ~exist([currentSample.savePath,'frames',filesep,id,filesep,'priorThumbs'],'dir')
                 mkdir([currentSample.savePath,'frames',filesep,id,filesep,'priorThumbs']);
                 fid=fopen([currentSample.savePath,'frames',filesep,id,filesep,'priorThumbs',filesep,'ACCEPTThumbnails.txt'],'w');
                 fclose(fid);
             end
-           elseif class ~= 0
-            if ~exist([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified'],'dir')
-               mkdir([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified']);
-               fid=fopen([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep,'ACCEPTThumbnails.txt'],'w');
+           elseif size(class,1) > 1
+            if ~exist([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs'],'dir')
+               mkdir([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs']);
+               fid=fopen([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,'ACCEPTThumbnails.txt'],'w');
                fclose(fid);
             end
            else
@@ -271,13 +363,10 @@ classdef IO < handle
             end
            end
            
-           if ~exist('rescaled','var')
+           if ~exist('rescaled','var') || isempty(rescaled)
                rescaled = true;
            end
-           
-           if ~exist('class','var')
-               class = 0;
-           end
+          
 
            if exist('option','var') && strcmp('prior',option)
                 if exist('eventNr','var') && ~isempty(eventNr)
@@ -340,14 +429,22 @@ classdef IO < handle
                 end
            else
                 if exist('eventNr','var') && ~isempty(eventNr)
-                    if ~isempty(currentSample.results.thumbnail_images{eventNr})
-                        data = currentSample.results.thumbnail_images{eventNr}(:,:,1);
-    %                     t=Tiff([currentSample.savePath,'frames',filesep,id,filesep, num2str(eventNr),'_thumb.tif'],'w');
+                    if exist('thumbContainer','var') && isa(thumbContainer,'ThumbContainer') && thumbContainer.nrOfEvents == size(currentSample.results.thumbnails,1)
+                        rawIm = thumbContainer.thumbnails{eventNr};
+                        segmIm = thumbContainer.segmentation{eventNr};
+                    else
+                        thumbContainer = ThumbContainer(currentSample,eventNr);
+                        rawIm = thumbContainer.thumbnails{1};
+                        segmIm = thumbContainer.segmentation{1};
+                    end
+                        
+                    if ~isempty(rawIm)
+                        data = rawIm(:,:,1);
                         t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(eventNr),'_thumb.tif'],'w');
                         t.setTag('Photometric',t.Photometric.MinIsBlack);
                         t.setTag('Compression',t.Compression.LZW);
-                        t.setTag('ImageLength',size(currentSample.results.thumbnail_images{eventNr},1));
-                        t.setTag('ImageWidth',size(currentSample.results.thumbnail_images{eventNr},2));
+                        t.setTag('ImageLength',size(data,1));
+                        t.setTag('ImageWidth',size(data,2));
                         t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
                         t.setTag('BitsPerSample',16);
                         t.setTag('SamplesPerPixel',1);
@@ -361,37 +458,45 @@ classdef IO < handle
                         s.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
                         s.setTag('BitsPerSample',1);
                         s.setTag('SamplesPerPixel',1);
-                        s.write(currentSample.results.segmentation{eventNr}(:,:,1));
+                        s.write(segmIm(:,:,1));
                         s.close;
                         for j = 2:currentSample.nrOfChannels
-                              imwrite(uint16(currentSample.results.thumbnail_images{eventNr}(:,:,j)), [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(eventNr),'_thumb.tif'], 'writemode', 'append');
-                              imwrite(currentSample.results.segmentation{eventNr}(:,:,j), [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(eventNr),'_thumb_segm.tif'], 'writemode', 'append');     
+                              imwrite(uint16(rawIm(:,:,j)), [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(eventNr),'_thumb.tif'], 'writemode', 'append');
+                              imwrite(segmIm(:,:,j), [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(eventNr),'_thumb_segm.tif'], 'writemode', 'append');     
                         end
                     end
                 else
-                    for i = 1:size(currentSample.results.thumbnail_images,2)
-                        if ~isempty(currentSample.results.thumbnail_images{i}) && (class == 0 || currentSample.results.classification{i,class} == 1)
-                            data = currentSample.results.thumbnail_images{i}(:,:,1);
-                            if class == 0
+                    if exist('thumbContainer','var') && isa(thumbContainer,'ThumbContainer') && thumbContainer.nrOfEvents == size(currentSample.results.thumbnails,1)
+                        thumbnail_images = thumbContainer.thumbnails;
+                        segmentation = thumbContainer.segmentation;
+                    else
+                        thumbContainer = ThumbContainer(currentSample);
+                        thumbnail_images = thumbContainer.thumbnails;
+                        segmentation = thumbContainer.segmentation;
+                    end
+                    for i = 1:size(thumbnail_images,1)
+                        if ~isempty(thumbnail_images{i}) && ((size(class,1)== 1&& class == 0) || class(i) == 1)
+                            data = thumbnail_images{i}(:,:,1);
+                            if (size(class,1)== 1 && class == 0)
                                 t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'],'w');
                             else
-                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep, num2str(i),...
-                                    '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '.tif'],'w');
+                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep, num2str(i),...
+                                    '_thumb.tif'],'w');
                             end
                             t.setTag('Photometric',t.Photometric.MinIsBlack);
                             t.setTag('Compression',t.Compression.LZW);
-                            t.setTag('ImageLength',size(currentSample.results.thumbnail_images{i},1));
-                            t.setTag('ImageWidth',size(currentSample.results.thumbnail_images{i},2));
+                            t.setTag('ImageLength',size(thumbnail_images{i},1));
+                            t.setTag('ImageWidth',size(thumbnail_images{i},2));
                             t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
                             t.setTag('BitsPerSample',16);
                             t.setTag('SamplesPerPixel',1);
                             t.write(uint16(data));
                             t.close;
-                            if class == 0
+                            if (size(class,1)== 1 && class == 0)
                                 s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'],'w');
                             else
-                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep,num2str(i),...
-                                    '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '_segm.tif'],'w');
+                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,num2str(i),...
+                                    '_thumb_segm.tif'],'w');
                             end
                             s.setTag('Photometric',t.Photometric.MinIsBlack);
                             s.setTag('Compression',t.Compression.LZW);
@@ -400,21 +505,21 @@ classdef IO < handle
                             s.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
                             s.setTag('BitsPerSample',1);
                             s.setTag('SamplesPerPixel',1);
-                            s.write(currentSample.results.segmentation{i}(:,:,1));
+                            s.write(segmentation{i}(:,:,1));
                             s.close;
                             for j = 2:currentSample.nrOfChannels
-                                if class == 0 
-                                   imwrite(uint16(currentSample.results.thumbnail_images{i}(:,:,j)), ...
+                                if (size(class,1)== 1 && class == 0)
+                                   imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'], 'writemode', 'append');
-                                   imwrite(currentSample.results.segmentation{i}(:,:,j), ...
+                                   imwrite(segmentation{i}(:,:,j), ...
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'], 'writemode', 'append'); 
                                 else
-                                   imwrite(uint16(currentSample.results.thumbnail_images{i}(:,:,j)), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified' filesep num2str(i)...
-                                       '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '.tif'],'writemode', 'append');
-                                   imwrite(currentSample.results.segmentation{i}(:,:,j), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs_classified',filesep,num2str(i),...
-                                    '_thumb_class_' currentSample.results.classification.Properties.VariableNames{class} '_segm.tif'], 'writemode', 'append');
+                                   imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
+                                       [currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs' filesep num2str(i)...
+                                       '_thumb.tif'],'writemode', 'append');
+                                   imwrite(segmentation{i}(:,:,j), ...
+                                       [currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,num2str(i),...
+                                    '_thumb_segm.tif'], 'writemode', 'append');
                                 end
                             end
                         end
@@ -422,7 +527,54 @@ classdef IO < handle
                 end
            end
         end
-                              
+        
+        function outputImage = load_overview_image(sample)
+            if exist([sample.savePath,'frames',filesep,sample.id,filesep,'overview_thumbnail.tif'],'file');
+               outputImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,'overview_thumbnail.tif']);
+            else
+               outputImage=[];
+            end   
+        end
+        
+        function outputImage = load_overview_mask(sample)
+            if exist([sample.savePath,'frames',filesep,sample.id,filesep,'overview_mask.tif'],'file');
+               outputImage=logical(imread([sample.savePath,'frames',filesep,sample.id,filesep,'overview_mask.tif']));
+            else
+               outputImage=[];
+            end   
+        end
+        
+        function save_overview_image(currentSample,inputImage)
+            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
+            end
+            t=Tiff([currentSample.savePath,'frames',filesep,currentSample.id,filesep,'overview_thumbnail.tif'],'w');
+            t.setTag('Photometric',t.Photometric.MinIsBlack);
+            t.setTag('Compression',t.Compression.LZW);
+            t.setTag('ImageLength',size(inputImage,1));
+            t.setTag('ImageWidth',size(inputImage,2));
+            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Separate);
+            t.setTag('BitsPerSample',16);
+            t.setTag('SamplesPerPixel',currentSample.nrOfChannels);
+            t.write(inputImage);
+            t.close;
+        end
+       
+        function save_overview_mask(currentSample,inputImage)
+            if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
+                mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
+            end
+            t=Tiff([currentSample.savePath,'frames',filesep,currentSample.id,filesep,'overview_mask.tif'],'w');
+            t.setTag('Photometric',t.Photometric.MinIsBlack);
+            t.setTag('Compression',t.Compression.LZW);
+            t.setTag('ImageLength',size(inputImage,1));
+            t.setTag('ImageWidth',size(inputImage,2));
+            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
+            t.setTag('BitsPerSample',8);
+            t.setTag('SamplesPerPixel',1);
+            t.write(uint8(inputImage));
+            t.close;
+        end
         
         %% Utility functions        
         function check_save_path(savePath)
@@ -442,8 +594,8 @@ classdef IO < handle
         end
         
         function location=calculate_overview_location(inputSample,priorLocationNr)
-            x=mean([inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr)])
-            y=mean([inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr)])
+            x=mean([inputSample.priorLocations.xBottomLeft(priorLocationNr),inputSample.priorLocations.xTopRight(priorLocationNr)]);
+            y=mean([inputSample.priorLocations.yBottomLeft(priorLocationNr),inputSample.priorLocations.yTopRight(priorLocationNr)]);
             [rows,columns]=find(inputSample.priorLocations.frameNr(priorLocationNr)==inputSample.frameOrder);
             smallImageSize=ceil(inputSample.imageSize/8);
             location(1)=smallImageSize(1)*(rows-1)+round(y/8);
@@ -469,12 +621,15 @@ classdef IO < handle
         end
         
         function convert_thumbnails_in_sample(inputSample)
+            disp('Detected old style sample converted to save disk space.');
             frames=unique(inputSample.results.thumbnails.frameNr);
+            inputSample.results.thumbnails.label = zeros(size(inputSample.results.thumbnails,1),1);
             for i=1:numel(frames)
                 currentDataFrame=IO.load_data_frame(inputSample,frames(i));
                 currentDataFrame.segmentedImage=zeros(size(currentDataFrame.rawImage));
                 thumbsInFrame=find(inputSample.results.thumbnails.frameNr==frames(i));
                 for j=1:numel(thumbsInFrame)
+                    inputSample.results.thumbnails.label(thumbsInFrame) = 1:1:numel(thumbsInFrame);
                     locations=[inputSample.results.thumbnails.yBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.yTopRight(thumbsInFrame(j)),...
                         inputSample.results.thumbnails.xBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.xTopRight(thumbsInFrame(j))];
                     currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:)=inputSample.results.segmentation{thumbsInFrame(j)}...
@@ -485,7 +640,20 @@ classdef IO < handle
             end
             inputSample.results.thumbnail_images=[];
             inputSample.results.segmentation=[];  
-            IO.save_sample(inputSample);
+         end
+        
+        function check_sample_for_thumbnails(inputSample)
+            if ~isempty(inputSample.results.segmentation)
+                IO.convert_thumbnails_in_sample(inputSample);
+            end
+            if ~isempty(inputSample.overviewImage)
+                IO.save_overview_image(inputSample,inputSample.overviewImage);
+                inputSample.overviewImage=[];
+            end
+            if ~isempty(inputSample.mask)
+                IO.save_overview_mask(inputSample,inputSample.mask);
+                inputSample.mask=[];
+            end
         end
     end
 end
