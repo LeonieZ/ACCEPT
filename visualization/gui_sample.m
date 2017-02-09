@@ -268,7 +268,7 @@ end
 index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterTop = mesh(GuiSampleHandle.axesTop,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0 0 1]);
+view(2); colormap([0.65 0.65 0.65]);
 % xlim([0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
 xlim([0,max(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2)),1)]);
                                   
@@ -340,7 +340,7 @@ end
 index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterMiddle = mesh(GuiSampleHandle.axesMiddle,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0 0 1]);
+view(2); colormap([0.65 0.65 0.65]);
 % xlim([0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
 xlim([0,max(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2)),1)]);
 
@@ -399,7 +399,7 @@ end
 index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterBottom = mesh(GuiSampleHandle.axesBottom,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0 0 1]);
+view(2); colormap([0.65 0.65 0.65]); %colormap([0 0 1]); 
 % xlim([0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
 xlim([0,max(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2)),1)]);
 
@@ -607,8 +607,8 @@ function plot_thumbnails(val)
 %                 set(hImages(k),'Selected','on');
                 set(hAxes(k),'XTick',[]);
                 set(hAxes(k),'yTick',[]);
-                set(hAxes(k),'XColor',[1.0 0.5 0]);
-                set(hAxes(k),'YColor',[1.0 0.5 0]);
+                set(hAxes(k),'XColor',[0 0 1]);
+                set(hAxes(k),'YColor',[0 0 1]);
                 set(hAxes(k),'LineWidth',3);
                 set(hAxes(k),'Visible','on');
             else
@@ -678,8 +678,8 @@ function openSpecificImage(~,~,row)
                     surroundingAx = get(gcbo,'Parent');
                     set(surroundingAx,'XTick',[]);
                     set(surroundingAx,'YTick',[]);
-                    set(surroundingAx,'XColor',[1.0 0.5 0]);
-                    set(surroundingAx,'YColor',[1.0 0.5 0]);
+                    set(surroundingAx,'XColor',[0 0 1]);
+                    set(surroundingAx,'YColor',[0 0 1]);
                     set(surroundingAx,'LineWidth',3);
                     set(surroundingAx,'Visible','on');
                     pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
@@ -711,9 +711,9 @@ function updateScatterPlots(pos,booleanOnOff)
     set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
     if sum(selectedCells) > 0
-        colormap([0 0 1; 1 .5 0]);
+        colormap([0.65 0.65 0.65; 0 0 1]);
     else
-        colormap([0 0 1]);
+        colormap([0.65 0.65 0.65]);
     end
     % update title for scatter panel showing clustering summary
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -752,9 +752,9 @@ function gate_scatter(handle,~,plotnr)
     delete(h);
     
     if sum(selectedCells) > 0
-        colormap([0 0 1; 1 .5 0]);
+        colormap([0.65 0.65 0.65; 0 0 1]);
     else
-        colormap([0 0 1]);
+        colormap([0.65 0.65 0.65]);
     end
     
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -781,7 +781,7 @@ function clear_selection(~,~)
     gate = struct('gates',cell(0),'name','');
     selectedCells = zeros(size(selectedCells));
 %     selectedFrames = false(size(selectedFrames));
-    colormap([0 0 1]);
+    colormap([0.65 0.65 0.65]);
     set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
@@ -829,9 +829,9 @@ function select_event(handle,~,plotnr)
         delete(h);
         
         if sum(selectedCells) > 0
-            colormap([0 0 1; 1 .5 0]);
+            colormap([0.65 0.65 0.65; 0 0 1]);
         else
-            colormap([0 0 1]);
+            colormap([0.65 0.65 0.65]);
         end
     
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -853,9 +853,9 @@ function select_event(handle,~,plotnr)
         delete(h);
         
         if sum(selectedCells) > 0
-            colormap([0 0 1; 1 .5 0]);
+            colormap([0.65 0.65 0.65; 0 0 1]);
         else
-            colormap([0 0 1]);
+            colormap([0.65 0.65 0.65]);
         end
         
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -1003,9 +1003,9 @@ function load_selection(handle,~)
         set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
         
         if sum(selectedCells) > 0
-            colormap([0 0 1; 1 .5 0]);
+            colormap([0.65 0.65 0.65; 0 0 1]);
         else
-            colormap([0 0 1]);
+            colormap([0.65 0.65 0.65]);
         end
         
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -1026,9 +1026,9 @@ function load_selection(handle,~)
             set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
                     
             if sum(selectedCells) > 0
-                colormap([0 0 1; 1 .5 0]);
+                colormap([0.65 0.65 0.65; 0 0 1]);
             else
-                colormap([0 0 1]);
+                colormap([0.65 0.65 0.65]);
             end
             
             set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -1105,9 +1105,9 @@ function design_manual_classifier(handle,~)
     set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
 
     if sum(selectedCells) > 0
-        colormap([0 0 1; 1 .5 0]);
+        colormap([0.65 0.65 0.65; 0 0 1]);
     else
-        colormap([0 0 1]);
+        colormap([0.65 0.65 0.65]);
     end
 
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
