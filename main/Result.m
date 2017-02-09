@@ -2,6 +2,7 @@ classdef Result < handle
     % This class contains the output of a workflow. This can be the
     % measured cell features and classification. 
     properties
+        sampleProcessorUsed=[];
         features=table();
         classification=table();
         thumbnails=table();% containing the mapping of the thumbnails. 

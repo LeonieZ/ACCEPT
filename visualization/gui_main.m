@@ -201,6 +201,10 @@ function visualize(handle,~,base)
             % load selected sample
 %             currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1),0);
             currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1));
+            if ~isempty(currentSample.results.segmentation)
+                IO.save_sample(currentSample);
+                currentSample = IO.load_sample(base.sampleList,selectedCellsInTable(1));
+            end
             if size(currentSample.results.thumbnails,1)<1 || isempty(currentSample.results.features)
                msgbox('Empty Sample.')
             else
