@@ -15,6 +15,7 @@ classdef Marker_Characterization < SampleProcessor
         end
         
         function run(this,inputSample)
+            inputSample.results.sampleProcessorUsed = this.name;
             this.dataframeProcessor = DataframeProcessor('Thumbnail_Analysis', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
             this.pipeline{1}.run(inputSample);
@@ -26,17 +27,15 @@ classdef Marker_Characterization < SampleProcessor
                 this.pipeline{i}.run(inputSample);
             end  
             
-%             if ~isempty(inputSample.results.features)
-%                 inputSample.results.features(find(inputSample.results.features.ch_3_Size==0),:) = [];
-%                 notNec = find(~ismember(linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)),inputSample.results.features{:,1}));
-%                 for i = 1:size(notNec,2)
-%                     inputSample.results.thumbnails = [];
-%                 end
-%             end
+            if ~isempty(inputSample.results.features)
+                notNec = find(inputSample.results.features.ch_3_Size==0);
+                inputSample.results.features(notNec,:) = [];
+                inputSample.results.thumbnails(notNec,:) = [];
+                inputSample.results.segmentation(:,notNec) = [];      
+            end
+            
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
-%             IO.save_thumbnail(inputSample,[],'prior');
-            IO.save_sample(inputSample);
         end
         
         function pipeline = make_sample_pipeline(this)

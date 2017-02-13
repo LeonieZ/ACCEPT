@@ -15,6 +15,7 @@ classdef Full_Detection < SampleProcessor
         end
         
         function run(this,inputSample)
+            inputSample.results.sampleProcessorUsed = this.name;
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);
 %             adaptive_start = 0.001;

@@ -621,25 +621,42 @@ classdef IO < handle
         end
         
         function convert_thumbnails_in_sample(inputSample)
-            disp('Detected old style sample converted to save disk space.');
-            frames=unique(inputSample.results.thumbnails.frameNr);
-            inputSample.results.thumbnails.label = zeros(size(inputSample.results.thumbnails,1),1);
-            for i=1:numel(frames)
-                currentDataFrame=IO.load_data_frame(inputSample,frames(i));
-                currentDataFrame.segmentedImage=zeros(size(currentDataFrame.rawImage));
-                thumbsInFrame=find(inputSample.results.thumbnails.frameNr==frames(i));
-                for j=1:numel(thumbsInFrame)
-                    inputSample.results.thumbnails.label(thumbsInFrame) = 1:1:numel(thumbsInFrame);
-                    locations=[inputSample.results.thumbnails.yBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.yTopRight(thumbsInFrame(j)),...
-                        inputSample.results.thumbnails.xBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.xTopRight(thumbsInFrame(j))];
-                    currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:)=inputSample.results.segmentation{thumbsInFrame(j)}...
-                        + currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:);
+            if strcmp(inputSample.results.sampleProcessorUsed,'Marker Characterization')
+                frames=unique(inputSample.results.thumbnails.frameNr);
+                for i=1:numel(frames)
+                    currentDataFrame=IO.load_data_frame(inputSample,frames(i));
+                    currentDataFrame.segmentedImage=zeros(size(currentDataFrame.rawImage));
+                    thumbsInFrame=find(inputSample.results.thumbnails.frameNr==frames(i));
+                    for j=1:numel(thumbsInFrame)
+                        locations=[inputSample.results.thumbnails.yBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.yTopRight(thumbsInFrame(j)),...
+                            inputSample.results.thumbnails.xBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.xTopRight(thumbsInFrame(j))];
+                        currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:)=inputSample.results.segmentation{thumbsInFrame(j)}...
+                            + currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:);
+                    end
+                    IO.save_data_frame_segmentation(inputSample,currentDataFrame);          
                 end
-                IO.save_data_frame_segmentation(inputSample,currentDataFrame);
-               
+                inputSample.results.thumbnail_images=[];
+                inputSample.results.segmentation=[];
+            else
+                disp('Detected old style sample converted to save disk space.');
+                frames=unique(inputSample.results.thumbnails.frameNr);
+                inputSample.results.thumbnails.label = zeros(size(inputSample.results.thumbnails,1),1);
+                for i=1:numel(frames)
+                    currentDataFrame=IO.load_data_frame(inputSample,frames(i));
+                    currentDataFrame.segmentedImage=zeros(size(currentDataFrame.rawImage));
+                    thumbsInFrame=find(inputSample.results.thumbnails.frameNr==frames(i));
+                    for j=1:numel(thumbsInFrame)
+                        inputSample.results.thumbnails.label(thumbsInFrame) = 1:1:numel(thumbsInFrame);
+                        locations=[inputSample.results.thumbnails.yBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.yTopRight(thumbsInFrame(j)),...
+                            inputSample.results.thumbnails.xBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.xTopRight(thumbsInFrame(j))];
+                        currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:)=inputSample.results.segmentation{thumbsInFrame(j)}...
+                            + currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:);
+                    end
+                    IO.save_data_frame_segmentation(inputSample,currentDataFrame);
+                end
+                inputSample.results.thumbnail_images=[];
+                inputSample.results.segmentation=[];  
             end
-            inputSample.results.thumbnail_images=[];
-            inputSample.results.segmentation=[];  
          end
         
         function check_sample_for_thumbnails(inputSample)

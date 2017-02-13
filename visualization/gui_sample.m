@@ -20,22 +20,7 @@ else
     maxi = 4095;
 end
 
-% %handle empty thumbs
-% usedThumbs = find(ismember(linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents),currentSample.results.features{:,1}));
-% % usedThumbs = linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents);
-% nrUsedThumbs = size(usedThumbs,2);
-% 
-% %replace NaN values with zeros
-% sampleFeatures = currentSample.results.features;
-% sampleFeatures_noNaN = sampleFeatures{:,:};
-% sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
-% sampleFeatures{:,:} = sampleFeatures_noNaN; 
-% %handle selections
-% selectedFrames = false(nrUsedThumbs,1);
-% currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
-% selectedCells = zeros(size(sampleFeatures,1),1);
 
-% usedThumbs = find(ismember(linspace(1,thumbContainer.nrOfEvents,thumbContainer.nrOfEvents),currentSample.results.features{:,1}));
 nrUsedThumbs = thumbContainer.nrOfEvents;
 
 %replace NaN values with zeros
@@ -44,7 +29,6 @@ sampleFeatures_noNaN = sampleFeatures{:,:};
 sampleFeatures_noNaN(isnan(sampleFeatures_noNaN)) = 0;
 sampleFeatures{:,:} = sampleFeatures_noNaN; 
 %handle selections
-% selectedFrames = false(nrUsedThumbs,1);
 currPos = linspace(1,nrUsedThumbs,nrUsedThumbs);
 selectedCells = zeros(nrUsedThumbs,1);
 
@@ -86,15 +70,17 @@ selectedProps = [1,2,5,6,10]; % properties of data sample to be visualized
 propnames = propnames(selectedProps); % row titles
 dat = cell(numel(propnames),1);
 entry = cell(numel(propnames),1);
-rnames = {'Sample ID','Type','Nr of Frames', 'Nr of Channels', 'Pixel Size','Nr of Scored Events'};
+rnames = {'Sample ID','Type','Nr of Frames', 'Nr of Channels', 'Pixel Size','Nr of Scored Events', 'Size Scale Bar'};
 for i = 1:numel(propnames)
    dat{i} = eval(['currentSample.',propnames{i}]);
    entry{i} = [rnames{i}, ': ',num2str(dat{i})];
 end
 
-% dat{6} = size(currentSample.results.thumbnails,1);
 dat{6} = size(currentSample.results.features,1);
 entry{6} = [rnames{6}, ': ',num2str(dat{6})];
+
+dat{7} = 10*currentSample.pixelSize;
+entry{7} = [rnames{7}, ': ',num2str(dat{7})];
 
 GuiSampleHandle.uiPanelTable = uipanel('Parent',GuiSampleHandle.uiPanelOverview,...
                                      'Units','characters','Position',[1.5 1.4 42 12],...
@@ -647,10 +633,10 @@ function plotImInAxis(im,segm,hAx,hIm)
         % create overlay image here
         if three_channel_overlay == false
             overlay(:,:,1) = im(:,:,2)/max_ch2; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
-            overlay(end-1,2:6,:) = 1;
+            overlay(end-1,2:min(11,end),:) = 1;
         else
             overlay(:,:,1) = im(:,:,1)/max_ch1; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
-            overlay(end-1,2:6,:) = 1;
+            overlay(end-1,2:min(11,end),:) = 1;
         end            
         set(hIm,'CData',overlay);
     else
