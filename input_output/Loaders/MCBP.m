@@ -61,7 +61,8 @@ classdef MCBP < Loader & IcyPluginData & CustomCsv
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            if ~exist(currentSample.imagePath,'dir')
+            [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100);
+            if exist(this.sample.imagePath,'dir')
                 this.load_scan_info(samplePath);
                 this.preload_tiff_headers(samplePath);         
             end
