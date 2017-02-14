@@ -40,7 +40,7 @@ classdef IO < handle
         end
         
         function t = export_samplelist_results_summary(sampleList,selectedCellsInTable,file)
-            n = size(selectedCellsInTable,2);
+            n = size(selectedCellsInTable,1);
             classifications = cell(1,n);
             id = cell(1,n);
             names={'sampleID'};

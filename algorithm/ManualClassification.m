@@ -32,7 +32,7 @@ classdef ManualClassification < SampleProcessorObject
                 returnSample = inputSample;
 
                 if isempty(inputSample.results.features)
-                    notify(this,'logMessage',logmessage(1,'No features available for classification.'));
+                    %notify(this,'logMessage',logmessage(1,'No features available for classification.'));
                     return
                 end
                 
