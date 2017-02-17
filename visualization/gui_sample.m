@@ -966,7 +966,7 @@ function export_selection(handle,~)
     if ~isempty(sel_name)
         currentSample.results.classification = [currentSample.results.classification array2table(selectedCells,'VariableNames',{sel_name{1}})];
         IO.save_sample(currentSample);
-        IO.save_results_as_xls(currentSample)
+%         IO.save_results_as_xls(currentSample)
     end
     set(0,'defaultUicontrolFontSize', 12)
     set(handle,'backg',color)
