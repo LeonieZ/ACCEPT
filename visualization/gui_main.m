@@ -305,7 +305,7 @@ if allSamples == 0 || allSamples == 1
     [file,path] = uiputfile([base.sampleList.resultPath filesep base.sampleList.sampleProcessorId filesep 'summaryTable.xlsx'],'Save summary file.');
     if ischar(file)
         if allSamples == 1
-            selectedCellsInTable = linspace(1,size(base.sampleList.sampleNames,2),size(base.sampleList.sampleNames,2));
+            selectedCellsInTable = linspace(1,size(base.sampleList.sampleNames,2),size(base.sampleList.sampleNames,2))';
         elseif allSamples == 0
             selectedCellsInTable = find(gui.selectedCells);
         end        
