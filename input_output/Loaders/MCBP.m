@@ -7,7 +7,7 @@ classdef MCBP < Loader & IcyPluginData & CustomCsv
         hasEdges='false'
         pixelSize=0.64
         channelNames={};
-        channelEdgeRemoval=1;
+        channelEdgeRemoval=2;
         sample=Sample();
         channelRemapping=[];
         tiffHeaders
@@ -185,16 +185,22 @@ classdef MCBP < Loader & IcyPluginData & CustomCsv
                         tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{j} '.tif']);
                         for i=1:numel(tempImageFileNames)
                             this.sample.imageFileNames{i,this.channelRemapping(j)} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
-                            this.sample.tiffHeaders{i,this.channelRemapping(j)}=imfinfo(this.sample.imageFileNames{i,this.channelRemapping(j)});
+                            this.sample.tiffHeaders{i,this.channelRemapping(j)} = imfinfo(this.sample.imageFileNames{i,this.channelRemapping(j)});
                         end
                     end
                     %function to fill the dataP.temp.imageinfos variable
                 end
          %Have to add a check for the 2^15 offset.
                     %dataP.temp.imagesHaveOffset=false;
-                this.sample.imageSize=[this.sample.tiffHeaders{1,1}(1).Height this.sample.tiffHeaders{1,1}(1).Width numel(this.filtersUsed)];
-                this.sample.nrOfFrames=numel(tempImageFileNames);
-                this.sample.nrOfChannels=numel(this.filtersUsed);
+                    
+                    %force at least 3 filters are to be used
+                    tempFiltersUsed = numel(this.filtersUsed);
+                    if tempFiltersUsed < 3
+                        tempFiltersUsed = 3;
+                    end
+                this.sample.imageSize = [this.sample.tiffHeaders{1,2}(1).Height this.sample.tiffHeaders{1,2}(1).Width tempFiltersUsed];
+                this.sample.nrOfFrames = numel(tempImageFileNames);
+                this.sample.nrOfChannels = tempFiltersUsed;
             else
                 %throw error
             end
@@ -228,7 +234,7 @@ classdef MCBP < Loader & IcyPluginData & CustomCsv
                 catch
                     if imageNr>0
                         notify(this,'logMessage',LogMessage(2,['Tiff', this.sample.imageFileNames{imageNr,i}, 'from channel ' num2str(i) ' is not readable!'])) ;
-                        return
+                        continue
                     else
                         notify(this,'logMessage',LogMessage(2,['Tiff', ' is missing or is not readable!'])) ;
                         return
