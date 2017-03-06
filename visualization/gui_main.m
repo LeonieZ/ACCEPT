@@ -11,8 +11,8 @@ gui.tasks_raw = cellfun(@(s) s.name,base.availableSampleProcessors,'UniformOutpu
 % select DEFAULT sampleProcessor number (in alphabetical order) for visualization
 defaultSampleProcessorNumber = 1;
 
-if(exist([installDir,filesep,'LatestSettings.mat'], 'file') == 2)
-   load([installDir,filesep,'LatestSettings.mat'],'inputPath','resultPath','processor')
+if(exist([installDir,filesep,'input_output',filesep,'LatestSettings.mat'], 'file') == 2)
+   load([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor')
    proc = find(cellfun(@(s) strcmp(processor, s.name), base.availableSampleProcessors));
    if ~isempty(proc)
        currentProcessorIndex = proc;
@@ -327,7 +327,12 @@ end
 
 function input_path(~,~,base)
 %     global gui
-    inputPath = uigetdir(pwd,'Please select an input folder.');
+    if isdir(gui.input_path.String)
+        start_path = gui.input_path.String;
+    else
+        start_path = pwd;
+    end
+    inputPath = uigetdir(start_path,'Please select an input folder.');
     if inputPath ~= 0
         set(gui.input_path,'String',inputPath);
         base.sampleList.inputPath=inputPath;
@@ -337,7 +342,12 @@ end
 
 function results_path(~,~,base)
 %     global gui
-    resultPath = uigetdir(pwd,'Please select a results folder.');
+    if isdir(gui.results_path.String)
+        start_path = gui.results_path.String;
+    else
+        start_path = pwd;
+    end
+    resultPath = uigetdir(start_path,'Please select a results folder.');
     if resultPath ~= 0
         test=strfind(resultPath,get(gui.input_path,'String'));
         if isempty(test)
@@ -460,7 +470,6 @@ set(gui.table,'data', dat);
 end
 
 function close_fcn(~,~) 
-%     fid=fopen([installDir,filesep,'input_output',filesep,'LatestSettings.txt'],'w');
     base.save_state;
     delete(gcf)
 end
