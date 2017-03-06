@@ -36,6 +36,7 @@ classdef IO < handle
         end
         
         function save_sample_processor(smplLst,processor)
+            IO.check_save_path(smplLst.save_path());
             save([smplLst.save_path(),'processed.mat'],'processor','-append','-v7.3');
         end
         
@@ -89,6 +90,7 @@ classdef IO < handle
             if ~isempty(classifiers)
                 names=cat(2,names,classifiers);
             end
+            IO.check_save_path(currentSample.savePath);
             if exist([currentSample.savePath(),'summaryTable.xlsx'],'file') == 2
                 currExcel = readtable([currentSample.savePath(),'summaryTable.xlsx']);
                 exist_names = currExcel.Properties.VariableNames; 
@@ -184,6 +186,7 @@ classdef IO < handle
             % Remove tiff headers from sample
             currentSample.tiffHeaders=[];
             currentSample.segmentationHeaders=[];
+            IO.check_save_path(currentSample.savePath);
             save([currentSample.savePath,'output',filesep,currentSample.id,'.mat'],'currentSample','-v7.3');
             %do we split this in a seperate function? /g
             load([currentSample.savePath,'processed.mat'],'samplesProcessed');
@@ -196,6 +199,7 @@ classdef IO < handle
         end
         
         function save_results_as_xls(currentSample)
+             IO.check_save_path(currentSample.savePath);
             %export results to a xls/csv file. 
              tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
              if size(tempTable,1) > 0
@@ -231,11 +235,7 @@ classdef IO < handle
         end
         
         function save_data_frame(currentSample,currentDataFrame)
-            % Save DataFrame 
-            % Check why we dont use the savepath function? /G
-            if ~exist([currentSample.savePath,'frames',filesep],'dir')
-                mkdir([currentSample.savePath,'frames',filesep]);
-            end
+            IO.check_save_path(currentSample.savePath);
             save([currentSample.savePath,'frames',filesep,currentSample.id,filesep,num2str(currentDataFrame.frameNr),'.mat'],'currentDataFrame','-v7.3');            
         end
         
@@ -317,6 +317,7 @@ classdef IO < handle
         
         
         function save_data_frame_segmentation(currentSample,currentDataFrame)
+            IO.check_save_path(currentSample.savePath);
             if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
                 mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
             end
@@ -333,6 +334,7 @@ classdef IO < handle
         end
         
         function save_thumbnail(currentSample,eventNr,option,rescaled,class,thumbContainer)
+           IO.check_save_path(currentSample.savePath); 
            id = currentSample.id;
            
            if ~exist('class','var') || isempty(class)
@@ -545,6 +547,7 @@ classdef IO < handle
         end
         
         function save_overview_image(currentSample,inputImage)
+            IO.check_save_path(currentSample.savePath);
             if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
                 mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
             end
@@ -561,6 +564,7 @@ classdef IO < handle
         end
        
         function save_overview_mask(currentSample,inputImage)
+            IO.check_save_path(currentSample.savePath);
             if ~exist([currentSample.savePath,'frames',filesep,currentSample.id],'dir')
                 mkdir([currentSample.savePath,'frames',filesep,currentSample.id]);
             end
@@ -580,10 +584,16 @@ classdef IO < handle
         function check_save_path(savePath)
             if ~exist(savePath,'dir')
                 mkdir(savePath);
-                mkdir([savePath,'output']);
-                mkdir([savePath,'frames']);
                 samplesProcessed={};
                 save([savePath filesep 'processed.mat'],'samplesProcessed','-v7.3');
+            end
+            framesDir = [savePath filesep 'frames'];
+            if ~exist(framesDir,'dir')
+                mkdir(framesDir);
+            end
+            outputDir = [savePath filesep 'output'];
+            if ~exist(outputDir,'dir')
+                mkdir(outputDir);
             end
         end
         
