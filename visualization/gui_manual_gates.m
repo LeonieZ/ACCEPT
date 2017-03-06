@@ -166,7 +166,7 @@ function load_gates(~,~)
     for i = 1:nrofGates
         infos = strsplit(gates{i,1},'_');
         gui.channel_nr(i).String = infos{2};
-        if ~contains(infos{3},'Overlay')
+        if isempty(strfind(infos{3},'Overlay'))
             gui.feature_list(i).Value = find(strcmp(infos{3},feature_list));
         elseif strcmp(infos{5},'3')
             gui.feature_list(i).Value = find(strcmp('Overlay CK',feature_list));
