@@ -56,6 +56,7 @@ classdef Base < handle
         function run(this)
             % run SampleProcessor with each sample marked as toBeProcessed
             this.busy=true;
+            IO.check_save_path(this.sampleList.resultPath)
             nbrSamples = size(this.sampleList.toBeProcessed,2);
             this.nrProcessed = 0;
             if ~isa(this.sampleProcessor,'Rescore_Using_Gate')
