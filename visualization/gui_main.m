@@ -11,8 +11,8 @@ gui.tasks_raw = cellfun(@(s) s.name,base.availableSampleProcessors,'UniformOutpu
 % select DEFAULT sampleProcessor number (in alphabetical order) for visualization
 defaultSampleProcessorNumber = 1;
 
-if(exist([installDir,filesep,'input_output',filesep,'LatestSettings.mat'], 'file') == 2)
-   load([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor')
+if(exist([installDir,filesep,'LatestSettings.mat'], 'file') == 2)
+   load([installDir,filesep,'LatestSettings.mat'],'inputPath','resultPath','processor')
    proc = find(cellfun(@(s) strcmp(processor, s.name), base.availableSampleProcessors));
    if ~isempty(proc)
        currentProcessorIndex = proc;

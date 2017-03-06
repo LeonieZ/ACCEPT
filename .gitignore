@@ -12,3 +12,4 @@ data/results/*
 
 input_output/LatestSettings.mat
 misc/saved_gates/*.mat
+LatestSettings.mat
