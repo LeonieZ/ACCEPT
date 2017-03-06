@@ -27,7 +27,7 @@ classdef MCBP < Loader & IcyPluginData & CustomCsv
                     if strcmp(input.type,this.name)
                         this.sample=input;
                     else
-                    error('tried to use incorrect sampletype with CellTracks Loader');
+                    error('tried to use incorrect sampletype with MCBP Loader');
                     end
                 else
                     this=this.new_sample_path(input);

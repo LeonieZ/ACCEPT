@@ -24,7 +24,7 @@ classdef Default < Loader & IcyPluginData & CustomCsv
                     if strcmp(input.type,this.name)
                         this.sample=input;
                     else
-                    error('tried to use incorrect sampletype with CellTracks Loader');
+                    error('tried to use incorrect sampletype with Default Loader');
                     end
                 else
                     this=this.new_sample_path(input);
@@ -58,7 +58,8 @@ classdef Default < Loader & IcyPluginData & CustomCsv
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            if ~exist(currentSample.imagePath,'dir')
+            [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100);
+            if exist(this.sample.imagePath,'dir')
                 %this.load_scan_info(samplePath);
                 this.preload_tiff_headers(samplePath);         
             end
@@ -149,8 +150,8 @@ classdef Default < Loader & IcyPluginData & CustomCsv
                     %function to fill the dataP.temp.imageinfos variable
                 end
          %Have to add a check for the 2^15 offset.
-                    %dataP.temp.imagesHaveOffset=false;
-                this.sample.imageSize=[this.sample.tiffHeaders{1,2}(1).Height this.sample.tiffHeaders{1,2}(1).Width numel(this.channelNames)];
+                %dataP.temp.imagesHaveOffset=false;
+                this.sample.imageSize=[this.sample.tiffHeaders{1,2}(1).Height this.sample.tiffHeaders{1,2}(1).Width  numel(this.channelNames)];
                 this.sample.nrOfFrames=numel(tempImageFileNames);
                 this.sample.nrOfChannels=numel(this.channelNames);
             else
