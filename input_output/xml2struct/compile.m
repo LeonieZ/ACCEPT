@@ -6,5 +6,5 @@
 if ismac
     mex -I'./rapidxml' -I'/Applications/Boost/boost_1_61_0/' xml2struct.cc;
 elseif ispc
-    mex -I'./rapidxml' -I'C:\Data\libraries\boost_1_61_0\boost_1_61_0\' xml2struct.cc;
+    mex -I'./rapidxml' -I'C:\Data\libraries\boost_1_63_0\boost_1_63_0\' xml2struct.cc;
 end

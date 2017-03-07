@@ -151,7 +151,7 @@ classdef Base < handle
             inputPath = this.sampleList.inputPath;
             resultPath = this.sampleList.resultPath;
             processor = this.sampleProcessor.name;
-            save([installDir,filesep,'input_output',filesep,'LatestSettings.mat'],'inputPath','resultPath','processor');
+            save([installDir,filesep,'LatestSettings.mat'],'inputPath','resultPath','processor');
             this.delete;
         end
 
