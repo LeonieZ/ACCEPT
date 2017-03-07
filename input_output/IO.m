@@ -586,6 +586,17 @@ classdef IO < handle
                 mkdir(savePath);
                 samplesProcessed={};
                 save([savePath filesep 'processed.mat'],'samplesProcessed','-v7.3');
+            else
+                if ~exist([savePath,'output'],'dir')
+                    mkdir([savePath,'output']);
+                end
+                if ~exist([savePath,'frames'],'dir')
+                    mkdir([savePath,'frames']);
+                end
+                if ~exist([savePath filesep 'processed.mat'],'file')
+                    samplesProcessed={};
+                    save([savePath filesep 'processed.mat'],'samplesProcessed','-v7.3');
+                end
             end
             framesDir = [savePath filesep 'frames'];
             if ~exist(framesDir,'dir')
