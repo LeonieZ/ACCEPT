@@ -10,7 +10,7 @@ classdef ThumbnailLoader < Loader
         pixelSize=0.64;
         channelNames={'ExclMarker','NuclMarker','InclMarker','Marker1','Marker2','Marker3'};
         channelRemapping=[1,2,3,4,5,6;1,2,3,4,5,6];
-        channelEdgeRemoval=1;      
+        channelEdgeRemoval=1;   
     end
     
     methods
@@ -31,16 +31,15 @@ classdef ThumbnailLoader < Loader
         
         function new_sample_path(this,samplePath)
             this.sample.type = this.name;
-            this.sample.loader = @ThumbnailLoader;
-            [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',1); 
-            [this.sample.priorPath,~] = this.find_dir(samplePath,'txt',1); 
+            this.sample.loader = @ThumbnailLoader; 
             splitPath = regexp(samplePath, filesep, 'split');
             if isempty(splitPath{end})
                 this.sample.id=splitPath{end-1};
             else
                 this.sample.id=splitPath{end};
             end
-            this.preload_tiff_headers();
+            this.preload_tiff_headers(samplePath);
+            this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
             this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
@@ -53,11 +52,11 @@ classdef ThumbnailLoader < Loader
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            if ~exist(currentSample.imagePath,'dir')
-                [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100); 
-                [this.sample.priorPath,~] = this.find_dir(samplePath,'xml',1);
-                this.preload_tiff_headers();         
+            [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',1);
+            if exist(this.sample.imagePath,'dir')
+                this.preload_tiff_headers(samplePath);         
             end
+            this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
         end
    
         function dataFrame = load_data_frame(this,frameNr,varargin)
@@ -70,7 +69,7 @@ classdef ThumbnailLoader < Loader
             dataFrame = Dataframe(frameNr,...
             false,this.channelEdgeRemoval,rawImage);
             name = strsplit(this.sample.imageFileNames{frameNr},'.');
-            if exist([name{1} '_segm.tif'], 'file') == 2
+            if exist([strjoin(name(1:end-1),'.') '_segm.tif'], 'file') == 2
                 dataFrame.segmentedImage = logical(this.read_segm(frameNr));
                 sumImage = sum(dataFrame.segmentedImage,3); 
                 labels = repmat(bwlabel(sumImage,8),1,1,size(dataFrame.segmentedImage,3));
@@ -86,8 +85,26 @@ classdef ThumbnailLoader < Loader
         
         function rawImage = load_raw_image(this,frameNr)
             rawImage = this.read_im(frameNr);
+            if size(rawImage,3) < this.sample.nrOfChannels
+                for l = size(rawImage,3)+1:this.sample.nrOfChannels
+                    rawImage(:,:,l) = zeros(size(rawImage,1),size(rawImage,2));
+                end
+            end
         end
         
+        function locations = prior_locations_in_sample(this,samplePath)
+            locations=table();          
+            [this.sample.priorPath,~] = this.find_dir(samplePath,'txt',1);           
+            for i = 1:this.sample.nrOfFrames
+                frameNr = i;
+                xBottomLeft = 1;
+                yBottomLeft = 1;
+                xTopRight = this.sample.tiffHeaders{i}.Width;
+                yTopRight = this.sample.tiffHeaders{i}.Height;                  
+                location=table(frameNr,xBottomLeft,yBottomLeft,xTopRight,yTopRight);
+                locations(i,:)=location;
+            end
+        end
         
        function frameOrder = calculate_frame_nr_order(this)
        end
@@ -96,37 +113,42 @@ classdef ThumbnailLoader < Loader
 
     methods(Access=private)
         
-        function preload_tiff_headers(this)
-            tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
-            this.sample.imageFileNames = [];
-            this.sample.tiffHeaders = [];
-            for i=1:numel(tempImageFileNames)
-                if isempty(strfind(tempImageFileNames(i).name,'segm'))
-                    this.sample.imageFileNames{end+1} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+        function preload_tiff_headers(this,samplePath)
+            [this.sample.imagePath, bool] = this.find_dir(samplePath,'tif',1); 
+            if bool
+                tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']);
+                this.sample.imageFileNames = [];
+                this.sample.tiffHeaders = [];
+                for i=1:numel(tempImageFileNames)
+                    if isempty(strfind(tempImageFileNames(i).name,'segm'))
+                        this.sample.imageFileNames{end+1} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+                    end
                 end
-            end
-            %function to fill the dataP.temp.imageinfos variable
-            
-            for i=1:numel(this.sample.imageFileNames)
-                this.sample.tiffHeaders{i}=imfinfo(this.sample.imageFileNames{i});
-            end
+                %function to fill the dataP.temp.imageinfos variable
 
-            %Have to add a check for the 2^15 offset.
-            if this.sample.tiffHeaders{1}(1).BitDepth == 8
-                this.sample.dataTypeOriginalImage = 'uint8';
+                for i=1:numel(this.sample.imageFileNames)
+                    this.sample.tiffHeaders{i}=imfinfo(this.sample.imageFileNames{i});
+                end
+
+                %Have to add a check for the 2^15 offset.
+                if this.sample.tiffHeaders{1}(1).BitDepth == 8
+                    this.sample.dataTypeOriginalImage = 'uint8';
+                else
+                    this.sample.dataTypeOriginalImage = 'uint16';
+                end
+                this.sample.imageSize=[this.sample.tiffHeaders{1}(1).Height this.sample.tiffHeaders{1}(1).Width numel(this.sample.tiffHeaders{1})];
+                this.sample.nrOfFrames=numel(this.sample.imageFileNames);
+                this.sample.nrOfChannels=max(cellfun(@numel,this.sample.tiffHeaders));
             else
-                this.sample.dataTypeOriginalImage = 'uint16';
+                %throw error
             end
-            this.sample.imageSize=[this.sample.tiffHeaders{1}(1).Height this.sample.tiffHeaders{1}(1).Width numel(this.sample.tiffHeaders{1})];
-            this.sample.nrOfFrames=numel(this.sample.imageFileNames);
-            this.sample.nrOfChannels=numel(this.sample.tiffHeaders{1});
         end
         
         function rawImage=read_im(this,imageNr)
             % use the previously gathered imageinfo and read all images in a multipage
             % tiff. read only one channel if a channel is specified.
             rawImage = zeros(this.sample.tiffHeaders{imageNr}(1).Height,this.sample.tiffHeaders{imageNr}(1).Width, size(this.sample.tiffHeaders{imageNr},1));
-            for i=1:this.sample.nrOfChannels;
+            for i=1:this.sample.nrOfChannels
                 try
                     imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr}));
                 catch
@@ -141,10 +163,10 @@ classdef ThumbnailLoader < Loader
             % use the previously gathered imageinfo and read all images in a multipage
             % tiff. read only one channel if a channel is specified.
             segmImage = zeros(this.sample.tiffHeaders{imageNr}(1).Height,this.sample.tiffHeaders{imageNr}(1).Width, size(this.sample.tiffHeaders{imageNr},1));
-            for i=1:this.sample.nrOfChannels;
+            for i=1:this.sample.nrOfChannels
                 try
                     name = strsplit(this.sample.imageFileNames{imageNr},'.');
-                    imagetemp = imread([name{1} '_segm.tif'], i);
+                    imagetemp = imread([strjoin(name(1:end-1),'.') '_segm.tif'], i);
                 catch
                     notify(this,'logMessage',LogMessage(2,['Segmentation from Tiff', this.sample.imageFileNames{imageNr}, 'from channel ' num2str(i) ' is not readable!'])) ;
                     return

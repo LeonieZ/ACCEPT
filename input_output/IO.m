@@ -587,11 +587,11 @@ classdef IO < handle
                 samplesProcessed={};
                 save([savePath filesep 'processed.mat'],'samplesProcessed','-v7.3');
             else
-                if ~exist([savePath,'output'],'dir')
-                    mkdir([savePath,'output']);
+                if ~exist([savePath filesep 'output'],'dir')
+                    mkdir([savePath filesep 'output']);
                 end
-                if ~exist([savePath,'frames'],'dir')
-                    mkdir([savePath,'frames']);
+                if ~exist([savePath filesep 'frames'],'dir')
+                    mkdir([savePath filesep 'frames']);
                 end
                 if ~exist([savePath filesep 'processed.mat'],'file')
                     samplesProcessed={};

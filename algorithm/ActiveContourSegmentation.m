@@ -64,7 +64,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
         function returnFrame = run(this, inputFrame)
             % Segmentation on Dataframe: this is the standard call via the graphical user interface
-            if isa(inputFrame,'Dataframe')
+            if isa(inputFrame,'Dataframe') && isempty(inputFrame.segmentedImage)
                 returnFrame = inputFrame;
                 returnFrame.segmentedImage = false(size(inputFrame.rawImage));
 
@@ -214,7 +214,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     returnFrame = returnFrame(:,:,this.maskForChannels);
                 end
 
-            else
+            elseif ~isa(inputFrame,'double') && ~isa(inputFrame,'Dataframe')
                 error('Active Contour Segmentation can only be used on dataframes or double images.')
             end
         end

@@ -34,7 +34,7 @@ classdef DataframeProcessor < handle
         
         function run(this,inputFrame)
             if any(cellfun(@(x) ~isa(x,'DataframeProcessorObject'),this.pipeline))
-                error('Cannot process dataframes. There are non DataframeProcessorObjects in the pipeline.')                
+                error('Cannot process dataframes. There are no DataframeProcessorObjects in the pipeline.')                
             end
             if isempty(this.pipeline)
                 notify(this,'logMessage',logmessage(1,[this.name,'image not processed, applied an empty workflow on dataframe.']));
