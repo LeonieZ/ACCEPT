@@ -1,11 +1,11 @@
-function [GuiSampleHandle] = scoring_gui_Sanne(base,currentSample)
+function [GuiSampleHandle] = scoring_gui_Sanne(base,currentSample,path)
 % profile on
 % Main figure: create and set properies (relative size, color)
 set(0,'units','characters');  
 screensz = get(0,'screensize');
 
 loader = ThumbnailLoader(currentSample);
-loader.update_prior_infos(currentSample,'\\nas1-mcbp.tnw.utwente.nl\ImagesMCBP\Sanne\Sanne Definition CTC thumbs\all');
+loader.update_prior_infos(currentSample,path);
 IO.preload_segmentation_tiffs(currentSample);
 
 thumbContainer = ThumbContainer(currentSample);
@@ -27,7 +27,7 @@ sampleFeatures{:,:} = sampleFeatures_noNaN;
 
 currPos = 1;
 scoredCells = 0;
-scores = zeros(1,nrUsedThumbs);
+scores = zeros(nrUsedThumbs,1);
 
 zoom_factor_x(1:2) = 1.15;
 zoom_factor_y(1:2) = 1.15;
@@ -397,6 +397,9 @@ function bselection(~,event)
    if scoredCells < nrUsedThumbs
     next_cell();
    end
+   if scoredCells == nrUsedThumbs
+       save_res();
+   end
 end
 
 function next_cell(~,~)
@@ -421,13 +424,19 @@ function next_cell(~,~)
 end
 %%%%%%%%%%%%%%%%%%%%%%%
 GuiSampleHandle.Count = uicontrol('Parent',GuiSampleHandle.uiPanelButton,'Style','text','Units','characters','FontUnits', 'normalized',...
-            'FontSize',0.75,'Position',[65 0.25 21.6 3],'BackgroundColor',[ 1 1 1],'String',[num2str(scoredCells) ' / ' num2str(nrUsedThumbs)]);
+            'FontSize',0.75,'Position',[65 0.25 31.6 3],'BackgroundColor',[ 1 1 1],'String',[num2str(scoredCells) ' / ' num2str(nrUsedThumbs)]);
 
 
 
 function change_overlay(~,~)
     three_channel_overlay = logical(get(GuiSampleHandle.changeOverlayButton,'Value'));
     plot_thumbnails(currPos); 
+end
+
+function save_res()
+    username = input('Enter your name: ','s');
+    scores_save = array2table(scores);
+    writetable(scores_save,[path(1:end-4) filesep 'results' filesep username '.xlsx']);
 end
 
 function close_fcn(~,~) 
