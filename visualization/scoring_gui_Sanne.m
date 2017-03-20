@@ -4,9 +4,9 @@ function [GuiSampleHandle] = scoring_gui_Sanne(base,currentSample,path)
 set(0,'units','characters');  
 screensz = get(0,'screensize');
 
-loader = ThumbnailLoader(currentSample);
+loader = ThumbnailLoader_adapted(currentSample);
 loader.update_prior_infos(currentSample,path);
-IO.preload_segmentation_tiffs(currentSample);
+loader.preload_segmentation_tiffs(currentSample,path);
 
 thumbContainer = ThumbContainer(currentSample);
 
@@ -434,9 +434,10 @@ function change_overlay(~,~)
 end
 
 function save_res()
-    username = input('Enter your name: ','s');
+    username = inputdlg('Enter your name: ','Name');
     scores_save = array2table(scores);
-    writetable(scores_save,[path(1:end-4) filesep 'results' filesep username '.xlsx']);
+    writetable(scores_save,[path(1:end-4) filesep 'results' filesep username{1} '.xlsx']);
+    delete(gcf)
 end
 
 function close_fcn(~,~) 
