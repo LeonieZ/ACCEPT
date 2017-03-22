@@ -333,9 +333,15 @@ classdef IO < handle
             t.close;
         end
         
-        function save_thumbnail(currentSample,eventNr,option,rescaled,class,thumbContainer)
+        function save_thumbnail(currentSample,eventNr,option,rescaled,class,thumbContainer,name)
            IO.check_save_path(currentSample.savePath); 
            id = currentSample.id;
+           
+           if ~exist('name','var')
+               name = 'selected_Thumbs';
+           else 
+               name = name{1};
+           end
            
            if ~exist('class','var') || isempty(class)
                class = 0;
@@ -352,9 +358,9 @@ classdef IO < handle
                 fclose(fid);
             end
            elseif size(class,1) > 1
-            if ~exist([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs'],'dir')
-               mkdir([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs']);
-               fid=fopen([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,'ACCEPTThumbnails.txt'],'w');
+            if ~exist([currentSample.savePath,'frames',filesep,id,filesep,name],'dir')
+               mkdir([currentSample.savePath,'frames',filesep,id,filesep,name]);
+               fid=fopen([currentSample.savePath,'frames',filesep,id,filesep,name,filesep,'ACCEPTThumbnails.txt'],'w');
                fclose(fid);
             end
            else
@@ -482,7 +488,7 @@ classdef IO < handle
                             if (size(class,1)== 1 && class == 0)
                                 t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'],'w');
                             else
-                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep, num2str(i),...
+                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,name,filesep, num2str(i),...
                                     '_thumb.tif'],'w');
                             end
                             t.setTag('Photometric',t.Photometric.MinIsBlack);
@@ -497,7 +503,7 @@ classdef IO < handle
                             if (size(class,1)== 1 && class == 0)
                                 s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'],'w');
                             else
-                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,num2str(i),...
+                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,name,filesep,num2str(i),...
                                     '_thumb_segm.tif'],'w');
                             end
                             s.setTag('Photometric',t.Photometric.MinIsBlack);
@@ -517,10 +523,10 @@ classdef IO < handle
                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'], 'writemode', 'append'); 
                                 else
                                    imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs' filesep num2str(i)...
+                                       [currentSample.savePath,'frames',filesep,id,filesep,name filesep num2str(i)...
                                        '_thumb.tif'],'writemode', 'append');
                                    imwrite(segmentation{i}(:,:,j), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,'selected_Thumbs',filesep,num2str(i),...
+                                       [currentSample.savePath,'frames',filesep,id,filesep,name,filesep,num2str(i),...
                                     '_thumb_segm.tif'], 'writemode', 'append');
                                 end
                             end

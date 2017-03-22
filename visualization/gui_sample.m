@@ -1122,9 +1122,14 @@ function export_thumbs(handle,~)
     function btn2_callback(~,~)
             choice = selectedCells;
             delete(gcf)
+            name = inputdlg('Enter a name for your selection:','Specify Folder Name.',1,{'selected_Thumbs'});
     end
     if ~isnan(choice)
-        IO.save_thumbnail(currentSample,[],[],[],choice,thumbContainer)
+        if exist('name','var')
+            IO.save_thumbnail(currentSample,[],[],[],choice,thumbContainer,name)
+        else
+            IO.save_thumbnail(currentSample,[],[],[],choice,thumbContainer)
+        end
     end
     set(handle,'backg',color)
 end
