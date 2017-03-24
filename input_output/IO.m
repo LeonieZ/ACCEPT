@@ -45,11 +45,12 @@ classdef IO < handle
             classifications = cell(1,n);
             id = cell(1,n);
             names={'sampleID'};
+            tiff_headers = false;
             for j=1:n
                 i = selectedCellsInTable(j);
                 if sampleList.isProcessed(i) == 1
                     try
-                        currentSample = IO.load_sample(sampleList,i);
+                        currentSample = IO.load_sample(sampleList,i,tiff_headers);
                         id{j} = currentSample.id;
                         classifications{j} = currentSample.results.classification;
                         classifiers = classifications{j}.Properties.VariableNames;
