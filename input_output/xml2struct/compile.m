@@ -1,7 +1,9 @@
 %Compile the xml2struct mex file, make sure you have the boost libraries 
 %somehere (http://www.boost.org/) so you can point to it. Original
 %compilation was done with boost 1.61.0 /g will mail the author to ask
-%about the software license. 
+%about the software license.
+
+% xml2struct function Copyright (C) Jan Hermann https://github.com/azag0/xml2struct 
 
 if ismac
     mex -I'./rapidxml' -I'/Applications/Boost/boost_1_61_0/' xml2struct.cc;
