@@ -455,7 +455,10 @@ GuiSampleHandle.load_button = uicontrol('Style', 'pushbutton', 'Units','characte
 % export thumbnails
 GuiSampleHandle.export_thumbs = uicontrol('Style', 'pushbutton', 'Units','characters','String', 'Export Thumbnails','FontUnits', 'normalized',...
             'FontSize',.5,'Position', [186.7 61.2 33 2.6],'Callback', {@export_thumbs}); 
-                                
+        
+% set keyboard scrolling function
+set(GuiSampleHandle.fig_main, 'KeyPressFcn', @key_Pressed_Callback);
+        
 %% Callback and helper functions
 
 % --- Executes on selection in popupChannel.
@@ -704,6 +707,13 @@ function openSpecificImage(~,~,row)
             colormap(gca,map);
     end
 end
+
+function key_Pressed_Callback(handle,event,~)
+    if(strcmp(event.Key, 'space'))
+        plot_thumbnails(-round(GuiSampleHandle.slider.Value)+5);
+        GuiSampleHandle.slider.Value=round(GuiSampleHandle.slider.Value)-5;
+    end
+ end
 
 % --- Helper function to update scatter plots
 function updateScatterPlots(pos,booleanOnOff)
@@ -956,7 +966,7 @@ function export_selection(handle,~)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
-    set(0,'defaultUicontrolFontSize', 14)
+    %set(0,'defaultUicontrolFontSize', 14)
     exist = true;
     if isempty(gate)
         default_name = '';
@@ -986,7 +996,7 @@ function export_selection(handle,~)
         IO.save_sample(currentSample);
 %         IO.save_results_as_xls(currentSample)
     end
-    set(0,'defaultUicontrolFontSize', 12)
+    %set(0,'defaultUicontrolFontSize', 12)
     set(handle,'backg',color)
 end
 
