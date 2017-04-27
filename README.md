@@ -1,6 +1,7 @@
 # ACCEPT
 
-The ACCEPT Software is an image analysis package for the Automated CTC Classification, Enumeration and PhenoTyping. 
+The ACCEPT Software is an image analysis package for the Automated CTC Classification, Enumeration and PhenoTyping.  
+Its currently under activele development for the EU Cancer-ID project. 
 
 ## Current Features:
  * CTC Marker Characterization to quantify the expression of markers on pre-scored CTCs 
