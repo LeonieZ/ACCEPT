@@ -412,7 +412,7 @@ function bselection(~,event)
    scores(currPos) = str2double(event.NewValue.String(1));
    scoredCells = scoredCells + 1;
    set(GuiSampleHandle.Count,'String',[num2str(scoredCells) ' / ' num2str(nrUsedThumbs)]);
-   pause(1)
+   pause(0.25)
    if scoredCells < nrUsedThumbs
     next_cell();
    end
