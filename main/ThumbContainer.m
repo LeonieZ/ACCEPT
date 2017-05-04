@@ -75,6 +75,9 @@ classdef ThumbContainer < handle
                 for i = 1 : numel(frames)
                     rawIm = IO.load_raw_image(this.currentSample,frames(i));
                     rawSeg = IO.load_segmented_image(this.currentSample,frames(i));
+                    if isempty(rawSeg)
+                        rawSeg = zeros(size(rawIm));
+                    end
                     sumImage = sum(rawSeg,3);
                     labels = repmat(bwlabel(sumImage,4),1,1,size(rawSeg,3));
                     rawLabelImage = labels.*double(rawSeg);

@@ -307,7 +307,7 @@ classdef IO < handle
 %                     outputFrame.mask=currentDataFrame.mask(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2),:);
 %                 else
                     outputFrame=loader.load_data_frame(frameNr,boundingBox);
-                if exist([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],'file');
+                if exist([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],'file')
                    outputFrame.segmentedImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,num2str(frameNr,'%03.0f'),'_seg.tif'],...
                    'PixelRegion',boundingBox);
                 end
@@ -315,7 +315,7 @@ classdef IO < handle
         end
               
         function outputImage = load_segmented_image(sample,frameNr)
-            if exist(sample.segmentationFileNames{frameNr},'file');
+            if ~isempty(sample.segmentationFileNames) && exist(sample.segmentationFileNames{frameNr},'file')
                outputImage=imread(sample.segmentationFileNames{frameNr},'info',sample.segmentationHeaders{frameNr});
             else
                outputImage=[];

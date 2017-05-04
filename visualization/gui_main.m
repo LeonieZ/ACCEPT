@@ -64,6 +64,7 @@ gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Proce
 gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','characters','Position',[90 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@visualize,base});
 gui.gate_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Gate','Units','characters','Position',[110 14 15 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@gate,base});
 gui.export_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Summary','Units','characters','Position',[110 10.8 15 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@export_summary,base});
+gui.thumbs_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Thumbnails','Units','characters','Position',[110 17.6 18 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@export_thumbs,base});
 gui.title_axes = axes('Parent',gui.fig_main,'Units','characters','Position',[80 50 29 3]); axis off;
 gui.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} ACCEPT','Units','characters','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','center','FontWeight','bold');
 
@@ -342,6 +343,81 @@ end
 
 set(handle,'backg',color)
 end
+
+function export_thumbs(handle,~,base)
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5])
+    drawnow;
+    selected = base.sampleList.toBeProcessed;
+    if sum(selected) == 0
+        selected = ones(size(selected),'logical');
+    end
+    choice = NaN;
+    pos_button = get(gui.thumbs_button,'Position');
+    pos_main = get(gui.fig_main,'Position');
+    d = dialog('Units','characters','Position',[pos_main(1)+pos_button(1)-16 pos_main(2)+pos_button(2)-8 60 5],'Name','Export Thumbnail Images');
+    uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'FontUnits','normalized','FontSize',0.28,'String','All Thumbnails.','Callback',@btn1_callback);
+    uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'FontUnits','normalized','FontSize',0.28,'String','Selected Thumbnails.','Callback',@btn2_callback);
+    waitfor(d);
+    
+    function btn1_callback(~,~)
+        choice = 0;
+        delete(gcf)
+    end
+    function btn2_callback(~,~)  
+        names = [];
+        delete(gcf)
+        for i = 1:size(base.sampleList.sampleNames,2)
+            if base.sampleList.isProcessed(i) == 1 && selected(i) == 1
+                try
+                    currentSample = IO.load_sample(base.sampleList,i,false);
+                    classifiers = currentSample.results.classification.Properties.VariableNames;
+                    if ~isempty(classifiers)
+                        names=cat(2,names,classifiers);
+                    end
+                catch
+                end
+            end
+        end
+        classes = unique(names,'stable');       
+        if isempty(classes)
+            msgbox('No prior selection avaliable.')
+        elseif size(classes,2)==1           
+            name = classes(1);    
+        else
+            [s,v] = listdlg('PromptString',[{'There are multiple prior selections available. Please select one:'} {''}],...
+                    'SelectionMode','single',...
+                    'ListString',classes,'ListSize',[250,150]);
+            if v == 1
+                name = classes(s);
+            end
+        end      
+    end
+    for j = 1:size(base.sampleList.sampleNames,2)
+        if base.sampleList.isProcessed(j) == 1 && selected(j) == 1
+            
+                currentSample = IO.load_sample(base.sampleList,j,false);
+                if choice ~= 0 && sum(strcmp(name,currentSample.results.classification.Properties.VariableNames)) == 1
+                    eval(['choice = currentSample.results.classification.' name{1} ';'])
+                end
+                thumbContainer = ThumbContainer(currentSample);
+                if ~isnan(choice)
+                    if exist('name','var')
+                        IO.save_thumbnail(currentSample,[],[],[],choice,thumbContainer,name)
+                    else
+                        IO.save_thumbnail(currentSample,[],[],[],choice,thumbContainer)
+                    end
+                end
+                if size(choice,1) > 1
+                    choice = NaN;
+                end
+            
+            
+        end
+    end
+    set(handle,'backg',color)
+end
+
 
 function input_path(~,~,base)
 %     global gui
