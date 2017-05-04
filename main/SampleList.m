@@ -25,7 +25,7 @@ classdef SampleList < handle
         resultPath = '';
         toBeProcessed = [];
         overwriteResults = false;
-        loaderTypesAvailable={CellTracks(),CellTracksXp(),MCBP(),ThumbnailLoader(),Default()}; % beware of the order, the first loader type that can load a dir will be used.
+        loaderTypesAvailable={CellTracks(),CellTracksXp(),MCBP(),ThumbnailLoader(),Default(),VyCAP()}; % beware of the order, the first loader type that can load a dir will be used.
     end 
     
     properties(SetAccess={?IO})

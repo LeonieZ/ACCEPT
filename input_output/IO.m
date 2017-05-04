@@ -96,7 +96,9 @@ classdef IO < handle
             end
             if ~isempty(t)
                 summary = array2table(t,'VariableNames',unique(names,'stable'));
-                delete(file);
+                try delete(file);
+                catch
+                end
                 writetable(summary,file);
             end
         end
@@ -210,7 +212,7 @@ classdef IO < handle
             %do we split this in a seperate function? /g
             load([currentSample.savePath,'processed.mat'],'samplesProcessed');
             samplesProcessed=union(samplesProcessed,{currentSample.id});
-            save([currentSample.savePath,'processed.mat'],'samplesProcessed','-append');
+            save([currentSample.savePath,'processed.mat'],'samplesProcessed');
         end
         
         function clear_results(currentSample)

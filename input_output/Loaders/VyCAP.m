@@ -16,7 +16,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
-classdef VyCAP < Loader & IcyPluginData
+classdef VyCAP < Loader & IcyPluginData & CustomCsv
     %MCBP Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -62,6 +62,10 @@ classdef VyCAP < Loader & IcyPluginData
             else
                 this.sample.id=splitPath{end};
             end
+            customChannelsUsed=this.look_for_custom_channels(samplePath);
+            if ~isempty(customChannelsUsed)
+                this.channelsUsed=customChannelsUsed;
+            end
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
@@ -69,7 +73,6 @@ classdef VyCAP < Loader & IcyPluginData
             this.preload_tiff_headers(samplePath);
             this.sample.priorLocations = this.prior_locations_in_sample(samplePath);
             this.calculate_frame_nr_order();
-            keyboard
         end
         
         function update_prior_infos(this,currentSample,samplePath)
@@ -87,7 +90,7 @@ classdef VyCAP < Loader & IcyPluginData
             this.channelEdgeRemoval,...
             this.read_im(frameNr,varargin{:}));
             if ~isempty(this.sample.mask)
-                [row, col] = this.frameNr_to_row_col(frameNr);
+                [row, col] = find(this.sample.frameOrder==frameNr);
                 [size_x_mask, size_y_mask] = size(this.sample.mask);
                 size_x_small = round(size_x_mask / this.sample.rows);
                 size_y_small = round(size_y_mask / this.sample.columns);
@@ -276,7 +279,7 @@ classdef VyCAP < Loader & IcyPluginData
             %if the current sample can be loaded by this class. 
             txtDir=[samplePath,filesep,'Scan'];
             txtFile=dir([txtDir filesep '*Scan settings.txt']);
-            if ~isemtpy(txtFile)
+            if ~isempty(txtFile)
                 bool=(exist([txtDir,filesep,txtFile(1).name],'file')==2);
             else
                 %no txt file found
