@@ -69,14 +69,16 @@ classdef ExtractFeatures < DataframeProcessorObject
 %                         end
 %                     end
                     %% smaller variant
-                    for ch_two = 1:2:3
-                        tmpTbl = table();
-                        for i = 1:this.nrObjects
-                            tmpImg = returnFrame.labelImage == i;
-                            tmpTbl = [tmpTbl; array2table(sum(sum(tmpImg(:,:,2) & tmpImg(:,:,ch_two)))/sum(sum(tmpImg(:,:,2))),...
-                                'VariableNames',{strcat('ch_', num2str(2),'_Overlay_ch_',num2str(ch_two))})]; 
+                    for ch_two = 1:inputFrame.nrChannels
+                        if ch_two ~= 2
+                            tmpTbl = table();
+                            for i = 1:this.nrObjects
+                                tmpImg = returnFrame.labelImage == i;
+                                tmpTbl = [tmpTbl; array2table(sum(sum(tmpImg(:,:,2) & tmpImg(:,:,ch_two)))/sum(sum(tmpImg(:,:,2))),...
+                                    'VariableNames',{strcat('ch_', num2str(2),'_Overlay_ch_',num2str(ch_two))})]; 
+                            end
+                            returnFrame.features = [returnFrame.features tmpTbl];
                         end
-                        returnFrame.features = [returnFrame.features tmpTbl];
                     end
                 end
             elseif isa(inputFrame,'double')
