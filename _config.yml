@@ -19,6 +19,7 @@ email:
 description: "The ACCEPT Software is an image analysis package for the Automated CTC Classification, Enumeration and PhenoTyping. Its currently under active development for the EU Cancer-ID project."
 baseurl: "/ACCEPT" # the optional subpath of your site, e.g. "/blog"
 url: "https://vandalum.github.io" # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
+repository: "vandalum/ACCEPT"
 author:
   name:
   twitter:
@@ -29,7 +30,30 @@ logo: # path of site logo, e.g. "/assets/images/logo.png"
 
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-basically-basic
+highlighter: rouge
+lsi: false
+incremental: false
+
+# Markdown Processing
+kramdown:
+  input: GFM
+  hard_wrap: false
+  auto_ids: true
+  footnote_nr: 1
+  entity_output: as_char
+  toc_levels: 1..6
+  smart_quotes: lsquo,rsquo,ldquo,rdquo
+  enable_coderay: false
+
+# Sass/SCSS
+sass:
+  sass_dir: _sass
+  style: compressed # http://sass-lang.com/documentation/file.SASS_REFERENCE.html#output_style
+
+# Outputting
+permalink: /:categories/:title/
+#timezone: America/New_York # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
 gems:
   - jekyll-feed
   - jekyll-seo-tag
