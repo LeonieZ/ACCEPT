@@ -14,7 +14,11 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 lang: en-US
+title: ACCEPT
 email:
+description: "The ACCEPT Software is an image analysis package for the Automated CTC Classification, Enumeration and PhenoTyping. Its currently under active development for the EU Cancer-ID project."
+baseurl: "/ACCEPT" # the optional subpath of your site, e.g. "/blog"
+url: "https://vandalum.github.io" # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 author:
   name:
   twitter:
