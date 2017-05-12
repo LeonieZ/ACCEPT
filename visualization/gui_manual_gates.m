@@ -23,7 +23,7 @@ screensz = get(0,'screensize');
 
 nrofGates = 4;
 
-feature_list = {'','Size', 'Eccentricity', 'Perimeter', 'MeanIntensity', 'MaxIntensity', 'StandardDeviation', 'Mass', 'P2A', 'Overlay CD45','Overlay CK'};
+feature_list = {'','Size', 'Eccentricity', 'Perimeter', 'MeanIntensity', 'MaxIntensity', 'StandardDeviation', 'Mass', 'P2A', 'Overlay with DNA'};
 
 gui.fig_main = figure('Units','characters','Position',[(screensz(3)-95)/2 (screensz(4)-20)/2 95 33],'Name','ACCEPT - Set Manual Gates','MenuBar','none',...
 'NumberTitle','off','Color', [1 1 1],'Resize','off','Visible','on');
@@ -182,14 +182,13 @@ function load_gates(~,~)
     end
     nrofGates = size(gates,1);
     for i = 1:nrofGates
-        infos = strsplit(gates{i,1},'_');
-        gui.channel_nr(i).String = infos{2};
+        infos = strsplit(gates{i,1},'_');  
         if isempty(strfind(infos{3},'Overlay'))
+            gui.channel_nr(i).String = infos{2};
             gui.feature_list(i).Value = find(strcmp(infos{3},feature_list));
-        elseif strcmp(infos{5},'3')
-            gui.feature_list(i).Value = find(strcmp('Overlay CK',feature_list));
-        elseif strcmp(infos{5},'1')
-            gui.feature_list(i).Value = find(strcmp('Overlay CD45',feature_list));
+        else
+            gui.channel_nr(i).String = infos{5};
+            gui.feature_list(i).Value = find(strcmp('Overlay with DNA',feature_list));
         end
         if strcmp(gates{i,2},'upper')
             gui.largerThan(i).Value = 0;
@@ -209,10 +208,9 @@ function res = exportgates(~,~,close)
         if (~isempty(gui.channel_nr(i).String) && gui.feature_list(i).Value ~= 1 && ...
                 gui.largerThan(i).Value ~= gui.smallerThan(i).Value && ~isempty(gui.value(i).String))
             res.gates{i,1} = ['ch_' regexprep(gui.channel_nr(i).String,' ','') '_' feature_list{gui.feature_list(i).Value}];
-            if strcmp(feature_list{gui.feature_list(i).Value},'Overlay CD45') || strcmp(feature_list{gui.feature_list(i).Value},'Overlay CK')
-                if str2double(gui.channel_nr(i).String) == 2
-                    res.gates{i,1} = strrep(res.gates{i,1}, 'Overlay CD45', 'Overlay_ch_1');
-                    res.gates{i,1} = strrep(res.gates{i,1}, 'Overlay CK', 'Overlay_ch_3');
+            if strcmp(feature_list{gui.feature_list(i).Value},'Overlay with DNA')
+                if str2double(gui.channel_nr(i).String) ~= 2
+                    res.gates{i,1} = ['ch_2_Overlay_' strrep(res.gates{i,1}, '_Overlay with DNA', '')];
                 else
                     res.gates{i,1} = [];
                 end
