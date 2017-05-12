@@ -27,7 +27,6 @@ classdef Default < Loader & IcyPluginData & CustomCsv
         channelNames={'APC','DAPI','PE'};
         channelEdgeRemoval=2;
         sample=Sample();
-        channelsUsed={'APC','DAPI','PE'};
     end
     
     events
@@ -62,8 +61,9 @@ classdef Default < Loader & IcyPluginData & CustomCsv
             end
             customChannelsUsed=this.look_for_custom_channels(samplePath);
             if ~isempty(customChannelsUsed)
-                this.channelsUsed=customChannelsUsed;
+                this.channelNames=customChannelsUsed;
             end
+            this.sample.channelNames = this.channelNames;
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
@@ -169,9 +169,9 @@ classdef Default < Loader & IcyPluginData & CustomCsv
                 end
          %Have to add a check for the 2^15 offset.
                 %dataP.temp.imagesHaveOffset=false;
-                this.sample.imageSize=[this.sample.tiffHeaders{1,2}(1).Height this.sample.tiffHeaders{1,2}(1).Width  numel(this.channelNames)];
+                this.sample.imageSize=[this.sample.tiffHeaders{1,2}(1).Height this.sample.tiffHeaders{1,2}(1).Width  numel(this.sample.channelNames)];
                 this.sample.nrOfFrames=numel(tempImageFileNames);
-                this.sample.nrOfChannels=numel(this.channelNames);
+                this.sample.nrOfChannels=numel(this.sample.channelNames);
             else
                 %throw error
             end
