@@ -29,7 +29,7 @@ loader.preload_segmentation_tiffs(currentSample,path);
 
 thumbContainer = ThumbContainer(currentSample);
 
-GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-230)/2 (screensz(4)-65)/2 230 65],'Name','ACCEPT - Automated CTC Classification Enumeration and PhenoTyping','MenuBar','none',...
+GuiSampleHandle.fig_main = figure('Units','characters','Position',[(screensz(3)-230)/2 (screensz(4)-65)/2 230 65],'Name','ACCEPT - CTC Scoring Tool','MenuBar','none',...
     'NumberTitle','off','Color',[1 1 1],'Resize','off','CloseRequestFcn',@close_fcn);
 
 %% Set maximum intensity
@@ -291,6 +291,10 @@ GuiSampleHandle.popupFeatureSelectBottomIndex2 = uicontrol('Parent',GuiSampleHan
             'FontUnits', 'normalized',...
             'FontSize',0.75,'HorizontalAlignment','left');
 
+%create push button for information
+GuiSampleHandle.infoButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'pushbutton', 'Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.9,'String', 'i','Position', [214.5 61 10 2],'Callback', @open_info,'BackgroundColor',gui_sample_color);
+
 % --- Plot thumbnails around index i
 function plot_thumbnails(val)
     %numberOfThumbs=size(currentSample.priorLocations,1);
@@ -412,13 +416,23 @@ function bselection(~,event)
    scores(currPos) = str2double(event.NewValue.String(1));
    scoredCells = scoredCells + 1;
    set(GuiSampleHandle.Count,'String',[num2str(scoredCells) ' / ' num2str(nrUsedThumbs)]);
-   pause(0.25)
+   pause(0.3)
    if scoredCells < nrUsedThumbs
     next_cell();
    end
    if scoredCells == nrUsedThumbs
        save_res();
    end
+end
+
+function open_info(~,~)
+    helpdlg({'The following parameters are shown in the scatter plots:','','CD45 Mean Intensity: Medium Intensity of the exclusion marker. The evaluated signal is outlined in red.','',...
+        'CK Mean Intensity: Medium Intensity of the inclusion marker. The evaluated signal is outlined in red.','',...
+        'DAPI Mean Intensity: Medium Intensity of the nucleus marker. The evaluated signal is outlined in red.','',...
+        'CK Size: Size of the evaluated signal in the CK channel in um^2.','',...
+        'DAPI Overlay CK: Percentage of the DAPI signal that is contained in the CK signal (1 - fully contained, 0 not contained at all).','',...
+        'CK Eccentricity: Roundness Measure in the CK channel between 0 and 1 (0 - perfect circle, 1 - line).'},'Feature Information')
+
 end
 
 function next_cell(~,~)
@@ -456,7 +470,7 @@ function save_res()
     username = inputdlg('Enter your name: ','Name');
     scores_save = array2table(scores,'VariableNames',{username{1}});
     writetable(scores_save,[path(1:end-4) filesep 'results' filesep username{1} '.xlsx']);
-    delete(gcf)
+%     delete(gcf)
 end
 
 function close_fcn(~,~) 
