@@ -503,7 +503,13 @@ classdef IO < handle
                         thumbnail_images = thumbContainer.thumbnails;
                         segmentation = thumbContainer.segmentation;
                     end
-                    for i = 1:size(thumbnail_images,1)
+%                     for i = 1:size(thumbnail_images,1)
+                    if size(thumbnail_images,1) > 1000
+                        ind = randperm(size(thumbnail_images,1),1000);
+                    else
+                        ind = linspace(1,size(thumbnail_images,1),size(thumbnail_images,1));
+                    end
+                    for i = ind
                         if ~isempty(thumbnail_images{i}) && ((size(class,1)== 1&& class == 0) || class(i) == 1)
                             data = thumbnail_images{i}(:,:,1);
                             if (size(class,1)== 1 && class == 0)
