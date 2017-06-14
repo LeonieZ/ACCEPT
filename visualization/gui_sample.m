@@ -33,9 +33,12 @@ if strcmp(currentSample.dataTypeOriginalImage,'uint8')
 elseif strcmp(currentSample.dataTypeOriginalImage,'uint12')
     maxi = 4095;
 else
-%     maxi = 65535;
-%     Set maxi to 4095 until uint12 is implemented
-    maxi = 4095;
+    max_true = find(currentSample.histogram(:,2),1,'last');
+    if max_true > 4095
+        maxi = 65535;
+    else
+        maxi = 4095;
+    end
 end
 
 
@@ -107,7 +110,7 @@ GuiSampleHandle.uiPanelTable = uipanel('Parent',GuiSampleHandle.uiPanelOverview,
                                       
 GuiSampleHandle.tableDetails = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelTable,...
                                   'Units','characters','Position',[0.2 .5 41.8 9],...
-                                  'String',entry,'FontUnits','normalized', 'FontSize',0.11,'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
+                                  'String',entry,'FontUnits','normalized', 'FontSize',0.10,'BackgroundColor',[1 1 1],'HorizontalAlignment','left','FontName','FixedWidth');
 
 tabPosition = get(GuiSampleHandle.uiPanelTable,'Position');
 
@@ -121,9 +124,9 @@ if ~isempty(thumbContainer.overviewImage)
 
      blank=zeros(size(thumbContainer.overviewImage(:,:,defCh)));
      GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
-     colormap(GuiSampleHandle.axesOverview,parula(4096));
+     colormap(GuiSampleHandle.axesOverview,parula(maxi+1));
      high=prctile(reshape(thumbContainer.overviewImage(:,:,defCh),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),99);
-     plotImInAxis(thumbContainer.overviewImage(:,:,defCh).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+     plotImInAxis(thumbContainer.overviewImage(:,:,defCh).*(maxi/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
 
 
     % % create choose button to switch color channel

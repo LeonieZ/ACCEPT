@@ -470,7 +470,7 @@ function save_res()
     username = inputdlg('Enter your name: ','Name');
     scores_save = array2table(scores,'VariableNames',{username{1}});
     writetable(scores_save,[path(1:end-4) filesep 'results' filesep username{1} '.xlsx']);
-%     delete(gcf)
+    delete(gcf)
 end
 
 function close_fcn(~,~) 
