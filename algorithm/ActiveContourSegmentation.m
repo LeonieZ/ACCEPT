@@ -336,7 +336,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     go_on = 0;
 
                     for s = 1:size(stats,1)
-                        if size(stats(s).PixelIdxList,1) < 10 || stats(s).Eccentricity > 0.95
+                        if size(stats(s).PixelIdxList,1) < 10 || stats(s).Eccentricity > 0.98
                             bin(stats(s).PixelIdxList) = 0;
                         end
                         if stats(s).Solidity < 0.95
