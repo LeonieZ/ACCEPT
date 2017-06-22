@@ -76,7 +76,7 @@ classdef Default < Loader & IcyPluginData & CustomCsv
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100);
+            [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',10);
             if exist(this.sample.imagePath,'dir')
                 %this.load_scan_info(samplePath);
                 this.preload_tiff_headers(samplePath);         
@@ -156,10 +156,10 @@ classdef Default < Loader & IcyPluginData & CustomCsv
                 %error
          end
          function preload_tiff_headers(this,samplePath)
-            [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',100);    
+            [this.sample.imagePath,bool] = this.find_dir(samplePath,'tif',10);    
             if bool
-                for j=1:numel(this.channelNames)
-                    tempImageFileNames = dir([this.sample.imagePath filesep '*' this.channelNames{j} '*.tif']);
+                for j=1:numel(this.sample.channelNames)
+                    tempImageFileNames = dir([this.sample.imagePath filesep '*' this.sample.channelNames{j} '*.tif']);
                     for i=1:numel(tempImageFileNames)
                         this.sample.imageFileNames{i,j} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
                         this.sample.tiffHeaders{i,j}=imfinfo(this.sample.imageFileNames{i,j});
