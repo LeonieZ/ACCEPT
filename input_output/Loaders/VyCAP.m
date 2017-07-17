@@ -29,7 +29,7 @@ classdef VyCAP < Loader & IcyPluginData & CustomCsv
         sample=Sample();
         channelRemapping=[];
         tiffHeaders
-        channelsUsed={'Reflection','DAPI','PE','Reflection','Marker1','Marker2'};
+        channelsUsed={'APC','DAPI','PE','FITC','Reflection','Marker2'};
     end
     
     events
@@ -151,7 +151,7 @@ classdef VyCAP < Loader & IcyPluginData & CustomCsv
             txtFile=dir([txtDir filesep '*Scan settings.txt']);
             this.sample.priorPath=samplePath;
             if ~isempty(txtFile)
-                    fid=fopen(strcat([txtDir,filesep,txtFile(1).name]));
+                    fid=fopen(strcat([txtDir,filesep,txtFile(end).name]));
                     tline = fgetl(fid);
                     i=1;
                     while ischar(tline)
