@@ -504,8 +504,14 @@ classdef IO < handle
                         segmentation = thumbContainer.segmentation;
                     end
 %                     for i = 1:size(thumbnail_images,1)
-                    if size(thumbnail_images,1) > 1000
-                        ind = randperm(size(thumbnail_images,1),1000);
+                    if size(class,1) > 1 
+                        if size(find(class == 1),1) > 1000
+                            orig = find(class == 1);
+                            ind = randperm(size(find(class == 1),1),1000);
+                            ind = orig(ind)';
+                        else
+                            ind = find(class == 1)';
+                        end
                     else
                         ind = linspace(1,size(thumbnail_images,1),size(thumbnail_images,1));
                     end
