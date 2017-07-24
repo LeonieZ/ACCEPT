@@ -199,7 +199,7 @@ classdef CellTracks < Loader
                 sizey = boundingBox{1}(2)-boundingBox{1}(1)+1;
                 rawImage = zeros(sizey,sizex,this.sample.imageSize(3));
             end
-            for i=1:this.sample.nrOfChannels;
+            for i=1:this.sample.nrOfChannels
                 try
                     imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr}));
                 catch

@@ -395,7 +395,7 @@ function export_thumbs(handle,~,base)
     end
     for j = 1:size(base.sampleList.sampleNames,2)
         if base.sampleList.isProcessed(j) == 1 && selected(j) == 1   
-                currentSample = IO.load_sample(base.sampleList,j,false);
+                currentSample = IO.load_sample(base.sampleList,j,true);
                 if choice ~= 0 && sum(strcmp(name,currentSample.results.classification.Properties.VariableNames)) == 1
                     eval(['choice = currentSample.results.classification.' name{1} ';'])
                 end

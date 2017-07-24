@@ -505,9 +505,9 @@ classdef IO < handle
                     end
 %                     for i = 1:size(thumbnail_images,1)
                     if size(class,1) > 1 
-                        if size(find(class == 1),1) > 1000
+                        if size(find(class == 1),1) > 100
                             orig = find(class == 1);
-                            ind = randperm(size(find(class == 1),1),1000);
+                            ind = randperm(size(find(class == 1),1),100);
                             ind = orig(ind)';
                         else
                             ind = find(class == 1)';
@@ -519,10 +519,14 @@ classdef IO < handle
                         if ~isempty(thumbnail_images{i}) && ((size(class,1)== 1&& class == 0) || class(i) == 1)
                             data = thumbnail_images{i}(:,:,1);
                             if (size(class,1)== 1 && class == 0)
-                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'],'w');
+                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,strrep(currentSample.id,'.','_'),...
+                                    '_thumb_', num2str(i),'.tif'],'w');
+%                                 t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'],'w');
                             else
-                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,name,filesep, num2str(i),...
-                                    '_thumb.tif'],'w');
+                                t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,name,filesep, strrep(currentSample.id,'.','_'),...
+                                    '_thumb_', num2str(i),'.tif'],'w');
+%                                 t=Tiff([currentSample.savePath,'frames',filesep,id,filesep,name,filesep, num2str(i),...
+%                                     '_thumb.tif'],'w');
                             end
                             t.setTag('Photometric',t.Photometric.MinIsBlack);
                             t.setTag('Compression',t.Compression.LZW);
@@ -534,10 +538,14 @@ classdef IO < handle
                             t.write(uint16(data));
                             t.close;
                             if (size(class,1)== 1 && class == 0)
-                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'],'w');
+                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,strrep(currentSample.id,'.','_'),...
+                                    '_thumb_segm_', num2str(i),'.tif'],'w');
+%                                 s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'],'w');
                             else
-                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,name,filesep,num2str(i),...
-                                    '_thumb_segm.tif'],'w');
+                                s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,name,filesep, strrep(currentSample.id,'.','_'),...
+                                    '_thumb_segm_', num2str(i),'.tif'],'w');
+%                                 s=Tiff([currentSample.savePath,'frames',filesep,id,filesep,name,filesep,num2str(i),...
+%                                     '_thumb_segm.tif'],'w');
                             end
                             s.setTag('Photometric',t.Photometric.MinIsBlack);
                             s.setTag('Compression',t.Compression.LZW);
@@ -550,17 +558,29 @@ classdef IO < handle
                             s.close;
                             for j = 2:currentSample.nrOfChannels
                                 if (size(class,1)== 1 && class == 0)
+%                                    imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
+%                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'], 'writemode', 'append');
+%                                    imwrite(segmentation{i}(:,:,j), ...
+%                                        [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'], 'writemode', 'append'); 
                                    imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, num2str(i),'_thumb.tif'], 'writemode', 'append');
+                                       [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep, strrep(currentSample.id,'.','_'),...
+                                        '_thumb_', num2str(i),'.tif'], 'writemode', 'append');
                                    imwrite(segmentation{i}(:,:,j), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,num2str(i),'_thumb_segm.tif'], 'writemode', 'append'); 
+                                       [currentSample.savePath,'frames',filesep,id,filesep,'Thumbs',filesep,strrep(currentSample.id,'.','_'),...
+                                        '_thumb_segm_', num2str(i),'.tif'], 'writemode', 'append'); 
                                 else
-                                   imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,name filesep num2str(i)...
-                                       '_thumb.tif'],'writemode', 'append');
+%                                    imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
+%                                        [currentSample.savePath,'frames',filesep,id,filesep,name filesep num2str(i)...
+%                                        '_thumb.tif'],'writemode', 'append');
+%                                    imwrite(segmentation{i}(:,:,j), ...
+%                                        [currentSample.savePath,'frames',filesep,id,filesep,name,filesep,num2str(i),...
+%                                         '_thumb_segm.tif'], 'writemode', 'append');
+                                    imwrite(uint16(thumbnail_images{i}(:,:,j)), ...
+                                       [currentSample.savePath,'frames',filesep,id,filesep,name filesep strrep(currentSample.id,'.','_'),...
+                                        '_thumb_', num2str(i),'.tif'],'writemode', 'append');
                                    imwrite(segmentation{i}(:,:,j), ...
-                                       [currentSample.savePath,'frames',filesep,id,filesep,name,filesep,num2str(i),...
-                                    '_thumb_segm.tif'], 'writemode', 'append');
+                                       [currentSample.savePath,'frames',filesep,id,filesep,name,filesep,strrep(currentSample.id,'.','_'),...
+                                        '_thumb_segm_', num2str(i),'.tif'], 'writemode', 'append');
                                 end
                             end
                         end
