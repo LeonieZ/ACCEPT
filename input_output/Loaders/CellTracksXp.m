@@ -153,6 +153,8 @@ classdef CellTracksXp < Loader
 
     methods(Access=private)        
         function preload_tiff_headers(this)
+            this.sample.imageFileNames = [];
+            this.sample.tiffHeaders = [];
             tempImageFileNames = dir([this.sample.imagePath filesep '*.tif']); 
             tempImageFileNames_cleared = [];
             for i=1:numel(tempImageFileNames)
@@ -378,7 +380,7 @@ classdef CellTracksXp < Loader
         
         function priorEvents=read_cells_dlm(this,path,frame)
             fileId=fopen(path);
-            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','¦');
+            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','?');
             nrOfEvents=numel(temp{1});
             priorEvents.eventNr=zeros(nrOfEvents,1);
             priorEvents.selected=zeros(nrOfEvents,1);
@@ -417,7 +419,7 @@ classdef CellTracksXp < Loader
         
         function frame=read_pic_dlm(~,path)
             fileId=fopen(path);
-            temp=textscan(fileId,'%s%s%s%f%s','delimiter','¦');
+            temp=textscan(fileId,'%s%s%s%f%s','delimiter','?');
             frame.timeStamp=temp{1};
             frame.frameNr=temp{4};
             frame.timeStamp=strrep(frame.timeStamp,'"','');
