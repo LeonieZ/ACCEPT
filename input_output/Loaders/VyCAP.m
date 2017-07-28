@@ -89,6 +89,7 @@ classdef VyCAP < Loader & IcyPluginData & CustomCsv
             this.does_frame_have_edge(frameNr),...
             this.channelEdgeRemoval,...
             this.read_im(frameNr,varargin{:}));
+            dataFrame.pixelSize = this.sample.pixelSize;
             if ~isempty(this.sample.mask)
                 [row, col] = find(this.sample.frameOrder==frameNr);
                 [size_x_mask, size_y_mask] = size(this.sample.mask);
