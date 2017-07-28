@@ -82,7 +82,17 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
         function returnFrame = run(this, inputFrame)
             % Segmentation on Dataframe: this is the standard call via the graphical user interface
-            if isa(inputFrame,'Dataframe') && isempty(inputFrame.segmentedImage)
+            if isa(inputFrame,'Dataframe') && ~isempty(inputFrame.segmentedImage)
+                returnFrame = inputFrame;
+                if this.clear_border == 1
+                    for i = 1:size(inputFrame.segmentedImage,3)
+                        returnFrame.segmentedImage(:,:,i) = imclearborder(inputFrame.segmentedImage(:,:,i));
+                    end
+                    sumImage = sum(returnFrame.segmentedImage,3);
+                    labels = repmat(bwlabel(sumImage,4),1,1,size(returnFrame.segmentedImage,3));
+                    returnFrame.labelImage = labels.*returnFrame.segmentedImage;
+                end
+            elseif isa(inputFrame,'Dataframe') && isempty(inputFrame.segmentedImage)
                 returnFrame = inputFrame;
                 returnFrame.segmentedImage = false(size(inputFrame.rawImage));
 

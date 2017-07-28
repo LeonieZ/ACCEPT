@@ -33,7 +33,11 @@ if strcmp(currentSample.dataTypeOriginalImage,'uint8')
 elseif strcmp(currentSample.dataTypeOriginalImage,'uint12')
     maxi = 4095;
 else
-    max_true = find(currentSample.histogram(:,2),1,'last');
+    if isempty(currentSample.histogram)
+        max_true = 4095;
+    else
+        max_true = find(currentSample.histogram(:,2),1,'last');
+    end
     if max_true > 4095
         maxi = 65535;
     else

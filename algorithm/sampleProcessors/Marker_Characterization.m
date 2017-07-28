@@ -45,7 +45,7 @@ classdef Marker_Characterization < SampleProcessor
                 this.pipeline{i}.run(inputSample);
             end  
             
-            if ~isempty(inputSample.results.features)
+            if ~isempty(inputSample.results.features) && ~strcmp(inputSample.type,'ThumbnailLoader')
                 notNec = find(inputSample.results.features.ch_3_Size==0);
                 inputSample.results.features(notNec,:) = [];
                 inputSample.results.thumbnails(notNec,:) = [];
