@@ -25,7 +25,7 @@ classdef SampleList < handle
         resultPath = '';
         toBeProcessed = [];
         overwriteResults = false;
-        loaderTypesAvailable={CellTracks(),CellTracksXp(),MCBP(),ThumbnailLoader(),Default(),VyCAP()}; % beware of the order, the first loader type that can load a dir will be used.
+        loaderTypesAvailable={CellTracks(),CellTracksXp(),MCBP(),ThumbnailLoader(),VyCAP(),Default()}; % beware of the order, the first loader type that can load a dir will be used.
     end 
     
     properties(SetAccess={?IO})
@@ -99,7 +99,7 @@ classdef SampleList < handle
             if all([~isempty(this.resultPath),...
                     ~isempty(this.inputPath),...
                     ~strcmp(this.sampleProcessorId,'empty'),...
-                    isempty(this.sampleNames)]);
+                    isempty(this.sampleNames)])
                 this.updated_input_path();
             end
             if and(~isempty(this.inputPath),~isempty(this.resultPath))
@@ -111,11 +111,11 @@ classdef SampleList < handle
             if all([~isempty(this.inputPath),...
                     ~isempty(this.resultPath),...
                     ~strcmp(this.sampleProcessorId,'empty'),...
-                    isempty(this.sampleNames)]);
+                    isempty(this.sampleNames)])
                 this.updated_input_path();
             end
             if and(~isempty(this.resultPath),...
-                    ~strcmp(this.sampleProcessorId,'empty'));
+                    ~strcmp(this.sampleProcessorId,'empty'))
                     this.processed_samples()
              end
         end
@@ -123,7 +123,7 @@ classdef SampleList < handle
         function updated_input_path(this)
             [this.sampleNames,this.loaderToBeUsed]=IO.available_samples(this);
             if and(~isempty(this.resultPath),...
-                ~strcmp(this.sampleProcessorId,'empty'));
+                ~strcmp(this.sampleProcessorId,'empty'))
                 this.processed_samples()   
             end
         end

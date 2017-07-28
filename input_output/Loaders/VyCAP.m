@@ -64,7 +64,7 @@ classdef VyCAP < Loader & IcyPluginData & CustomCsv
             end
             customChannelsUsed=this.look_for_custom_channels(samplePath);
             if ~isempty(customChannelsUsed)
-                this.channelsUsed=customChannelsUsed;
+                this.channelsUsed=customChannelsUsed';
             end
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
@@ -77,7 +77,7 @@ classdef VyCAP < Loader & IcyPluginData & CustomCsv
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            if ~exist(currentSample.imagePath,'dir')
+            if ~exist(currentSample.imagePath,'dir')|| isempty(currentSample.tiffHeaders)
                 this.load_scan_info(samplePath);
                 this.preload_tiff_headers(samplePath);         
             end
@@ -163,17 +163,29 @@ classdef VyCAP < Loader & IcyPluginData & CustomCsv
             end
             this.sample.columns=str2num(settings{6}(10:end));
             this.sample.rows=str2num(settings{7}(10:end));
-            this.sample.nrOfChannels=str2num(settings{8}(23:end-1));
+            this.sample.pixelSize = str2num(strrep(settings{19}(end-3:end),',','.'))*0.1;
+%             this.sample.nrOfChannels=str2num(settings{8}(23:end-1));
+            list = dir(samplePath); ischannel = ones(size(list,1),1);
+            for i = 1:size(list,1)
+                if strcmp(list(i).name,'.')||strcmp(list(i).name,'..')||strcmp(list(i).name,'Scan')||strcmp(list(i).name,'Selection')||list(i).isdir==0
+                    ischannel(i) = 0;
+                end
+            end
+            list(~ischannel) = [];
+            this.sample.nrOfChannels = size(list,1);
             if this.sample.nrOfChannels<=2
                 %error
                 return
             end
             for i=1:this.sample.nrOfChannels
-                this.channelNames{i}=settings{5+i*5}(49:end);
+%                 this.channelNames{i}=settings{5+i*5}(49:end);
+                channelname = list(i).name;
+                this.channelNames{i}=channelname(1:end-1);
             end
             this.channelRemapping=[];
-            for i=1:this.sample.nrOfChannels
-            this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{i}))=i;
+%             for i=1:this.sample.nrOfChannels
+            for i=1:size(this.channelsUsed,2)
+                this.channelRemapping(strcmp(this.channelNames,this.channelsUsed{i}))=i;
             end
         end
         
@@ -213,7 +225,7 @@ classdef VyCAP < Loader & IcyPluginData & CustomCsv
                 sizey = boundingBox{1}(2)-boundingBox{1}(1)+1;
                 rawImage = zeros(sizey,sizex,this.sample.imageSize(3));
             end
-            for i=1:this.sample.nrOfChannels;
+            for i=1:this.sample.nrOfChannels
                 try
                     imagetemp = double(imread(this.sample.imageFileNames{imageNr,i},'info',this.sample.tiffHeaders{imageNr,i}));
                 catch
