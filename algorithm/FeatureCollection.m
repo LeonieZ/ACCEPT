@@ -180,6 +180,36 @@ classdef FeatureCollection < SampleProcessorObject
                     end
                 end
             end
+            if this.use_thumbs == 0 && ~isempty(inputSample.priorLocations) && ~isempty(returnSample.results.thumbnails)
+                returnSample.results.classification = [returnSample.results.classification table(zeros(size(returnSample.results.features,1),1),'VariableNames',{'Prior_Scores'})];
+                for i = 1:size(inputSample.priorLocations,1)  
+                    selection = find(returnSample.results.thumbnails.frameNr == inputSample.priorLocations.frameNr(i));
+                    selection = selection(abs((returnSample.results.thumbnails.xBottomLeft(selection)+0.5*(returnSample.results.thumbnails.xTopRight(selection)...
+                        - returnSample.results.thumbnails.xBottomLeft(selection)))...
+                        - (inputSample.priorLocations.xBottomLeft(i)+ 0.5*(inputSample.priorLocations.xTopRight(i)-inputSample.priorLocations.xBottomLeft(i)))) < 30);
+                    selection = selection(abs((returnSample.results.thumbnails.yBottomLeft(selection)+0.5*(returnSample.results.thumbnails.yTopRight(selection)...
+                        - returnSample.results.thumbnails.yBottomLeft(selection)))...
+                        - (inputSample.priorLocations.yBottomLeft(i)+ 0.5*(inputSample.priorLocations.yTopRight(i)-inputSample.priorLocations.yBottomLeft(i)))) < 30);
+                    if ~isempty(selection)
+                        xTopRight_overlap = min(returnSample.results.thumbnails.xTopRight(selection),inputSample.priorLocations.xTopRight(i));
+                        yTopRight_overlap = min(returnSample.results.thumbnails.yTopRight(selection),inputSample.priorLocations.yTopRight(i));
+                        xBottomLeft_overlap = max(returnSample.results.thumbnails.xBottomLeft(selection),inputSample.priorLocations.xBottomLeft(i));
+                        yBottomLeft_overlap = max(returnSample.results.thumbnails.yBottomLeft(selection),inputSample.priorLocations.yBottomLeft(i));
+                        overlap = (xTopRight_overlap-xBottomLeft_overlap).*(yTopRight_overlap-yBottomLeft_overlap);
+                        [~,index] = max(overlap);
+                        candidate = selection(index);
+                        size_candidate = (returnSample.results.thumbnails.xTopRight(candidate)-returnSample.results.thumbnails.xBottomLeft(candidate)).*...
+                            (returnSample.results.thumbnails.yTopRight(candidate)-returnSample.results.thumbnails.yBottomLeft(candidate));
+                        size_prior = (returnSample.priorLocations.xTopRight(i)-returnSample.priorLocations.xBottomLeft(i)).*...
+                            (returnSample.priorLocations.yTopRight(i)-returnSample.priorLocations.yBottomLeft(i));
+                        overlap_scaled1 = overlap(index)/size_candidate;
+                        overlap_scaled2 = overlap(index)/size_prior;
+                        if overlap_scaled1 > 0.75 || overlap_scaled2 > 0.75
+                            returnSample.results.classification.Prior_Scores(candidate) = 1;
+                        end
+                    end
+                end             
+            end
         end
         
     end
