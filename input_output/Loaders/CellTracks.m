@@ -253,7 +253,7 @@ classdef CellTracks < Loader
             index=[];
             %index=[1:this.xmlData.num_events];
             if ~isempty(this.xmlData)
-                index=find(this.xmlData.score==1|this.xmlData.score==2);
+                index=find(this.xmlData.score==1|this.xmlData.score==2|this.xmlData.score==3);
             end
             if isempty(index)
                 locations=[];
