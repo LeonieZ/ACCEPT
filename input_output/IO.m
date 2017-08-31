@@ -505,9 +505,9 @@ classdef IO < handle
                     end
 %                     for i = 1:size(thumbnail_images,1)
                     if size(class,1) > 1 
-                        if size(find(class == 1),1) > 100
+                        if size(find(class == 1),1) > 200
                             orig = find(class == 1);
-                            ind = randperm(size(find(class == 1),1),100);
+                            ind = randperm(size(find(class == 1),1),200);
                             ind = orig(ind)';
                         else
                             ind = find(class == 1)';
