@@ -36,18 +36,13 @@ classdef Full_Detection < SampleProcessor
             inputSample.results.sampleProcessorUsed = this.name;
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);
-%             adaptive_start = 0.001;
-%             adaptive_step  = 0.005;
-%             use_openMP     = true;
-%             ac = ActiveContourSegmentation({'adaptive',adaptive_start,adaptive_step},...
-%                                            500, 1,{'triangle','global', inputSample.histogram_down},...
-%                                            [],3,use_openMP);
+
             lambda          = 0.01;
             inner_it        = 200;
             breg_it         = 1;
             init            = {'triangle','global', inputSample.histogram_down};
             maskForChannels = [];
-            single_ch       = []; %3;
+            single_ch       = [];
             use_openMP      = true;
             ac = ActiveContourSegmentation(lambda,inner_it,breg_it,init,...
                                            maskForChannels,single_ch,use_openMP);

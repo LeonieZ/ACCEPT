@@ -16,7 +16,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
-classdef Full_Detection_DLA < SampleProcessor
+classdef Full_Detection_Mask < SampleProcessor
     %CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
     % Acts on preselected thumbnails, does segmentation (otsu thresholding)
     % an extracts features for every cell. No classification!
@@ -25,26 +25,29 @@ classdef Full_Detection_DLA < SampleProcessor
     end
     
     methods 
-        function this = Full_Detection_DLA()
-            this.name = 'Full Detection DLA';
+        function this = Full_Detection_Mask()
+            this.name = 'Full Detection with Mask';
             this.version = '0.1';
             this.dataframeProcessor = DataframeProcessor('FullImage_Detection', this.make_dataframe_pipeline(),'0.1');
             this.pipeline = this.make_sample_pipeline();
         end
         
         function run(this,inputSample)
+            
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);
-
+            
             lambda          = 0.01;
             inner_it        = 200;
             breg_it         = 1;
             init            = {'triangle','global', inputSample.histogram_down};
-            maskForChannels = 3;
-            single_ch       = 3; 
+            maskForChannels = [2 2 3 2 2];
+            dilate = [1 0 0 1 1];
+            single_ch       = [];
             use_openMP      = true;
+            
             ac = ActiveContourSegmentation(lambda,inner_it,breg_it,init,...
-                                           maskForChannels,single_ch,use_openMP);
+                                           maskForChannels,single_ch,use_openMP,dilate);
             ac.clear_border = 1;
             this.dataframeProcessor.pipeline{1} = ac;
             for i = 3:numel(this.pipeline)

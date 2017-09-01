@@ -32,6 +32,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         adaptive_start = 0.01;
         adaptive_step = 0.05;
         use_openMP = false;
+        dilate = [];
     end
 
     properties
@@ -47,6 +48,10 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
     methods
         function this = ActiveContourSegmentation(lambda, inner_it, breg_it, varargin)
+            if nargin > 7
+               this.dilate = varargin{5};
+            end
+            
             if nargin > 6
                this.use_openMP = varargin{4};
             end
@@ -150,7 +155,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     segmentedImages = cell(nbrChSeg_uni,1);
                     for i = 1:nbrChSeg_uni
 %                         segmentedImages{i} = bwareaopen(bregman_cv(this,inputFrame,chMask(i),cvInit),10);
-                        tmp = bregman_cv(this,inputFrame,chMask(i),cvInit);
+                        tmp = bregman_cv(this,inputFrame,chSeg_uni(i),cvInit);
                         boundary = bwperim(tmp);
                         tmp_cleared = bwareaopen(tmp - boundary,10);
                         tmp = bwmorph(tmp_cleared,'thicken',1);
@@ -164,7 +169,11 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     for i = 1:inputFrame.nrChannels
 %                         returnFrame.segmentedImage(:,:,chMask(i)) = segmentedImages{i};
                         if ismember(this.maskForChannels(i),chMask)
-                            returnFrame.segmentedImage(:,:,i) = segmentedImages{chSeg_uni==this.maskForChannels(i)};
+                            if  ~isempty(this.dilate) && this.dilate(i) == 1
+                                returnFrame.segmentedImage(:,:,i) = bwmorph(segmentedImages{chSeg_uni==this.maskForChannels(i)},'thicken',5);
+                            else
+                                returnFrame.segmentedImage(:,:,i) = segmentedImages{chSeg_uni==this.maskForChannels(i)};
+                            end
                         end
                     end
                 else
@@ -181,9 +190,9 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 %                      returnFrame.segmentedImage(:,:,this.maskForChannels==chMask) = bwareaopen(bregman_cv(this,inputFrame,chMask,cvInit),10);                    
                 end
 
-                if sum(ismember(this.maskForChannels,0))==0 && isa(inputFrame,'Dataframe')
-                    returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
-                end
+%                 if sum(ismember(this.maskForChannels,0))==0 && isa(inputFrame,'Dataframe')
+%                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
+%                 end
                 
                 sumImage = sum(returnFrame.segmentedImage,3);
                 labels = repmat(bwlabel(sumImage,4),1,1,size(returnFrame.segmentedImage,3));
