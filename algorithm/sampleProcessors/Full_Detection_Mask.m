@@ -34,6 +34,16 @@ classdef Full_Detection_Mask < SampleProcessor
         
         function run(this,inputSample)
             
+            gui_mask_handle = gui_mask();
+            waitfor(gui_mask_handle.fig_main,'UserData')
+            try
+                specified_mask = get(gui_mask_handle.fig_main,'UserData');
+            catch 
+                return
+            end
+            delete(gui_mask_handle.fig_main)
+            clear('gui_mask_handle');
+            
             this.pipeline{1}.run(inputSample);
             this.pipeline{2}.run(inputSample);
             
@@ -41,8 +51,8 @@ classdef Full_Detection_Mask < SampleProcessor
             inner_it        = 200;
             breg_it         = 1;
             init            = {'triangle','global', inputSample.histogram_down};
-            maskForChannels = [2 2 3 2 2];
-            dilate = [1 0 0 1 1];
+            maskForChannels = specified_mask.mask;
+            dilate = specified_mask.dilate;
             single_ch       = [];
             use_openMP      = true;
             
