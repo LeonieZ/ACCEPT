@@ -40,7 +40,8 @@ classdef ExtractFeatures < DataframeProcessorObject
                         %fill structure so tables can be concatenated.
                         MsrTemp=fillStruct(this, MsrTemp);
 
-                        StandardDeviation = arrayfun(@(x) std2(x.PixelValues)/x.MeanIntensity, MsrTemp);
+                        StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
+                        MedianIntensity = arrayfun(@(x) median(x.PixelValues), MsrTemp);
                         Mass = arrayfun(@(x) sum(x.PixelValues), MsrTemp);
                         P2A = arrayfun(@(x) x.Perimeter^2/(4*pi*x.Area), MsrTemp);
                         Size = arrayfun(@(x) x.Area *(inputFrame.pixelSize)^2 , MsrTemp);
@@ -50,10 +51,12 @@ classdef ExtractFeatures < DataframeProcessorObject
                         tmpTable = struct2table(MsrTemp);
                         tmpTable.Properties.VariableNames = names;
                         tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat('ch_',num2str(ch),'_StandardDeviation')});
+                        tmpMedianIntensity = array2table(MedianIntensity,'VariableNames',{strcat('ch_',num2str(ch),'_MedianIntensity')});
                         tmpMass = array2table(Mass,'VariableNames',{strcat('ch_',num2str(ch),'_Mass')});
                         tmpP2A = array2table(P2A,'VariableNames',{strcat('ch_',num2str(ch),'_P2A')});
                         tmpSize = array2table(Size,'VariableNames',{strcat('ch_',num2str(ch),'_Size')});
-                        returnFrame.features = [returnFrame.features tmpTable tmpSize tmpStandardDeviation tmpMass tmpP2A];
+
+                        returnFrame.features = [returnFrame.features tmpTable tmpSize tmpStandardDeviation tmpMass tmpP2A tmpMedianIntensity];
                     end
                               
                     %% VERY TIME CONSUMING DUE TO COMPLEXITY (not needed?)
