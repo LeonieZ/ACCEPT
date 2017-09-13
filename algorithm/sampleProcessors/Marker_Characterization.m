@@ -17,9 +17,11 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef Marker_Characterization < SampleProcessor
-    %CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
-    % Acts on preselected thumbnails, does segmentation (otsu thresholding)
-    % an extracts features for every cell. No classification!
+    % CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
+    % Acts on preselected thumbnails, segments using active contour
+    % and extracts features for every cell. No classification!
+    % Note that events that have no CK signal are removed if another event
+    % with CK is found in that thumbnail!
         
     properties
     end
@@ -46,7 +48,22 @@ classdef Marker_Characterization < SampleProcessor
             end  
             
             if ~isempty(inputSample.results.features) && ~strcmp(inputSample.type,'ThumbnailLoader')
-                notNec = find(inputSample.results.features.ch_3_Size==0);
+                %check if thumbs are listed double
+                thumbsQuantity = hist(inputSample.results.features{:,1},linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)));
+                multiThumbs = find(thumbsQuantity>1)';
+                multiThumbs_loc = ismember(inputSample.results.features.ThumbNr,multiThumbs);
+                %check which events have no CK signal
+                noCK = inputSample.results.features.ch_3_Size==0;
+                %if double listed, event without CK signal can be removed
+                notNec = noCK & multiThumbs_loc;
+                %make sure so thumb is removed completely
+                thumbsQuantity_new = hist(inputSample.results.features.ThumbNr(~notNec),linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)));
+                removedCompl = find(thumbsQuantity_new == 0 & thumbsQuantity ~= 0);
+                if ~isempty(removedCompl)
+                    remain = ismember(inputSample.results.features.ThumbNr,removedCompl);
+                    notNec(remain) = 0;
+                end
+                %delete events not needed
                 inputSample.results.features(notNec,:) = [];
                 inputSample.results.thumbnails(notNec,:) = [];
                 inputSample.results.segmentation(:,notNec) = [];      
