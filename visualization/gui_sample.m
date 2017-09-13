@@ -217,14 +217,16 @@ for i=1:rows
     x = 0;
     ind = (i-1)*(cols) + 1; % 5,10,15... index for first column element
     hAxes(ind) = axes(axesProp,axesVal,'Units','characters','Position',[x y axWidth axHeight]);
-    hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
+%     hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
+    hImages(ind)= imshow([],'InitialMagnification','fit');
     set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
     % plot image for each color channel in column 2 till nbrChannels
     for ch = 1:cols-1
         x = (ch)*cPitch;
         ind = ((i-1)*cols + ch +1); % 1-4,6-9,... index for four color channels
         hAxes(ind) = axes(axesProp,axesVal,'Units','characters','Position',[x y axWidth axHeight]);
-        hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
+%         hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
+        hImages(ind)= imshow([],'InitialMagnification','fit');
         set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
         colormap(hAxes(ind),map);
     end
