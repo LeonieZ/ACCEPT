@@ -17,11 +17,12 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef SampleOverviewLoading < SampleProcessorObject
-    %SAMPLEOVERVIEWLOADING Summary of this class goes here
-    %   Detailed explanation goes here
+    %  SAMPLEOVERVIEWLOADING Creates one large overview image of the sample 
+    %  by stitching all images together, moreover it creates a histogram of
+    %  the full sample
     
     properties
-        reductionFactor = 1/8;
+        reductionFactor = 1/8; %factor used for downsampling of images
     end
     
     methods
@@ -34,14 +35,19 @@ classdef SampleOverviewLoading < SampleProcessorObject
         function returnSample = run(this, inputSample)
             returnSample = inputSample;
             
+            %only if overview image is not created before
             if isempty(returnSample.overviewImage)                    
                 loader = inputSample.loader(inputSample);
                 if ~isa(loader,'ThumbnailLoader')
+                    %create histogram of complete sample
                     returnSample.histogram = zeros(65535,inputSample.imageSize(3));
                     returnSample.histogram_down = zeros(65535,inputSample.imageSize(3));
+                    %order in which frames are recorded by microscope
                     frameOrder = loader.calculate_frame_nr_order;
+                    %determine reduced image size
                     reducedSize = [ceil(inputSample.imageSize(1)*this.reductionFactor(1)),inputSample.imageSize(2)*this.reductionFactor(1),inputSample.imageSize(3)];
                     reducedSize = ceil(reducedSize);
+                    %initialize overview image
                     inputSample.overviewImage = zeros(reducedSize(1)*inputSample.rows,reducedSize(2)*inputSample.columns,reducedSize(3),'uint16');
 
                     % parallelize with parfor
@@ -50,6 +56,7 @@ classdef SampleOverviewLoading < SampleProcessorObject
                     offset = cell(1,inputSample.rows*inputSample.columns);
                     histc1 = cell(1,inputSample.rows*inputSample.columns);
                     histc2 = cell(1,inputSample.rows*inputSample.columns);
+                    %load images in parallel
                     parfor k=1:inputSample.rows*inputSample.columns
                         i=I(k);
                         j=J(k);                    
@@ -59,6 +66,7 @@ classdef SampleOverviewLoading < SampleProcessorObject
                         histc1{k} = histc(reshape(frame.rawImage,numel(frame.rawImage)/frame.nrChannels,frame.nrChannels),1:1:65535); %costly
                         histc2{k} = histc(reshape(tempImage{k},numel(tempImage{k})/frame.nrChannels,frame.nrChannels),1:1:65535); %costly
                     end
+                    %fill image and histogram with preloaded frames
                     for k=1:inputSample.rows*inputSample.columns
                         inputSample.overviewImage(offset{k}(1):offset{k}(1)+reducedSize(1)-1,offset{k}(2):offset{k}(2)+reducedSize(2)-1,:) = tempImage{k};
                         inputSample.histogram      = inputSample.histogram      + histc1{k};                    

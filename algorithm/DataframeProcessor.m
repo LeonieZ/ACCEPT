@@ -17,8 +17,12 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef DataframeProcessor < handle
-    %DATAFRAMEPROCESSOR Summary of this class goes here
-    %   Detailed explanation goes here
+    %  DATAFRAMEPROCESSOR is the base class for all possible processors of 
+    %  frames. Adapted to each use case by specifying a pipeline how to
+    %  process the frames.
+    %  There are two levels, sample and dataframe level. All
+    %  SampleProcessor/-objects act on sample level, while
+    %  DataframeProcessor/-objects acts on an individual frame
     
     properties
         name='Empty'
@@ -32,10 +36,12 @@ classdef DataframeProcessor < handle
     
     methods
         function this = DataframeProcessor(varargin)
+            %specify name
             if nargin > 0
                 this.name = varargin{1};
             end
-            
+            %specify pipeline with dataframeprocessorObjects acting on
+            %individual frame
             if nargin > 1
                 this.pipeline = varargin{2};  
             end
@@ -51,12 +57,18 @@ classdef DataframeProcessor < handle
         
         
         function run(this,inputFrame)
+            % run function, starts each dataframeprocessor object
+            % successively
+            
+            %check if pipeline is only filled with DataframeProcessorObjects
             if any(cellfun(@(x) ~isa(x,'DataframeProcessorObject'),this.pipeline))
                 error('Cannot process dataframes. There are no DataframeProcessorObjects in the pipeline.')                
             end
+            %check if pipeline is not empty
             if isempty(this.pipeline)
                 notify(this,'logMessage',logmessage(1,[this.name,'image not processed, applied an empty workflow on dataframe.']));
             else
+                %start processing
                 for i=1:numel(this.pipeline)
                     this.pipeline{i}.run(inputFrame);
                 end 

@@ -17,8 +17,9 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef ThresholdingSegmentation < DataframeProcessorObject
-    %THRESHOLDING_SEGMENTATION Summary of this class goes here
-    %   Detailed explanation goes here
+    % THRESHOLDING_SEGMENTATION 
+    % Computes a segmentation of the input frame/image using either Otsu or
+    % Triangle method or a fixed threshold.
     
     properties (SetAccess = private)
         thresholds = [];
@@ -34,32 +35,34 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
     
     methods
         function this = ThresholdingSegmentation(meth,range,varargin)
-             
-            %varargin(1) = histogram, varargin(2) = masksforchannels, varargin(3) = offsets varargin(4) =
-            %thresholds of manual ones
-            
+            %specify if otsu, triangle or a fixed treshold 
             validatestring(meth,{'otsu','triangle','manual'});
             this.meth = meth;
             
+            %use the global (full sample) or local(frame) histogram
             validatestring(range,{'global','local'});
             this.range = range;
             
+            %input custom histogram
             if nargin > 2
                 this.histogram = varargin{1};
             end
             
+            %determine if a channel mask is used
             if nargin > 3
                 this.maskForChannels = varargin{2};  
             end
             
+            %determine an offset in each channel (added/subtracted to the
+            %automatic threshold)
             if nargin > 4
                 this.offset = varargin{3};
             end
-            
+            %if manual, determine threshold
             if nargin > 5
                 this.thresholds = varargin{4};
             end
-            
+            %manual requires a threshold as input
             if strcmp(this.meth,'manual') && isempty(this.thresholds)
                 error('Please specify the threshold.')
             end
@@ -68,48 +71,56 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
         
         function returnFrame = run(this,inputFrame)
             if isa(inputFrame,'Dataframe')
+                %load data
                 returnFrame = inputFrame;
                 returnFrame.segmentedImage = false(size(inputFrame.rawImage));
+                %enough bins for uint16 input data
                 bins = 65535;
-
+                
+                %fill offset
                 if isempty(this.offset)
                     this.offset = zeros(1,inputFrame.nrChannels);
                 elseif size(this.offset,2) == 1
                     this.offset = this.offset(1) * ones(1,inputFrame.nrChannels);
                 end
-
+                
+                %fill mask
                 if isempty(this.maskForChannels)
                     this.maskForChannels = 1:1:inputFrame.nrChannels;
                 elseif size(this.maskForChannels,2) == 1
                     this.maskForChannels = this.maskForChannels(1) * ones(1,inputFrame.nrChannels);
                 end
                 
+                %initialize histogram
                 if isempty(this.histogram)
                     this.histogram = zeros(1,bins,inputFrame.nrChannels);
                 end
 
                 %create histogram if thresholding is local otherwise we assume
                 %this was already done.
-
                 if strcmp(this.range,'local') && ~strcmp(this.meth,'manual')
                     this.create_local_hist(inputFrame);
                 end
-                                
+                
+                %calcualte threshold with chosen method (otsu/triangle)
                 if ~strcmp(this.meth,'manual')
                     this.calculate_threshold()
                 end
                 
+                %run segmentation for every channel
                 for i = 1:inputFrame.nrChannels
                     if any(this.maskForChannels == i)
                         tmp = inputFrame.rawImage(:,:,this.maskForChannels(i)) > this.thresholds(i);
-                        if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask)
+                        if inputFrame.frameHasEdge == true && ~isempty(inputFrame.mask) %set pixels in edge mask to zero
                             tmp(inputFrame.mask) = false;
                         end
-                        tmp = bwareaopen(tmp, 3);
+                        tmp = bwareaopen(tmp, 3); %remove very small objects
                         returnFrame.segmentedImage(:,:,i) = tmp;  
                     end
                 end
+                %fill segmentation according to channel mask
                 returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
+                %create label image (overlapping object have one label)
                 sumImage = sum(returnFrame.segmentedImage,3); 
                 labels = repmat(bwlabel(sumImage,8),1,1,returnFrame.nrChannels);
                 returnFrame.labelImage = labels.*returnFrame.segmentedImage; 
@@ -118,6 +129,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
             elseif isa(inputFrame,'double') || isa(inputFrame,'single') || isa(inputFrame,'uint8') || isa(inputFrame,'uint16')
                 % note: 1. in case you are using the TS function on a double/single/... image using a mask is not possible
                 % 2. not for images scaled from 0 to 1.
+                
                 returnFrame = false(size(inputFrame));
                 bins = 65535;
 
@@ -135,15 +147,16 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
 
                 %create histogram if thresholding is local otherwise we assume
                 %this was already done.
-
                 if strcmp(this.range,'local') && ~strcmp(this.meth,'manual')
                     this.create_local_hist(inputFrame);
                 end
-
+                
+                %calcualte threshold with chosen method (otsu/triangle)
                 if ~strcmp(this.meth,'manual')
                     this.calculate_threshold()
                 end
-
+                
+                %run segmentation for every channel
                 for i = 1:size(inputFrame,3)
                     tmp = inputFrame(:,:,i) > this.thresholds(i);
                     tmp = bwareaopen(tmp, 10);
@@ -164,6 +177,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
         end
         
         function create_local_hist(this, inputFrame)
+            %create histogram for loaded dataframe
             if isa(inputFrame,'Dataframe')
                 for j = 1:inputFrame.nrChannels
                     if any(this.maskForChannels == j)                
@@ -195,7 +209,6 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                 if any(this.maskForChannels == i)
                     % Variable names are chosen to be similar to the formulas in
                     % the Otsu paper.
-
                     num_bins = size(hist(:,i),1);
                     p = hist(:,i) / sum(hist(:,i));
                     omega = cumsum(p);
@@ -205,9 +218,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     sigma_b_squared = (mu_t * omega - mu).^2 ./ (omega .* (1 - omega));
 
                     % Find the location of the maximum value of sigma_b_squared.
-                    % The maximum may extend over several bins, so average together the
-                    % locations.  If maxval is NaN, meaning that sigma_b_squared is all NaN,
-                    % then return 0.
+                    % if several bins reach max, average
                     maxval = max(sigma_b_squared);
                     isfinite_maxval = isfinite(maxval);
                     if isfinite_maxval
@@ -221,8 +232,8 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
         end
         
         function thresh = triangle_method(this)
-            % Function carried over from old ACTC script by Sjoerd.
-            % adapted it a bit  - need to test if it works correctly!
+            % Function carried over from old ACTC script by Sjoerd Ligthart.
+            % partly adapted 
             hist = this.histogram;
             thresh = zeros(1,size(hist,2));
             num_bins = size(hist(:,1),1);

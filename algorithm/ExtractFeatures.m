@@ -17,8 +17,8 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef ExtractFeatures < DataframeProcessorObject
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    %  EXTRACTFEATURES DataFrameProcessorObject to extract features after
+    %  segmentation; acting on frame
     
     properties
         nrObjects = [];
@@ -27,26 +27,37 @@ classdef ExtractFeatures < DataframeProcessorObject
     methods
         function returnFrame = run(this,inputFrame)
             if isa(inputFrame,'Dataframe')
+                % load data and initialize feature table
                 returnFrame = inputFrame;
                 returnFrame.features = table();
+                %number of found objects
                 this.nrObjects = max(inputFrame.labelImage(:));
 
                 if this.nrObjects > 0
                     for ch = 1:inputFrame.nrChannels
                         imTemp = inputFrame.rawImage(:,:,ch);
+                        % extract features (subtract background median for
+                        % intensity measures)
                         MsrTemp = regionprops(inputFrame.labelImage(:,:,ch), imTemp - median(imTemp(inputFrame.labelImage(:,:,ch) == 0)),...
                                 'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
 
                         %fill structure so tables can be concatenated.
                         MsrTemp=fillStruct(this, MsrTemp);
-
+                        
+                        %compute more features 
+                        %standard deviation
                         StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
+                        %median inensity
                         MedianIntensity = arrayfun(@(x) median(x.PixelValues), MsrTemp);
+                        %mass (sum of all pixels)
                         Mass = arrayfun(@(x) sum(x.PixelValues), MsrTemp);
+                        %perimeter 2 area (roundness measure)
                         P2A = arrayfun(@(x) x.Perimeter^2/(4*pi*x.Area), MsrTemp);
+                        %size in micrometer (scaled with pixelsize)
                         Size = arrayfun(@(x) x.Area *(inputFrame.pixelSize)^2 , MsrTemp);
                         MsrTemp=rmfield(MsrTemp,{'PixelValues','Area'});
-
+                        
+                        % create table with all features
                         names = strcat('ch_',num2str(ch),'_',fieldnames(MsrTemp));
                         tmpTable = struct2table(MsrTemp);
                         tmpTable.Properties.VariableNames = names;
@@ -55,7 +66,8 @@ classdef ExtractFeatures < DataframeProcessorObject
                         tmpMass = array2table(Mass,'VariableNames',{strcat('ch_',num2str(ch),'_Mass')});
                         tmpP2A = array2table(P2A,'VariableNames',{strcat('ch_',num2str(ch),'_P2A')});
                         tmpSize = array2table(Size,'VariableNames',{strcat('ch_',num2str(ch),'_Size')});
-
+                        
+                        %add to existing feature table
                         returnFrame.features = [returnFrame.features tmpTable tmpSize tmpStandardDeviation tmpMass tmpP2A tmpMedianIntensity];
                     end
                               
@@ -72,6 +84,8 @@ classdef ExtractFeatures < DataframeProcessorObject
 %                         end
 %                     end
                     %% smaller variant
+                    %compute overlay of nucleus marker channel to all
+                    %other ones
                     for ch_two = 1:inputFrame.nrChannels
                         if ch_two ~= 2
                             tmpTbl = table();
@@ -80,44 +94,57 @@ classdef ExtractFeatures < DataframeProcessorObject
                                 tmpTbl = [tmpTbl; array2table(sum(sum(tmpImg(:,:,2) & tmpImg(:,:,ch_two)))/sum(sum(tmpImg(:,:,2))),...
                                     'VariableNames',{strcat('ch_', num2str(2),'_Overlay_ch_',num2str(ch_two))})]; 
                             end
+                            %add to features
                             returnFrame.features = [returnFrame.features tmpTbl];
                         end
                     end
                 end
             elseif isa(inputFrame,'double')
-                if mod(size(inputFrame,3),2) ~= 0
+                %input is double image with all channels first and all
+                %segmentations attached
+                if mod(size(inputFrame,3),2) ~= 0 %check if number of frames can mach number of segmentations
                     error('Feature Extraction not possible. Number of image frames and segmented frames is not the same!')
                 end
+                %extract raw image and segmentation
                 rawImage = inputFrame(:,:,1:size(inputFrame,3)/2);
                 segImage = inputFrame(:,:,size(inputFrame,3)/2+1:end);
                 
+                %check if segmentation is binary
                 if ~isempty(find(segImage(segImage ~= 1),1))
                     error('Feature Extraction not possible. Segmented Image is not binary.')
                 end
                 
-                % transform to labeled image
+                % transform segmentation to labeled image
                 sumImage = sum(segImage,3); 
                 labels = repmat(bwlabel(sumImage,4),1,1,size(segImage,3));
                 labelImage = labels.*segImage;
-            
+                
+                %set output to empty table
                 returnFrame = table();
+                %determine number of objects
                 this.nrObjects = max(labelImage(:));
 
                 if this.nrObjects > 0
                     for ch = 1:size(segImage,3)
                         imTemp = rawImage(:,:,ch);
+                        % extract features (subtract background median for
+                        % intensity measures)
                         MsrTemp = regionprops(labelImage(:,:,ch), imTemp - median(imTemp(labelImage(:,:,ch) == 0)),...
                                 'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
 
                         %fill structure so tables can be concatenated.
                         MsrTemp=fillStruct(this, MsrTemp);
-
+                        %compute more features
+                        %standard deviation
                         StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
+                        %mass (sum of pixels)
                         Mass = arrayfun(@(x) sum(x.PixelValues), MsrTemp);
+                        %perimeter 2 area (roundness measure)
                         P2A = arrayfun(@(x) x.Perimeter^2/(4*pi*x.Area), MsrTemp);
 
                         MsrTemp=rmfield(MsrTemp,'PixelValues');
-
+                        
+                        %create table with all features
                         names = strcat('ch_',num2str(ch),'_',fieldnames(MsrTemp));
                         tmpTable = struct2table(MsrTemp);
                         tmpTable.Properties.VariableNames = names;
@@ -133,6 +160,7 @@ classdef ExtractFeatures < DataframeProcessorObject
         end
 
         function MsrTemp=fillStruct(this, MsrTemp)
+            % fill missing information with zeros or NaNs
             numObjects = this.nrObjects;
             numMsr=numel(MsrTemp);
 

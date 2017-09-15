@@ -17,9 +17,12 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef Full_Detection_Mask < SampleProcessor
-    %CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
-    % Acts on preselected thumbnails, does segmentation (otsu thresholding)
-    % an extracts features for every cell. No classification!
+    % Full_Detection_Mask SampleProcessor, same as Full Detection but a 
+    % channel mask can be specified (used to copy segmentation of one
+    % channel to the other). Automatically segments all objects
+    % using active contour segmentation and extracts several shape and
+    % intensity features afterwards. Extracted objects and features can be 
+    % gated or classified afterwards.
         
     properties
         maskForChannels = [];

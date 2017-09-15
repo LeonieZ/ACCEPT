@@ -17,9 +17,10 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef Candidate_Selection < SampleProcessor
-%CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
-    % Acts on preselected thumbnails, does segmentation (otsu thresholding)
-    % an extracts features for every cell. No classification!
+    % Candidate Selection SampleProcessor. Does the same as the Full
+    % Detection Processor with a gating afterwards. Detects all objects by
+    % Active Contour, extracts features and applies a specified line gate
+    % combination. 
         
     properties
     end

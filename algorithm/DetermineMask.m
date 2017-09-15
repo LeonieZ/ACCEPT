@@ -17,8 +17,8 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef DetermineMask < DataframeProcessorObject
-    %DETERMINE_MASK Summary of this class goes here
-    %   Detailed explanation goes here
+    %  DETERMINE_MASK determine edge mask in dataframe level to remove from
+    %  further analysis
     
     properties
         channelEdgeRemoval = []
@@ -27,22 +27,26 @@ classdef DetermineMask < DataframeProcessorObject
     methods
         function this = DetermineMask(varargin)
             if nargin > 0
+                %specify channel to be used for mask determination
                 this.channelEdgeRemoval = varargin{1};
             end
         end
         
         function returnFrame = run(this,inputFrame)
             if isa(inputFrame,'Dataframe')
+                %load data
                 returnFrame = inputFrame;
                 returnFrame.mask = false(size(inputFrame.rawImage,1),size(inputFrame.rawImage,2));
-                se = strel('disk',50);
-                
+                %open image first to smooth
+                se = strel('disk',50);              
                 if isempty(this.channelEdgeRemoval)
                     this.channelEdgeRemoval = inputFrame.channelEdgeRemoval;
                 end
-                
                 openImg = imopen(inputFrame.rawImage(:,:,this.channelEdgeRemoval),se);
+                
+                %create active contour object
                 ac = ActiveContourSegmentation(1, 50, 1);
+                %segment edge
                 binImg = ac.run(openImg);
                 [r,c] = find(binImg == 1);
 
@@ -51,14 +55,16 @@ classdef DetermineMask < DataframeProcessorObject
                 returnFrame.mask = bwmorph(returnFrame.mask,'thicken',100);
             elseif isa(inputFrame,'double')
                 returnFrame = false(size(inputFrame,1),size(inputFrame,2));
-                se = strel('disk',50);
-                
+                %open image first to smooth
+                se = strel('disk',50);  
                 if isempty(this.channelEdgeRemoval)
                     this.channelEdgeRemoval = 1;
-                end
-                
+                end              
                 openImg = imopen(inputFrame(:,:,this.channelEdgeRemoval),se);
+                
+                %create active contour object
                 ac = ActiveContourSegmentation(1, 50, 1);
+                %segment edge
                 binImg = ac.run(openImg);
                 [r,c] = find(binImg == 1);
 

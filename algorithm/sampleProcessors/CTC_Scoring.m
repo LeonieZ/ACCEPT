@@ -17,9 +17,8 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef CTC_Scoring < SampleProcessor
-    %CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
-    % Acts on preselected thumbnails, does segmentation (otsu thresholding)
-    % an extracts features for every cell. No classification!
+    % CTC Scoring sampleprocessor - placefolder for use case of loading objects into the
+    % CTC scoring gui
         
     properties
     end

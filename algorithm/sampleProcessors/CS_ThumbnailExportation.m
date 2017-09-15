@@ -16,17 +16,16 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
-classdef CellSearch_ThumbnailExportation < SampleProcessor
-    %CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
-    % Acts on preselected thumbnails, does segmentation (otsu thresholding)
-    % an extracts features for every cell. No classification!
+classdef CS_ThumbnailExportation < SampleProcessor
+    % CS_ThumbnailExportation - exports all thumbnails that are stored as
+    % scored prior locations in the xml or xls file.
         
     properties
     end
     
     methods 
-        function this = CellSearch_ThumbnailExportation()
-            this.name = 'CellSearch Thumbnail Exportation';
+        function this = CS_ThumbnailExportation()
+            this.name = 'CS Thumbnail Exportation';
             this.version = '0.1'; 
             this.dataframeProcessor =[];
             this.pipeline = cell(0);

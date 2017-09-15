@@ -17,13 +17,15 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef SampleProcessor < handle
-    %SAMPLEPROCESSOR Summary of this class goes here
-    %   Detailed explanation goes here
+    %  SAMPLEPROCESSOR is the base class for all use cases in the toolbox.
+    %  There are two levels, sample and dataframe level. All
+    %  SampleProcessor/-objects act on sample level, while
+    %  DataframeProcessor/-objects acts on an individual frame
     
     properties
         name
         version
-        dataframeProcessor;
+        dataframeProcessor; %determine how each dataframe is processed
         pipeline=cell(0);
         showInList=true;
     end
@@ -35,12 +37,14 @@ classdef SampleProcessor < handle
     methods
         function this = SampleProcessor(dataframeProcessor,varargin)
             if nargin > 0
+                %specify dataFrame processor
                 this.dataframeProcessor = dataframeProcessor;
-
+                %specify name
                 if nargin > 2
                     this.name = varargin{1};
                 end
-
+                %specify pipeline with sampleprocessorObjects acting on
+                %sample
                 if nargin > 3
                     this.pipeline = varargin{2};  
                 end
@@ -63,7 +67,8 @@ classdef SampleProcessor < handle
       
         
         function run(this,inputSample)
-
+            % run function, starts each sampleprocessor object
+            % successively
             if isempty(this.pipeline)
                 notify(this,'logMessage',logmessage(1,[this.name,'no results, applied an empty workflow on sample.']));
             else
@@ -73,6 +78,7 @@ classdef SampleProcessor < handle
             end
         end
         
+        %check if pipeline is only filled with SampleProcessorObjects
         function  set.pipeline(this,value)
             if any(cellfun(@(x) ~isa(x,'SampleProcessorObject'),value))
                 error('cannot add non workflow_objects to algorithm')                

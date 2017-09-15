@@ -36,13 +36,18 @@ classdef Marker_Characterization < SampleProcessor
         
         function run(this,inputSample)
             inputSample.results.sampleProcessorUsed = this.name;
+            %create DataframeProcessor
             this.dataframeProcessor = DataframeProcessor('Thumbnail_Analysis', this.make_dataframe_pipeline(),'0.1');
+            %create sample pipeline
             this.pipeline = this.make_sample_pipeline();
+            %run overview loading
             this.pipeline{1}.run(inputSample);
+            %create segmentation object
             ac = ActiveContourSegmentation({'adaptive',0.001,0.005}, 200, 1,{'triangle','global', inputSample.histogram});
             ac.clear_border = 1;
             this.dataframeProcessor.pipeline{1} = ac;
- 
+            
+            %start processing
             for i = 2:numel(this.pipeline)
                 this.pipeline{i}.run(inputSample);
             end  
@@ -68,14 +73,17 @@ classdef Marker_Characterization < SampleProcessor
                 inputSample.results.thumbnails(notNec,:) = [];
                 inputSample.results.segmentation(:,notNec) = [];      
             end
-            
+            %clear pipeline
             this.dataframeProcessor =[];
             this.pipeline = cell(0);
         end
         
         function pipeline = make_sample_pipeline(this)
+            %create sample pipeline
             pipeline = cell(0);
+            %loading of overview image
             sol = SampleOverviewLoading();
+            %extracting of features
             fc = FeatureCollection(this.dataframeProcessor,1);
             pipeline{1} = sol;
             pipeline{2} = fc;
@@ -84,6 +92,7 @@ classdef Marker_Characterization < SampleProcessor
     
     methods (Static)    
         function pipeline = make_dataframe_pipeline()
+            %create pipeline for frame processing
             pipeline = cell(0);
             ef = ExtractFeatures();
             pipeline{1} = [];

@@ -16,6 +16,9 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
+% Minimize active contour energy according to [Chambolle, Antonin, and Thomas Pock. "A
+% first-order primal-dual algorithm for convex problems with applications to imaging." 
+% Journal of mathematical imaging and vision 40.1 (2011): 120-145.]
 
 function u = bregman_cv_core(f,nx,ny,lambda,breg_it,inner_it,...
                              tol,p,u,u_bar,b,sigma,tau,theta,...
@@ -42,10 +45,7 @@ function u = bregman_cv_core(f,nx,ny,lambda,breg_it,inner_it,...
             arg2 =  (u + tau * div(p,'shift')) - tau/lambda * ((f - mu1).^2 - (f - mu0).^2 - lambda * b);
             u = max(0, min(1,arg2));
             stat_u(j) = (nx*ny)^(-1) * (sum((u(:) - u_old(:)).^2)/sum(u_old(:).^2)); %#ok<AGROW>
-%             stat_p(j) = (nx*ny)^(-1) * (sum((p(:) - p_old(:)).^2)/sum(p_old(:).^2));
-%             stat_primal(j) = (nx*ny)^(-1) * sum(u(:) .* (((f(:) - mu1).^2 - (f(:) - mu0).^2) - lambda *b(:))) + lambda*(nx*ny*2)^(-1)*(sum(sum(sum(abs(grad(u,'shift'))))));
-% 			stat_dual(j) = (nx*ny)^(-1) * sum(sum(-div(p,'shift')+1/lambda*f));
-%             primal_dual_gap(j) = stat_primal(j) - stat_dual(j);
+
 			%%% step 3: update theta, sigma, tau (CP Alg 2) 
 			theta = 1/((1+2*tau)^(1/2)); tau = theta * tau; sigma = sigma/theta;     
             

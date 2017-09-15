@@ -17,9 +17,7 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef Rescore_Using_Gate < SampleProcessor
-%CTC_Marker_Characterization SampleProcessor for the Feature Collection use case.
-    % Acts on preselected thumbnails, does segmentation (otsu thresholding)
-    % an extracts features for every cell. No classification!
+    % Rescore_Using_Gate SampleProcessor for gating of extracted objects.
         
     properties
         previousProcessor = SampleProcessor();
@@ -37,16 +35,20 @@ classdef Rescore_Using_Gate < SampleProcessor
         
         function [] = set_gates(this,savedGate) 
             if savedGate == 0
+                %call gui to specify gates
                 gui_gates = gui_manual_gates();
                 waitfor(gui_gates.fig_main,'UserData')
                 try
+                    %store gates
                     this.gate = get(gui_gates.fig_main,'UserData');
                 catch 
                     return
                 end
+                %delete gui
                 delete(gui_gates.fig_main)
                 clear('gui_gates');
             elseif savedGate == 1
+                %load gates saved before
                 file = which('ACCEPT.m');
                 installDir = fileparts(file);
                 [file_name, folder_name] = uigetfile([installDir filesep 'misc' filesep 'saved_gates' filesep '*.mat'],'Load gate.');
@@ -59,6 +61,7 @@ classdef Rescore_Using_Gate < SampleProcessor
             else
                 return
             end
+            %store name and gates
             if ~isempty(this.gate)
                 this.pipeline{1}.name = this.gate.name;
                 this.pipeline{1}.gates = this.gate.gates;
@@ -66,7 +69,7 @@ classdef Rescore_Using_Gate < SampleProcessor
         end
         
         function run(this,inputSample)
- 
+            %start gating
             if isempty(this.gate)
                 this.set_gates(0);
             end
@@ -76,9 +79,8 @@ classdef Rescore_Using_Gate < SampleProcessor
                 this.previousProcessor.run(inputSample);
             end
             
-            %apply gate
+            % apply gate
             this.pipeline{1}.run(inputSample);  
-%             IO.attach_results_summary(inputSample)
 
         end
     end
@@ -91,50 +93,5 @@ classdef Rescore_Using_Gate < SampleProcessor
             pipeline{1} = mc;           
         end
     end
-    
-%     methods (Static)    
-%         function pipeline = make_dataframe_pipeline()
-%             pipeline = cell(0);
-%             ef = ExtractFeatures();      
-%             pipeline{1} = [];
-%             pipeline{2} = ef;
-%         end
-%         
-%         function [selectedProcessorId,selectedProcessor] = choose_processor_to_rescore()
-%                 d = dialog('Position',[300 300 250 150],'Name','Select a sample processor that you want to rescore');
-%                 processors=IO.check_available_sample_processors();
-%                 txt = uicontrol('Parent',d,...
-%                        'Style','text',...
-%                        'Position',[20 80 210 40],...
-%                        'String','Select a color');
-% 
-%                 popup = uicontrol('Parent',d,...
-%                        'Style','popup',...
-%                        'Position',[75 70 100 25],...
-%                        'String',cellfun(@(s) s.name,processors,'UniformOutput',false),...
-%                        'Callback',@popup_callback);
-% 
-%                 btn = uicontrol('Parent',d,...
-%                        'Position',[89 20 70 25],...
-%                        'String','choose',...
-%                        'Callback','delete(gcf)');
-% 
-%                 selectedProcessor = processors{1};
-% 
-%                 % Wait for d to close before running to completion
-%                 uiwait(d);
-% 
-%                 function popup_callback(popup,callbackdata)
-%                       idx = popup.Value;
-%                       % This code uses dot notation to get properties.
-%                       % Dot notation runs in R2014b and later.
-%                       % For R2014a and earlier:
-%                       % idx = get(popup,'Value');
-%                       % popup_items = get(popup,'String');
-%                       selectedProcessor = processors{idx};
-%                 end
-%                 selectedProcessorId=selectedProcessor.id();
-%         end
-%     end
     
 end

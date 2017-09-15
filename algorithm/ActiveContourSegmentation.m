@@ -17,8 +17,8 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef ActiveContourSegmentation < DataframeProcessorObject
-    %ACTIVECONTOUR_SEGMENTATION Summary of this class goes here
-    %   Detailed explanation goes here
+    %  ACTIVECONTOUR_SEGMENTATION Computes a segmentation of the input 
+    %  frame/image using Active contour segmentation
 
     properties (SetAccess = private)
         maskForChannels = [];
@@ -28,6 +28,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         mu_update = [];
         single_channel = [];
         init = [];
+        %adaptive choice of reg. parameter yes/no
         adaptive_reg = 0;
         adaptive_start = 0.01;
         adaptive_step = 0.05;
@@ -41,41 +42,48 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
     end
 
     properties (Constant)
-        sigma = 1/2.9; %0.1
-        tau   = 1/2.9; %0.1
+        sigma = 1/2.9; 
+        tau   = 1/2.9; 
         theta = 0.5;
     end
 
     methods
         function this = ActiveContourSegmentation(lambda, inner_it, breg_it, varargin)
             if nargin > 7
+                %dilate segmentation afterwards?
                this.dilate = varargin{5};
             end
             
             if nargin > 6
+                %use openMP in mex file?
                this.use_openMP = varargin{4};
             end
             
             if nargin > 5
+                %segment only one channel
                 this.single_channel = varargin{3};
             end
 
             if nargin > 4 && ~isempty(varargin{2})
+                %use mask for channels
                 this.maskForChannels = varargin{2};
             end
 
             if isa(lambda,'numeric')
+                %regularization parameter
                 this.lambda = lambda;
             elseif strcmp(lambda,'adaptive')
+                %lambda set adaptively
                 this.lambda = this.adaptive_start;
                 this.adaptive_reg = 1;
             elseif isa(lambda,'cell') && strcmp(lambda{1},'adaptive') && isa(lambda{2},'numeric') && isa(lambda{3},'numeric')
+                %lambda set adaptively with given start and step values
                 this.adaptive_start = lambda{2};
                 this.lambda = this.adaptive_start;
                 this.adaptive_step = lambda{3};
                 this.adaptive_reg = 1;
             end
-
+            %number of iterations
             this.breg_it   = breg_it;
             this.inner_it  = inner_it;
             this.mu_update = inner_it+1;
@@ -87,20 +95,25 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
         function returnFrame = run(this, inputFrame)
             % Segmentation on Dataframe: this is the standard call via the graphical user interface
-            if isa(inputFrame,'Dataframe') && ~isempty(inputFrame.segmentedImage)
+            if isa(inputFrame,'Dataframe') && ~isempty(inputFrame.segmentedImage) %if segmentation is already filled
                 returnFrame = inputFrame;
                 if this.clear_border == 1
                     for i = 1:size(inputFrame.segmentedImage,3)
+                        %remove objects touching the border
                         returnFrame.segmentedImage(:,:,i) = imclearborder(inputFrame.segmentedImage(:,:,i));
                     end
+                    %create label image
                     sumImage = sum(returnFrame.segmentedImage,3);
                     labels = repmat(bwlabel(sumImage,4),1,1,size(returnFrame.segmentedImage,3));
                     returnFrame.labelImage = labels.*returnFrame.segmentedImage;
                 end
-            elseif isa(inputFrame,'Dataframe') && isempty(inputFrame.segmentedImage)
+            elseif isa(inputFrame,'Dataframe') && isempty(inputFrame.segmentedImage) %segmentation of dataframe
+                %load and initialize data
                 returnFrame = inputFrame;
                 returnFrame.segmentedImage = false(size(inputFrame.rawImage));
-
+                
+                %fill mask variable with default values if not specified
+                %before, otherwise according to given values
                 if isempty(this.maskForChannels) && isempty(this.single_channel)
                     this.maskForChannels = 1:1:inputFrame.nrChannels;
                 elseif isempty(this.maskForChannels) && ~isempty(this.single_channel)
@@ -109,19 +122,24 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 elseif size(this.maskForChannels,2) == 1
                     this.maskForChannels = this.maskForChannels(1) * ones(1,inputFrame.nrChannels);
                 end
-
+                
+                %use same lambda in each channel
                 if size(this.lambda,2) == 1
                     this.lambda = repmat(this.lambda,1, inputFrame.nrChannels);
                 end
-
+                %use same bregman its in each channel
                 if size(this.breg_it,2) == 1
                     this.breg_it = repmat(this.breg_it,1, inputFrame.nrChannels);
                 end
-
+                
+                %fill initialization of segmentation
                 if ~isempty(this.init)
                     if isa(this.init,'double') || isa(this.init,'logical')
+                        %if segmentation is given
                         cvInit = this.init;
                     elseif isa(this.init,'cell') && isa(this.init{1},'char') && isa(this.init{2},'char')
+                        %initialize with specified thresholding method
+                        %(local or global)
                         validatestring(this.init{1},{'otsu','triangle'});
                         validatestring(this.init{2},{'global','local'});
                         if strcmp(this.init{2},'local')
@@ -134,6 +152,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                             cvInit = [];
                         end
                     elseif isa(this.init,'cell') && isa(this.init{1},'char') && strcmp(this.init{1},'manual')
+                        %initialize with fixed thresholding
                         manualSeg = ThresholdingSegmentation('manual','local',[],[],[],this.init{2});
                         cvInit = manualSeg.run(inputFrame.rawImage);
                     else
@@ -147,29 +166,33 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                 % otherwise use openMP if only one channel is processed
                 chMask = this.maskForChannels(this.maskForChannels ~= 0); % indices of channels to be analyzed
                 nbrChSeg = size(chMask,2);
-                chSeg_uni = unique(chMask);
-                nbrChSeg_uni = size(chSeg_uni,2);
+                chSeg_uni = unique(chMask); %determine which channels should be segmented
+                nbrChSeg_uni = size(chSeg_uni,2); %number of channels to be segmented
                 if nbrChSeg > 1
                     % parallelize in Matlab and do not use openMP in C-code
                     this.use_openMP = 0;
                     segmentedImages = cell(nbrChSeg_uni,1);
-                    for i = 1:nbrChSeg_uni
-%                         segmentedImages{i} = bwareaopen(bregman_cv(this,inputFrame,chMask(i),cvInit),10);
+                    parfor i = 1:nbrChSeg_uni
+                        %call bregman segmentation code
                         tmp = bregman_cv(this,inputFrame,chSeg_uni(i),cvInit);
                         boundary = bwperim(tmp);
+                        %remove small objects
                         tmp_cleared = bwareaopen(tmp - boundary,10);
+                        %thicken remaining ones
                         tmp = bwmorph(tmp_cleared,'thicken',1);
+                        %again (helps to remove unwanted small noise
+                        %events)
                         boundary = bwperim(tmp);
                         tmp_cleared = bwareaopen(tmp - boundary,10);
+                        %store segmentation
                         segmentedImages{i} = bwmorph(tmp_cleared,'thicken',1);
                     end
-                    
-
-%                     for i = 1:nbrChSeg
+                    %fill dataframe with segmentation
                     for i = 1:inputFrame.nrChannels
-%                         returnFrame.segmentedImage(:,:,chMask(i)) = segmentedImages{i};
                         if ismember(this.maskForChannels(i),chMask)
+                            % store segmentation
                             if  ~isempty(this.dilate) && this.dilate(i) == 1
+                                % dilate first if chosen
                                 returnFrame.segmentedImage(:,:,i) = bwmorph(segmentedImages{chSeg_uni==this.maskForChannels(i)},'thicken',4);
                             else
                                 returnFrame.segmentedImage(:,:,i) = segmentedImages{chSeg_uni==this.maskForChannels(i)};
@@ -180,19 +203,21 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     % only one channel, hence no parallelization in Matlab
                     % parallelize in C-code using openMP instead
                     % (problematic on Windows at the moment, no executable available) 
+                    
+                    %call bregman segmentation code
                     tmp = bregman_cv(this,inputFrame,chMask,cvInit);
+                    %remove small objects
                     boundary = bwperim(tmp);
                     tmp_cleared = bwareaopen(tmp - boundary,10);
+                    %thicken remaining ones
                     tmp = bwmorph(tmp_cleared,'thicken',1);
+                    %again (helps to remove unwanted small noise
+                    %events)
                     boundary = bwperim(tmp);
                     tmp_cleared = bwareaopen(tmp - boundary,10);
+                    %store segmentation
                     returnFrame.segmentedImage(:,:,this.maskForChannels==chMask) = bwmorph(tmp_cleared,'thicken',1);
-%                      returnFrame.segmentedImage(:,:,this.maskForChannels==chMask) = bwareaopen(bregman_cv(this,inputFrame,chMask,cvInit),10);                    
                 end
-
-%                 if sum(ismember(this.maskForChannels,0))==0 && isa(inputFrame,'Dataframe')
-%                     returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
-%                 end
                 
                 sumImage = sum(returnFrame.segmentedImage,3);
                 labels = repmat(bwlabel(sumImage,4),1,1,size(returnFrame.segmentedImage,3));
@@ -200,27 +225,33 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
             % Segmentation on double array: this case can be used for separate image segmentation and testing purposes
             elseif isa(inputFrame,'double') || isa(inputFrame,'single')
+                %initialize output frame
                 returnFrame = false(size(inputFrame));
-
+                
+                %fill mask for channels
                 if isempty(this.maskForChannels) && isempty(this.single_channel)
                     this.maskForChannels = 1:1:size(inputFrame,3);
                 elseif ~isempty(this.single_channel)
                     this.maskForChannels = zeros(1,size(inputFrame,3));
                     this.maskForChannels(this.single_channel) = this.single_channel;
                 end
-
+                
+                %same lambda for all channels
                 if size(this.lambda,2) == 1
                     this.lambda = repmat(this.lambda,1,size(inputFrame,3));
                 end
-
+                %same number of bregman its for all channels
                 if size(this.breg_it,2) == 1
                     this.breg_it = repmat(this.breg_it,1,size(inputFrame,3));
                 end
 
+                %fill initialization for segmentation
                 if ~isempty(this.init)
                     if isa(this.init,'double') || isa(this.init,'single') || isa(this.init,'logical')
+                        %given segmentation
                         cvInit = this.init;
                     elseif isa(this.init,'cell') && isa(this.init{1},'char') && isa(this.init{2},'char')
+                        %use specified thresholding method (global/local)
                         validatestring(this.init{1},{'otsu','triangle'});
                         validatestring(this.init{2},{'global','local'});
                         if strcmp(this.init{2},'local')
@@ -230,6 +261,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                         end
                         cvInit = threshSeg.run(inputFrame);
                     elseif isa(this.init,'cell') && isa(this.init{1},'char') && strcmp(this.init{1},'manual')
+                        %use fixed treshold
                         manualSeg = ThresholdingSegmentation('manual','local',[],[],[],this.init{2});
                         cvInit = manualSeg.run(inputFrame);
                     else
@@ -241,12 +273,16 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                 for i = 1:size(inputFrame,3)
                     if any(this.maskForChannels == i)
+                        %call bregman segmentation code
                         tmp = bregman_cv(this, inputFrame, i, cvInit);
+                        %remove small objects
                         tmp = bwareaopen(tmp, 10);
+                        %store segmentation
                         returnFrame(:,:,i) = tmp;
                     end
                 end
-
+                
+                %fill channels with segmentation of frame specified in mask
                 if isempty(this.single_channel)
                     returnFrame = returnFrame(:,:,this.maskForChannels);
                 end
@@ -257,6 +293,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         end
 
         function bin = bregman_cv(this, dataFrame, k, init)
+            %segmentation method (core in mex file)
             if isa(dataFrame,'Dataframe')
                 f = dataFrame.rawImage(:,:,k);
             elseif isa(dataFrame,'double') || isa(dataFrame,'single')
@@ -279,15 +316,16 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
             if isempty(init)
                 init(:,:,k) = f;
-                % initialize primal variables
+                % initialize primal variables as zero
                 u = zeros(nx,ny,type);
                 u_bar = u; % dims: nx x ny
             else
-                % initialize primal variables
+                % initialize primal variables with given init
                 u = init(:,:,k);
                 u_bar = u; % dims: nx x ny
             end
-
+            
+            %determine mu1 and mu0 used in active contour segmentation
             if max(max((init(:,:,k)<0.5))) == 1 && max(max((init(:,:,k)>=0.5))) == 1
                 mu0 = max(mean(mean(f(init(:,:,k)<0.5))),0); % mean value outside object
                 mu1 = max(mean(mean(f(init(:,:,k)>=0.5))),0); % mean value inside object
@@ -302,13 +340,16 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             useMask = false;
             mask    = [];
             if isa(dataFrame,'Dataframe') && dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask)
+                %if dataframe has edge to be removed, set it to mean
+                %background intensity
                 f(dataFrame.mask)     = mu0;
                 u(dataFrame.mask)     = 0;
                 u_bar(dataFrame.mask) = 0;
                 useMask = true;
                 mask = dataFrame.mask;
             end %note: in case you are using the AC function on a double image using a mask is not possible
-
+            
+            %compute contour for max. 20 diffferent reg parameters
             maxContourUpd = 20;
             
             for l = 1:maxContourUpd
@@ -346,24 +387,31 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                     %figure; imagesc(u); colorbar;
                 end
                 %%%%%%%%%%%%%%% Bregman_CV_CORE END %%%%%%%%%%%%%%%%%%%%%%%
-
+                
+                %threshold solution
                 bin = u >= 0.5;
-
-                if this.adaptive_reg == 1
-                    %disp('Entering the adaptive segmentation case now...')
+                
+                
+                if this.adaptive_reg == 1 %if adaptive reg is chosen
+                    % disp('Entering the adaptive segmentation case now...')
+                    %compute solidity (Area/ConvexArea) and eccentricity of found objects
                     stats = regionprops(bin,'Solidity','Eccentricity','PixelIdxList');
                     go_on = 0;
 
                     for s = 1:size(stats,1)
                         if size(stats(s).PixelIdxList,1) < 10 || stats(s).Eccentricity > 0.98
+                            %remove small and line-like objects
                             bin(stats(s).PixelIdxList) = 0;
                         end
                         if stats(s).Solidity < 0.95
+                            % if objects are not close to convex consider to increase
+                            % reg. parameter
                             go_on = 1;
                         end
                     end
 
                     if go_on == 1
+                        %watershed solution to seperate clustered cells
                         D = bwdist(~bin);
                         D = -D;
                         D(~bin) = -Inf;
@@ -371,14 +419,18 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                         bin(L <= 1) = 0;
                         bin(L > 1) = 1;
+                        %compute again eccentricity and solidity
                         stats = regionprops(bin,'Solidity','Eccentricity','PixelIdxList');
                         go_on = 0;
 
                         for s = 1:size(stats,1)
                             if size(stats(s).PixelIdxList,1) < 3 || stats(s).Eccentricity > 0.95
+                                %remove small or line like objects
                                 bin(stats(s).PixelIdxList) = 0;
                             end
                             if stats(s).Solidity < 0.95
+                                %if objects still not close to convex
+                                %increase lambda and segment again
                                 go_on = 1;
                             end
                         end
@@ -386,17 +438,16 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
 
                     if go_on == 1
                         i = 1; j = 1;
+                        %increase lambda
                         lambda = lambda + this.adaptive_step; %#ok<PROPLC>
-                        %p = zeros(nx,ny,dim); % dims: nx x ny x dim, dual variable
-                        %b = zeros(nx,ny); % dims: nx x ny , bregman variable
 
                         if isempty(init)
                             init(:,:,k) = f;
-                            % initialize primal variables
+                            % initialize primal variables as zero
                             u = zeros(nx,ny);
                             u_bar = u; % dims: nx x ny
                         else
-                            % initialize primal variables
+                            % initialize primal variables with given init
                             u = init(:,:,k);
                             u_bar = u; % dims: nx x ny
                         end
@@ -409,6 +460,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             end
             
             if this.clear_border
+                %remove objects touching the border
                 bin = imclearborder(bin);
             end
         end

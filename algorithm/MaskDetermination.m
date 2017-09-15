@@ -17,11 +17,10 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef MaskDetermination < SampleProcessorObject
-    %DETERMINE_MASK Summary of this class goes here
-    %   Detailed explanation goes here
-    
+    %DETERMINE_MASK determines an edge mask for samples that have a boundary
+    %that should be excluded from further analysis
     properties
-        channelEdgeRemoval = []
+        channelEdgeRemoval = [] %specify channel used to determine the scope of the boundary
         maxDist = 0.1;
     end
     
@@ -37,7 +36,8 @@ classdef MaskDetermination < SampleProcessorObject
         
         function returnSample = run(this,inputSample)
                 returnSample = inputSample;
-%                 mask_small = false(size(inputSample.overviewImage));
+                
+                %open image first to smooth
                 se = strel('disk',50);
                 
                 if isempty(this.channelEdgeRemoval)
@@ -45,8 +45,11 @@ classdef MaskDetermination < SampleProcessorObject
                 end
                 
                 openImg = imopen(inputSample.overviewImage(:,:,this.channelEdgeRemoval),se);
+                
+                %use region growing to determine mask size
                 mask_small = regiongrowing(double(openImg)/max(double(openImg(:))), this.maxDist, [round(size(openImg,1)/2),round(size(openImg,2)/2)]);
                 returnSample.mask = bwmorph(~mask_small,'open'); 
+                %remove all excluded pixels also from histogram
                 inputSample.histogram_down = inputSample.histogram_down - histc(reshape(inputSample.overviewImage(repmat(returnSample.mask,1,1,inputSample.nrOfChannels)),...
                     numel(inputSample.overviewImage(repmat(returnSample.mask,1,1,inputSample.nrOfChannels)))/inputSample.nrOfChannels,inputSample.nrOfChannels),1:1:65535);
         end

@@ -1,4 +1,4 @@
-function [GuiSampleHandle] = scoring_gui_Sanne(base,currentSample,path)
+function [GuiSampleHandle] = CTC_scoring_gui(base,currentSample,path)
     %% This file is part of ACCEPT, 
     % A program for the automated classification, enumeration and 
     % phenotyping of Circulating Tumor Cells.
