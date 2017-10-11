@@ -134,7 +134,7 @@ if ~isempty(thumbContainer.overviewImage)
 
 
     % % create choose button to switch color channel
-     GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames,...
+     GuiSampleHandle.popupChannel = uicontrol('Style','popup','String',currentSample.channelNames(1:currentSample.nrOfChannels),...
                                          'Units','characters','Position',[88 40 17.6 8.7],...
                                          'FontUnits','normalized','FontSize',0.12,...
                                          'Value',defCh,...
@@ -473,8 +473,10 @@ set(GuiSampleHandle.fig_main, 'KeyPressFcn', @key_Pressed_Callback);
 % --- Executes on selection in popupChannel.
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
-    high=prctile(reshape(thumbContainer.overviewImage(:,:,selectedChannel),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),99);
-    plotImInAxis(thumbContainer.overviewImage(:,:,selectedChannel).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+    if selectedChannel <= nbrColorChannels
+        high=prctile(reshape(thumbContainer.overviewImage(:,:,selectedChannel),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),99);
+        plotImInAxis(thumbContainer.overviewImage(:,:,selectedChannel).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+    end
 end
 
 % --- Executes on selection in topFeatureIndex1 (x-axis)
