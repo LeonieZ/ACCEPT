@@ -52,7 +52,7 @@ classdef Marker_Characterization < SampleProcessor
                 this.pipeline{i}.run(inputSample);
             end  
             
-            if ~isempty(inputSample.results.features) && ~strcmp(inputSample.type,'ThumbnailLoader')
+            if ~isempty(inputSample.results.features) %&& ~strcmp(inputSample.type,'ThumbnailLoader')
                 %check if thumbs are listed double
                 thumbsQuantity = hist(inputSample.results.features{:,1},linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)));
                 multiThumbs = find(thumbsQuantity>1)';
