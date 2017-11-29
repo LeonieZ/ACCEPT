@@ -23,7 +23,7 @@ screensz = get(0,'screensize');
 
 nrofGates = 4;
 
-feature_list = {'','Size', 'Eccentricity', 'Perimeter', 'MeanIntensity', 'MaxIntensity', 'StandardDeviation', 'Mass', 'P2A', 'Overlay with DNA'};
+feature_list = {'','Size', 'Eccentricity', 'Perimeter', 'MeanIntensity', 'MaxIntensity', 'MedianIntensity', 'StandardDeviation', 'Mass', 'P2A', 'Overlay with DNA'};
 
 gui.fig_main = figure('Units','characters','Position',[(screensz(3)-95)/2 (screensz(4)-20)/2 95 33],'Name','ACCEPT - Set Manual Gates','MenuBar','none',...
 'NumberTitle','off','Color', [1 1 1],'Resize','off','Visible','on');
