@@ -193,7 +193,7 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                             % store segmentation
                             if  ~isempty(this.dilate) && this.dilate(i) == 1
                                 % dilate first if chosen
-                                returnFrame.segmentedImage(:,:,i) = bwmorph(segmentedImages{chSeg_uni==this.maskForChannels(i)},'thicken',4);
+                                returnFrame.segmentedImage(:,:,i) = bwmorph(segmentedImages{chSeg_uni==this.maskForChannels(i)},'thicken',3);
                             else
                                 returnFrame.segmentedImage(:,:,i) = segmentedImages{chSeg_uni==this.maskForChannels(i)};
                             end
