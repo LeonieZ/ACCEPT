@@ -161,6 +161,7 @@ classdef CellTracks < Loader
             end
             tempImageFileNames(tempImageFileNames_cleared) = [];
             this.sample.imageFileNames = [];
+            this.sample.tiffHeaders = [];
             for i=1:numel(tempImageFileNames)
                 this.sample.imageFileNames{i} = [this.sample.imagePath filesep tempImageFileNames(i).name];
             end

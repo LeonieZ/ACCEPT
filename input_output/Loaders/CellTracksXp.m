@@ -76,11 +76,11 @@ classdef CellTracksXp < Loader
         
         function update_prior_infos(this,currentSample,samplePath)
             this.sample = currentSample;
-            if ~exist(currentSample.imagePath,'dir')
+%             if ~exist(currentSample.imagePath,'dir')
                 [this.sample.imagePath,~] = this.find_dir(samplePath,'tif',100); 
                 [this.sample.priorPath,~] = this.find_dir(samplePath,'xml',1);
                 this.preload_tiff_headers();         
-            end
+%             end
         end
    
         function dataFrame = load_data_frame(this,frameNr,varargin)
@@ -135,20 +135,37 @@ classdef CellTracksXp < Loader
         
         function frameOrder = calculate_frame_nr_order(this)
             frameOrder=zeros(this.sample.rows,this.sample.columns);
-            for i=1:this.sample.nrOfFrames
-                row = ceil(i/this.sample.columns);
-                cols = this.sample.columns;
-                switch row
+            if this.sample.nrOfFrames == 140
+                for i=1:this.sample.nrOfFrames
+                    row = 4-floor((i-1)/this.sample.columns);
+                    cols = this.sample.columns;
+                    switch row
+                    case {2,4,6} 
+                        col = this.sample.nrOfFrames-i+1-(row-1)*cols;
+                        frameOrder(row,col)=i;
+                    otherwise
+                        col=mod(i,cols);
+                        if col == 0
+                            col = cols;
+                        end
+                        frameOrder(row,col)=i;
+                    end
+                end          
+            else
+                for i=1:this.sample.nrOfFrames
+                    row = ceil(i/this.sample.columns);
+                    cols = this.sample.columns;
+                    switch row
                     case {2,4,6} 
                         col=(1+cols-(i-(row-1)*this.sample.columns));
                         frameOrder(row,col)=i;
                     otherwise
                         col=i-(row-1)*cols;
                         frameOrder(row,col)=i;
-                end
-            end          
+                    end
+                end 
+            end       
         end
-            
     end
 
     methods(Access=private)        
@@ -201,7 +218,7 @@ classdef CellTracksXp < Loader
                 sizey = boundingBox{1}(2)-boundingBox{1}(1)+1;
                 rawImage = zeros(sizey,sizex,this.sample.imageSize(3));
             end
-            for i=1:this.sample.nrOfChannels;
+            for i=1:this.sample.nrOfChannels
                 try
                     imagetemp = double(imread(this.sample.imageFileNames{imageNr},i, 'info',this.sample.tiffHeaders{imageNr}));
                 catch
@@ -380,7 +397,8 @@ classdef CellTracksXp < Loader
         
         function priorEvents=read_cells_dlm(this,path,frame)
             fileId=fopen(path);
-            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','?');
+%             temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','?');
+            temp=textscan(fileId,'%s%s%f%f%f%f%s%s%s%s%s%s%s','delimiter','¦');
             nrOfEvents=numel(temp{1});
             priorEvents.eventNr=zeros(nrOfEvents,1);
             priorEvents.selected=zeros(nrOfEvents,1);
@@ -419,7 +437,8 @@ classdef CellTracksXp < Loader
         
         function frame=read_pic_dlm(~,path)
             fileId=fopen(path);
-            temp=textscan(fileId,'%s%s%s%f%s','delimiter','?');
+%             temp=textscan(fileId,'%s%s%s%f%s','delimiter','?');
+            temp=textscan(fileId,'%s%s%s%f%s','delimiter','¦');
             frame.timeStamp=temp{1};
             frame.frameNr=temp{4};
             frame.timeStamp=strrep(frame.timeStamp,'"','');

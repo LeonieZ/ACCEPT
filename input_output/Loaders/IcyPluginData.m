@@ -33,7 +33,8 @@ classdef IcyPluginData < handle
             if bool==1 
                 if ispc
                     try [~,~,raw]=xlsread([sample.priorPath,filesep,xlsfiles(1).name],1);
-                        offset = find(ismember(raw(:,1),'detectedROI'),1)-1;
+                        index_name = ismember(raw(1,:),'Name');
+                        offset = find(ismember(raw(:,index_name),'detectedROI'),1)-1;
                         startLoc = find(ismember(raw(1,:),'Position X'));
                         for i=1:(size(raw,1)-offset)
                             eventNr=i;

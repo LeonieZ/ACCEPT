@@ -17,7 +17,7 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef Automatic_Classification < SampleProcessor
-    % Automatic_Classification sampleprocessor - placefolder for use case
+    % Automatic_Classification sampleprocessor - placeholder for use case
     % of fully automated approach
         
     properties
