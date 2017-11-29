@@ -128,9 +128,12 @@ if ~isempty(thumbContainer.overviewImage)
 
      blank=zeros(size(thumbContainer.overviewImage(:,:,defCh)));
      GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
+     
      colormap(GuiSampleHandle.axesOverview,parula(maxi+1));
-     high=prctile(reshape(thumbContainer.overviewImage(:,:,defCh),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),99);
-     plotImInAxis(thumbContainer.overviewImage(:,:,defCh).*(maxi/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+     low=prctile(reshape(thumbContainer.overviewImage(:,:,defCh),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),1);
+     high=prctile(reshape(thumbContainer.overviewImage(:,:,defCh)-low,[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),95);
+     
+     plotImInAxis((thumbContainer.overviewImage(:,:,defCh)-low).*(maxi/(high)),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
 
 
     % % create choose button to switch color channel
@@ -219,7 +222,7 @@ for i=1:rows
     hAxes(ind) = axes(axesProp,axesVal,'Units','characters','Position',[x y axWidth axHeight]);
 %     hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
     hImages(ind)= imshow([],'InitialMagnification','fit');
-    set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
+    set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i,ind});
     % plot image for each color channel in column 2 till nbrChannels
     for ch = 1:cols-1
         x = (ch)*cPitch;
@@ -227,7 +230,7 @@ for i=1:rows
         hAxes(ind) = axes(axesProp,axesVal,'Units','characters','Position',[x y axWidth axHeight]);
 %         hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
         hImages(ind)= imshow([],'InitialMagnification','fit');
-        set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i});
+        set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i,ind});
         colormap(hAxes(ind),map);
     end
 end
@@ -474,8 +477,9 @@ set(GuiSampleHandle.fig_main, 'KeyPressFcn', @key_Pressed_Callback);
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
     if selectedChannel <= nbrColorChannels
-        high=prctile(reshape(thumbContainer.overviewImage(:,:,selectedChannel),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),99);
-        plotImInAxis(thumbContainer.overviewImage(:,:,selectedChannel).*(4095/high),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+        low=prctile(reshape(thumbContainer.overviewImage(:,:,selectedChannel),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),1);
+        high=prctile(reshape(thumbContainer.overviewImage(:,:,selectedChannel)-low,[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),95);   
+        plotImInAxis((thumbContainer.overviewImage(:,:,selectedChannel)-low).*(maxi/(high)),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
     end
 end
 
@@ -683,7 +687,7 @@ function plotImInAxis(im,segm,hAx,hIm)
 end
 
 % --- Helper function used in thumbnail gallery to react on user clicks
-function openSpecificImage(~,~,row)
+function openSpecificImage(~,~,row,column)
     type = get(gcf,'SelectionType');
     switch type
         case 'open' % double-click
@@ -714,15 +718,45 @@ function openSpecificImage(~,~,row)
             im = get(gcbo,'cdata');
             true_max_int = max(im(im~=1));
             im_new = (im / true_max_int) .* double(im~=1) + 1.002 * double(im==1);
-            figure; imagesc(im_new,[0,1.002]); axis equal; axis off;
+            new_fig = figure; imagesc(im_new,[0,1.002]); axis equal; axis off;
+            %determine features
+            channel = column - 1 - (row-1)*(nbrColorChannels+1);
+            if channel ~=0
+                ax = gca; ax.Position = [0.0200 0.1100 0.55 0.8150];
+                pos = max(1,-round(get(GuiSampleHandle.slider,'Value'))-3+row);
+                thumbNr = currPos(pos);
+
+                nrOfFeatures = floor((size(sampleFeatures,2)-1)/nbrColorChannels);
+                if channel == 1 && nbrColorChannels*nrOfFeatures+1+channel <= size(sampleFeatures,2)
+                    indices = [2+(channel-1)*nrOfFeatures:1+nrOfFeatures+(channel-1)*nrOfFeatures,nbrColorChannels*nrOfFeatures+1+channel];
+                elseif channel ~=1 && channel ~=2 && nbrColorChannels*nrOfFeatures+channel <= size(sampleFeatures,2)
+                    indices = [2+(channel-1)*nrOfFeatures:1+nrOfFeatures+(channel-1)*nrOfFeatures,nbrColorChannels*nrOfFeatures+channel];
+                else
+                    indices = 2+(channel-1)*nrOfFeatures:1+nrOfFeatures+(channel-1)*nrOfFeatures;
+                end
+                feature_names_selected = feature_names(indices);
+                corr_features = sampleFeatures(thumbNr,indices);
+                featuresToPlot = cell(1,size(corr_features,2));
+                for l = 1:size(corr_features,2)
+                    featuresToPlot{l} = [feature_names_selected{l} ': ' sprintf('%.2f',max(0,corr_features{1,l}))];
+                end
+                featuresToPlot{size(corr_features,2)+1} = '----------------';
+                featuresToPlot{size(corr_features,2)+2} = ['Frame Nr: ' num2str(currentSample.results.thumbnails.frameNr(thumbNr))];
+                featuresToPlot{size(corr_features,2)+3} = ['Center X: ' num2str(round(currentSample.results.thumbnails.xBottomLeft(thumbNr)...
+                    +(currentSample.results.thumbnails.xTopRight(thumbNr)-currentSample.results.thumbnails.xBottomLeft(thumbNr))/2))];
+                featuresToPlot{size(corr_features,2)+4} = ['Center Y: ' num2str(round(currentSample.results.thumbnails.yBottomLeft(thumbNr)...
+                    +(currentSample.results.thumbnails.yTopRight(thumbNr)-currentSample.results.thumbnails.yBottomLeft(thumbNr))/2))];
+                annotation('textbox',[.58 .3 .35 .4],'String',featuresToPlot,'VerticalAlignment','middle','FitBoxtoText','on')
+            end
             colormap(gca,map);
     end
 end
 
 function key_Pressed_Callback(handle,event,~)
     if(strcmp(event.Key, 'space'))
-        plot_thumbnails(-round(GuiSampleHandle.slider.Value)+5);
-        GuiSampleHandle.slider.Value=round(GuiSampleHandle.slider.Value)-5;
+        newPos = max(3,min(-round(GuiSampleHandle.slider.Value)+5,nrUsedThumbs-2));
+        plot_thumbnails(newPos);
+        GuiSampleHandle.slider.Value=-newPos;
     end
  end
 
