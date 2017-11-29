@@ -45,22 +45,28 @@ classdef ExtractFeatures < DataframeProcessorObject
                         MsrTemp=fillStruct(this, MsrTemp);
                         
                         %compute more features 
+                        %mean intensity
+                        MeanIntensity = arrayfun(@(x) max(0,(x.MeanIntensity)), MsrTemp);
+                        %max intensity
+                        MaxIntensity = arrayfun(@(x) max(0,(x.MeanIntensity)), MsrTemp);
                         %standard deviation
                         StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
-                        %median inensity
-                        MedianIntensity = arrayfun(@(x) median(x.PixelValues), MsrTemp);
+                        %median intensity
+                        MedianIntensity = arrayfun(@(x) max(0,median(x.PixelValues)), MsrTemp);
                         %mass (sum of all pixels)
-                        Mass = arrayfun(@(x) sum(x.PixelValues), MsrTemp);
+                        Mass = arrayfun(@(x) max(0,sum(x.PixelValues)), MsrTemp);
                         %perimeter 2 area (roundness measure)
                         P2A = arrayfun(@(x) x.Perimeter^2/(4*pi*x.Area), MsrTemp);
                         %size in micrometer (scaled with pixelsize)
                         Size = arrayfun(@(x) x.Area *(inputFrame.pixelSize)^2 , MsrTemp);
-                        MsrTemp=rmfield(MsrTemp,{'PixelValues','Area'});
+                        MsrTemp=rmfield(MsrTemp,{'PixelValues','Area','MeanIntensity','MaxIntensity'});
                         
                         % create table with all features
                         names = strcat('ch_',num2str(ch),'_',fieldnames(MsrTemp));
                         tmpTable = struct2table(MsrTemp);
                         tmpTable.Properties.VariableNames = names;
+                        tmpMeanIntensity = array2table(MeanIntensity,'VariableNames',{strcat('ch_',num2str(ch),'_MeanIntensity')});
+                        tmpMaxIntensity = array2table(MaxIntensity,'VariableNames',{strcat('ch_',num2str(ch),'_MaxIntensity')});
                         tmpStandardDeviation = array2table(StandardDeviation,'VariableNames',{strcat('ch_',num2str(ch),'_StandardDeviation')});
                         tmpMedianIntensity = array2table(MedianIntensity,'VariableNames',{strcat('ch_',num2str(ch),'_MedianIntensity')});
                         tmpMass = array2table(Mass,'VariableNames',{strcat('ch_',num2str(ch),'_Mass')});
@@ -68,7 +74,7 @@ classdef ExtractFeatures < DataframeProcessorObject
                         tmpSize = array2table(Size,'VariableNames',{strcat('ch_',num2str(ch),'_Size')});
                         
                         %add to existing feature table
-                        returnFrame.features = [returnFrame.features tmpTable tmpSize tmpStandardDeviation tmpMass tmpP2A tmpMedianIntensity];
+                        returnFrame.features = [returnFrame.features tmpTable tmpMeanIntensity tmpMaxIntensity tmpMedianIntensity tmpSize tmpStandardDeviation tmpMass tmpP2A];
                     end
                               
                     %% VERY TIME CONSUMING DUE TO COMPLEXITY (not needed?)
