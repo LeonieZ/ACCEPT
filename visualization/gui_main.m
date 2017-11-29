@@ -64,7 +64,8 @@ gui.process_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Proce
 gui.visualize_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Visualize','Units','characters','Position',[90 6 35 3],'FontUnits','normalized', 'FontSize',0.5,'Callback', {@visualize,base});
 gui.gate_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Gate','Units','characters','Position',[110 14 15 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@gate,base});
 gui.export_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Summary','Units','characters','Position',[110 10.8 15 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@export_summary,base});
-gui.thumbs_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Thumbnails','Units','characters','Position',[110 17.6 18 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@export_thumbs,base});
+gui.export_xls = uicontrol(gui.fig_main,'Style','pushbutton','String','Export XLS','Units','characters','Position',[110 20.4 18 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@export_xls,base});
+gui.thumbs_button = uicontrol(gui.fig_main,'Style','pushbutton','String','Thumbnails','Units','characters','Position',[110 17.2 18 3],'FontUnits','normalized', 'FontSize',0.4,'Callback', {@export_thumbs,base});
 gui.title_axes = axes('Parent',gui.fig_main,'Units','characters','Position',[80 50 29 3]); axis off;
 gui.title = text('Position',[0 0],'String','\color[rgb]{0.729,0.161,0.208} ACCEPT','Units','characters','FontUnits','normalized', 'FontSize',1,'verticalAlignment','base','horizontalAlignment','center','FontWeight','bold');
 
@@ -125,7 +126,7 @@ f=size_pixels(3:4)./size_characters(3:4);
 %%% 
 
 gui.table = uitable('Parent', gui.fig_main, 'Data', [],'ColumnName', {'Sample name','Select'},'ColumnFormat', {'char','logical'},'ColumnEditable', [false,true],'RowName',[],'Units','characters',...
-    'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.695*51.2*f(1) 0.295*51.2*f(1)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt));
+    'Position',[54.4 10.8 51.2 19.6],'ColumnWidth',{0.695*51.2*f(1) 0.295*51.2*f(1)}, 'FontUnits','normalized', 'FontSize',0.05,'CellEditCallback',@(src,evnt)EditTable(src,evnt),'ButtonDownFcn',@select_all);
 gui.slider = uicontrol('Style','Slider','Parent',gui.fig_main,'Units','characters','Position',[105.6 10.8 3.2 19.6],'Min',-1,'Max',0,'Value',0,...
     'SliderStep', [1, 1] ,'Visible','on','Enable','off','Callback',{@update_table,base});
 set(gui.fig_main,'Visible','on');
@@ -344,6 +345,29 @@ end
 set(handle,'backg',color)
 end
 
+function export_xls(handle,~,base)
+    color = get(handle,'backg');
+    set(handle,'backgroundcolor',[1 .5 .5])
+    drawnow;
+    if sum(gui.selectedCells(:)) == 0
+        gui.selectedCells = ones(size(gui.selectedCells));
+    end
+    for a = 1:size(base.sampleList.sampleNames,2)
+        if gui.selectedCells(a,1) == 1
+            currentSample = IO.load_sample(base.sampleList,a);
+            IO.save_results_as_xls(currentSample)
+        end
+    end
+      
+    gui.selectedCells = false(size(base.sampleList.sampleNames,2),1);
+    dat = get(gui.table,'data');
+    for r=1:size(dat,1)
+        dat{r,2} = false;     
+    end
+    set(gui.table,'data',dat);
+           
+    set(handle,'backg',color)
+end
 function export_thumbs(handle,~,base)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
@@ -488,6 +512,8 @@ function update_list(base)
             set(gui.table, 'Position',[(160 - size_nd(3))/2, pos_cur(2), size_nd(3), pos_cur(4)]);
             set(gui.gate_button,'Position',[(160 + size_nd(3))/2+4.4, pos_cur(2), 15, 3]);
             set(gui.export_button,'Position',[(160 + size_nd(3))/2+4.4, pos_cur(2)+3.2, 15, 3]);
+            set(gui.thumbs_button,'Position',[(160 + size_nd(3))/2+4.4, pos_cur(2)+6.4, 18, 3]);
+            set(gui.export_xls,'Position',[(160 + size_nd(3))/2+4.4, pos_cur(2)+9.6, 18, 3]);     
         end
         set(gui.table,'Visible','on');
     else
@@ -532,6 +558,8 @@ function update_list(base)
             slider_pos = get(gui.slider,'Position');
             set(gui.gate_button,'Position',[slider_pos(1)+slider_pos(3)+1.2, slider_pos(2), 15, 3]);
             set(gui.export_button,'Position',[slider_pos(1)+slider_pos(3)+1.2, slider_pos(2)+3.2, 15, 3]);
+            set(gui.thumbs_button,'Position',[slider_pos(1)+slider_pos(3)+1.2, slider_pos(2)+6.4, 18, 3]);
+            set(gui.export_xls,'Position',[slider_pos(1)+slider_pos(3)+1.2, slider_pos(2)++9.6, 18, 3]);    
         end
         if nbrSamples > nbrRows
             set(gui.slider, 'Min',-nbrSamples+nbrRows,'Max',0,'Value',-sliderpos,'SliderStep', [1, 1]/(nbrSamples-nbrRows), 'Enable','on');
@@ -560,6 +588,26 @@ for r=1:min(nbrSamples,nbrRows)
     dat{r,2} = gui.selectedCells(r+val);
 end
 set(gui.table,'data', dat);
+end
+
+function select_all(src,~) 
+    type = get(gcf,'SelectionType');
+    if strcmp(type,'alt') && sum(gui.selectedCells(:)) ~= size(gui.selectedCells,1)
+        data=get(src,'Data'); % get the data cell array of the table
+        for d = 1:size(data,1)
+            data{d,2} = true;
+        end
+        set(src,'data',data); % resets the vertical scroll to the top of the table
+        gui.selectedCells = ones(size(gui.selectedCells),'logical');
+    elseif strcmp(type,'alt') && sum(gui.selectedCells(:)) == size(gui.selectedCells,1)
+        data=get(src,'Data'); % get the data cell array of the table
+        for d = 1:size(data,1)
+            data{d,2} = false;
+        end
+        set(src,'data',data); % resets the vertical scroll to the top of the table
+        gui.selectedCells = zeros(size(gui.selectedCells),'logical');
+        
+    end
 end
 
 function close_fcn(~,~) 
