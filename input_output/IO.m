@@ -39,17 +39,20 @@ classdef IO < handle
             %these samples are already processed in the output dir when the
             %overwriteResults attribute is set to false. 
             files = dir(sampleList.inputPath);
+            files = files(~cellfun(@(x) strcmp(x,'.') || strcmp(x,'..'), {files.name})); 
             if isempty(files)
-                %sampleList.logMessage('inputPath is empty; cannot continue',1,1);
-                error('inputDir is empty; cannot continue');
-            end
-
-            % select only directory entries from the input listing and remove
-            % anything that starts with a .*.
-            samples = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
-            for i=1:numel(samples)
-                sampleNames{i}=samples(i).name;
-                loaderUsed{i}=IO.check_sample_type([sampleList.inputPath,filesep,samples(i).name],sampleList.loaderTypesAvailable);
+%                 sampleList.logMessage('inputPath is empty; cannot continue',1,1);
+                %error('inputDir is empty; cannot continue');
+                sampleNames = [];
+                loaderUsed = [];
+            else
+                % select only directory entries from the input listing and remove
+                % anything that starts with a .*.
+                samples = files([files.isdir] & ~strncmpi('.', {files.name}, 1)); 
+                for i=1:numel(samples)
+                    sampleNames{i}=samples(i).name;
+                    loaderUsed{i}=IO.check_sample_type([sampleList.inputPath,filesep,samples(i).name],sampleList.loaderTypesAvailable);
+                end
             end
         end
         
