@@ -17,7 +17,9 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %% 
 classdef Rescore_Using_Gate < SampleProcessor
-    % Rescore_Using_Gate SampleProcessor for gating of extracted objects.
+    % Rescore_Using_Gate SampleProcessor to apply manually set gate.
+    % Acts on the previously extracted features and adds a manual classification 
+    % with preset gates.
         
     properties
         previousProcessor = SampleProcessor();

@@ -35,6 +35,7 @@ classdef MaskDetermination < SampleProcessorObject
         end
         
         function returnSample = run(this,inputSample)
+            if ~strcmp(inputSample.hasEdges,'false')
                 returnSample = inputSample;
                 
                 %open image first to smooth
@@ -52,6 +53,7 @@ classdef MaskDetermination < SampleProcessorObject
                 %remove all excluded pixels also from histogram
                 inputSample.histogram_down = inputSample.histogram_down - histc(reshape(inputSample.overviewImage(repmat(returnSample.mask,1,1,inputSample.nrOfChannels)),...
                     numel(inputSample.overviewImage(repmat(returnSample.mask,1,1,inputSample.nrOfChannels)))/inputSample.nrOfChannels,inputSample.nrOfChannels),1:1:65535);
+            end
         end
     end
     

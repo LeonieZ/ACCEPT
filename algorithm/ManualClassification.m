@@ -28,15 +28,15 @@ classdef ManualClassification < SampleProcessorObject
     
     methods
         function this = ManualClassification(gates,name,varargin)
-            %varargin{1} fills this.index if only one entry of feature
-            %table should be processed
+            %varargin{1} type and varargin{2} fills this.index if only one entry
+            %should be processed
             
             this.gates = gates;
             
             this.name = name;
             
             if nargin > 2
-                this.index = varargin{1};
+                this.index = varargin{2};
             else 
                 this.index = [];
             end    
@@ -102,7 +102,7 @@ classdef ManualClassification < SampleProcessorObject
             % set gates for easy iteration
             gate_valuesl = zeros(1, size(gateStr,1));
             gate_valuesu = zeros(1, size(gateStr,1));
-            %determine if upper of lower bound
+            %determine if upper or lower bound
             for gate = 1:size(gateStr,1)
                 if ~isempty(gateStr{gate,2})
                     if strcmp(gateStr{gate,2}, 'upper')

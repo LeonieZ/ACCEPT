@@ -34,27 +34,25 @@ classdef DetermineMask < DataframeProcessorObject
         
         function returnFrame = run(this,inputFrame)
             if isa(inputFrame,'Dataframe')
-                if inputFrame.frameHasEdge
-                    %load data
-                    returnFrame = inputFrame;
-                    returnFrame.mask = false(size(inputFrame.rawImage,1),size(inputFrame.rawImage,2));
-                    %open image first to smooth
-                    se = strel('disk',50);              
-                    if isempty(this.channelEdgeRemoval)
-                        this.channelEdgeRemoval = inputFrame.channelEdgeRemoval;
-                    end
-                    openImg = imopen(inputFrame.rawImage(:,:,this.channelEdgeRemoval),se);
-
-                    %create active contour object
-                    ac = ActiveContourSegmentation(1, 50, 1);
-                    %segment edge
-                    binImg = ac.run(openImg);
-                    [r,c] = find(binImg == 1);
-
-                    % adapt for corner images;
-                    returnFrame.mask(min(r):max(r),min(c):max(c)) = true;
-                    returnFrame.mask = bwmorph(returnFrame.mask,'thicken',100);
+                %load data
+                returnFrame = inputFrame;
+                returnFrame.mask = false(size(inputFrame.rawImage,1),size(inputFrame.rawImage,2));
+                %open image first to smooth
+                se = strel('disk',50);              
+                if isempty(this.channelEdgeRemoval)
+                    this.channelEdgeRemoval = inputFrame.channelEdgeRemoval;
                 end
+                openImg = imopen(inputFrame.rawImage(:,:,this.channelEdgeRemoval),se);
+
+                %create active contour object
+                ac = ActiveContourSegmentation(1, 50, 1);
+                %segment edge
+                binImg = ac.run(openImg);
+                [r,c] = find(binImg == 1);
+
+                % adapt for corner images;
+                returnFrame.mask(min(r):max(r),min(c):max(c)) = true;
+                returnFrame.mask = bwmorph(returnFrame.mask,'thicken',100);
             elseif isa(inputFrame,'double')
                 returnFrame = false(size(inputFrame,1),size(inputFrame,2));
                 %open image first to smooth

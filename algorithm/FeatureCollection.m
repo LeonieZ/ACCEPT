@@ -65,11 +65,11 @@ classdef FeatureCollection < SampleProcessorObject
                         featureTables{i} = [thumbNr dataFrame.features]; %maybe change like below?!
                         %determine box surrounding event found
                         bb = struct2cell(regionprops(dataFrame.labelImage,'BoundingBox'));
-                        yBottomLeft = cellfun(@(x) min(max(floor(x(2)) - round(0.2*x(5)),1),size(dataFrame.rawImage,1)),bb);
-                        xBottomLeft = cellfun(@(x) min(max(floor(x(1)) - round(0.2*x(4)),1),size(dataFrame.rawImage,2)),bb);
-                        yTopRight = cellfun(@(x) min(floor(x(2)) + round(1.2*x(5)),size(dataFrame.rawImage,1)),bb);
+                        yBottomLeft = cellfun(@(x) min(max(floor(x(2)) - round(0.2*x(0.5*size(bb{1},2)+2)),1),size(dataFrame.rawImage,1)),bb);
+                        xBottomLeft = cellfun(@(x) min(max(floor(x(1)) - round(0.2*x(0.5*size(bb{1},2)+1)),1),size(dataFrame.rawImage,2)),bb);
+                        yTopRight = cellfun(@(x) min(floor(x(2)) + round(1.2*x(0.5*size(bb{1},2)+2)),size(dataFrame.rawImage,1)),bb);
                         yTopRight = max(yTopRight,yBottomLeft+2);
-                        xTopRight = cellfun(@(x) min(floor(x(1)) + round(1.2*x(4)),size(dataFrame.rawImage,2)),bb);
+                        xTopRight = cellfun(@(x) min(floor(x(1)) + round(1.2*x(0.5*size(bb{1},2)+1)),size(dataFrame.rawImage,2)),bb);
                         xTopRight = max(xTopRight,xBottomLeft+2);
                         ind1 = find(xTopRight>size(dataFrame.rawImage,2));
                         ind2 = find(yTopRight>size(dataFrame.rawImage,1));
@@ -191,10 +191,10 @@ classdef FeatureCollection < SampleProcessorObject
                     % (compare middlepoints of boxes)
                     selection = selection(abs((returnSample.results.thumbnails.xBottomLeft(selection)+0.5*(returnSample.results.thumbnails.xTopRight(selection)...
                         - returnSample.results.thumbnails.xBottomLeft(selection)))...
-                        - (inputSample.priorLocations.xBottomLeft(i)+ 0.5*(inputSample.priorLocations.xTopRight(i)-inputSample.priorLocations.xBottomLeft(i)))) < 20);
+                        - (inputSample.priorLocations.xBottomLeft(i)+ 0.5*(inputSample.priorLocations.xTopRight(i)-inputSample.priorLocations.xBottomLeft(i)))) < 30);
                     selection = selection(abs((returnSample.results.thumbnails.yBottomLeft(selection)+0.5*(returnSample.results.thumbnails.yTopRight(selection)...
                         - returnSample.results.thumbnails.yBottomLeft(selection)))...
-                        - (inputSample.priorLocations.yBottomLeft(i)+ 0.5*(inputSample.priorLocations.yTopRight(i)-inputSample.priorLocations.yBottomLeft(i)))) < 20);
+                        - (inputSample.priorLocations.yBottomLeft(i)+ 0.5*(inputSample.priorLocations.yTopRight(i)-inputSample.priorLocations.yBottomLeft(i)))) < 30);
                     %compute overlap of boxes
                     if ~isempty(selection)
                         xTopRight_overlap = min(returnSample.results.thumbnails.xTopRight(selection),inputSample.priorLocations.xTopRight(i));
