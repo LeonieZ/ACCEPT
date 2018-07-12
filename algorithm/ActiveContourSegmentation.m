@@ -142,9 +142,14 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
                         %(local or global)
                         validatestring(this.init{1},{'otsu','triangle'});
                         validatestring(this.init{2},{'global','local'});
-                        if strcmp(this.init{2},'local')
-                            threshSeg = ThresholdingSegmentation(this.init{1},'local',[],this.maskForChannels);
-                            cvInit = threshSeg.run(inputFrame.rawImage);
+                        if strcmp(this.init{2},'local')  
+                            if isempty(inputFrame.preProcessedImage)
+                                threshSeg = ThresholdingSegmentation(this.init{1},'local',[],this.maskForChannels);
+                                cvInit = threshSeg.run(inputFrame.rawImage);
+                            else
+                                threshSeg = ThresholdingSegmentation(this.init{1},'local',[],this.maskForChannels);
+                                cvInit = threshSeg.run(inputFrame.preProcessedImage);
+                            end
                         elseif strcmp(this.init{2},'global') && ~isempty(this.init{3})
                             threshSeg = ThresholdingSegmentation(this.init{1},'global',this.init{3},this.maskForChannels);
                             cvInit = threshSeg.run(inputFrame.rawImage);
@@ -295,7 +300,11 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
         function bin = bregman_cv(this, dataFrame, k, init)
             %segmentation method (core in mex file)
             if isa(dataFrame,'Dataframe')
-                f = dataFrame.rawImage(:,:,k);
+                if isempty(dataFrame.preProcessedImage)
+                    f = dataFrame.rawImage(:,:,k);
+                else
+                    f = dataFrame.preProcessedImage(:,:,k);
+                end
             elseif isa(dataFrame,'double') || isa(dataFrame,'single')
                 f = dataFrame;
             end
@@ -312,8 +321,14 @@ classdef ActiveContourSegmentation < DataframeProcessorObject
             dim = ndims(f);
 
             %scale data f
-            f = f-min(f(:)); f = f/max(f(:));
-
+            if isa(dataFrame,'Dataframe') && dataFrame.frameHasEdge == true && ~isempty(dataFrame.mask) && min(dataFrame.mask(:)) ~=1
+                f = f-min(f(~dataFrame.mask)); 
+                f = f/max(f(~dataFrame.mask));
+            else
+                f = f-min(f(:)); 
+                f = f/max(f(:));
+            end
+            
             if isempty(init)
                 init(:,:,k) = f;
                 % initialize primal variables as zero
