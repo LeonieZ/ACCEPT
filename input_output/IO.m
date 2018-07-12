@@ -319,7 +319,11 @@ classdef IO < handle
               
         function outputImage = load_segmented_image(sample,frameNr)
             if ~isempty(sample.segmentationFileNames) && exist(sample.segmentationFileNames{frameNr},'file')
-               outputImage=imread(sample.segmentationFileNames{frameNr},'info',sample.segmentationHeaders{frameNr});
+               if ~isempty(sample.segmentationHeaders)
+                   outputImage=imread(sample.segmentationFileNames{frameNr},'info',sample.segmentationHeaders{frameNr});
+               else
+                   outputImage=imread(sample.segmentationFileNames{frameNr});
+               end
             else
                outputImage=[];
             end
@@ -350,7 +354,7 @@ classdef IO < handle
             t.setTag('Compression',t.Compression.LZW);
             t.setTag('ImageLength',size(currentDataFrame.segmentedImage,1));
             t.setTag('ImageWidth',size(currentDataFrame.segmentedImage,2));
-            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Separate);
+            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
             t.setTag('BitsPerSample',8);
             t.setTag('SamplesPerPixel',currentSample.nrOfChannels);
             t.write(uint8(currentDataFrame.segmentedImage));
@@ -593,7 +597,7 @@ classdef IO < handle
         end
         
         function outputImage = load_overview_image(sample)
-            if exist([sample.savePath,'frames',filesep,sample.id,filesep,'overview_thumbnail.tif'],'file');
+            if exist([sample.savePath,'frames',filesep,sample.id,filesep,'overview_thumbnail.tif'],'file')
                outputImage=imread([sample.savePath,'frames',filesep,sample.id,filesep,'overview_thumbnail.tif']);
             else
                outputImage=[];
@@ -601,7 +605,7 @@ classdef IO < handle
         end
         
         function outputImage = load_overview_mask(sample)
-            if exist([sample.savePath,'frames',filesep,sample.id,filesep,'overview_mask.tif'],'file');
+            if exist([sample.savePath,'frames',filesep,sample.id,filesep,'overview_mask.tif'],'file')
                outputImage=logical(imread([sample.savePath,'frames',filesep,sample.id,filesep,'overview_mask.tif']));
             else
                outputImage=[];
@@ -618,7 +622,7 @@ classdef IO < handle
             t.setTag('Compression',t.Compression.LZW);
             t.setTag('ImageLength',size(inputImage,1));
             t.setTag('ImageWidth',size(inputImage,2));
-            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Separate);
+            t.setTag('PlanarConfiguration',t.PlanarConfiguration.Chunky);
             t.setTag('BitsPerSample',16);
             t.setTag('SamplesPerPixel',currentSample.nrOfChannels);
             t.write(inputImage);
