@@ -221,7 +221,7 @@ classdef VyCAP < Loader & IcyPluginData & CustomCsv
                 x = max(x,1);
                 y = min(y,this.sample.imageSize(1));
                 y = max(y,1);
-                boundingBox = {y,x};
+                boundingBox = {x,y};
                 sizex = boundingBox{2}(2)-boundingBox{2}(1)+1;
                 sizey = boundingBox{1}(2)-boundingBox{1}(1)+1;
                 rawImage = zeros(sizey,sizex,this.sample.imageSize(3));
