@@ -27,7 +27,7 @@ classdef CellTracks < Loader
         pixelSize=0.64;
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
         channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
-        channelEdgeRemoval=2;
+        channelEdgeRemoval=1;
         xmlData=[];
         sample=Sample();
     end
@@ -61,10 +61,10 @@ classdef CellTracks < Loader
             end
             this.preload_tiff_headers();
             this.sample.pixelSize = this.pixelSize;
-            this.sample.hasEdges = this.hasEdges;
-            this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
+            this.sample.hasEdges = this.hasEdges; 
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
             this.processXML();
+            this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
             this.sample.priorLocations = this.prior_locations_in_sample;
             this.sample.frameOrder=this.calculate_frame_nr_order;
             this.sample.results = Result();
@@ -329,6 +329,9 @@ classdef CellTracks < Loader
                 this.sample.rows=str2num(this.xmlData.runs.record.numrows);
                 this.xmlData.camYSize=str2num(this.xmlData.runs.record.camysize);
                 this.xmlData.camXSize=str2num(this.xmlData.runs.record.camxsize);
+                for c = 1:this.sample.nrOfChannels
+                    this.channelNames{c} = this.xmlData.test_filters.record(c).filtername;
+                end           
             else
                     %notify(this,'logMessage',logmessage(2,['unable to read xml']));
                     %setting row and colums based on nrOfImages

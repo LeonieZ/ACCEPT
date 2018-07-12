@@ -28,7 +28,7 @@ classdef CellTracksXp < Loader
         pixelSize=0.64;
         channelNames={'DNA','Marker1','CK','CD45','Marker2','Marker3'};
         channelRemapping=[2,4,3,1,5,6;4,1,3,2,5,6];
-        channelEdgeRemoval=2;
+        channelEdgeRemoval=1;
         dlmData=[];
         sample=Sample();
     end
@@ -63,9 +63,9 @@ classdef CellTracksXp < Loader
             this.preload_tiff_headers();
             this.sample.pixelSize = this.pixelSize;
             this.sample.hasEdges = this.hasEdges;
-            this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
             this.sample.channelEdgeRemoval = this.channelEdgeRemoval;
             this.processDLM();
+            this.sample.channelNames = this.channelNames(this.channelRemapping(2,1:this.sample.nrOfChannels));
             this.sample.priorLocations = this.prior_locations_in_sample();
             this.sample.frameOrder=this.calculate_frame_nr_order();
             this.sample.results = Result();
@@ -350,7 +350,7 @@ classdef CellTracksXp < Loader
                 this.dlmData.frameNr=[];
                 this.dlmData.camYSize=1384;
                 this.dlmData.camXSize=1036;
-
+                this.channelNames = this.read_frames_dlm([this.sample.priorPath filesep 'frames.dlm']);
                 this.dlmData.frame=this.read_pic_dlm([this.sample.priorPath filesep 'pic.dlm']);
                 if ~isempty(this.dlmData.frame.frameNr)
                     this.dlmData.priorEvents=this.read_cells_dlm([this.sample.priorPath filesep 'cells.dlm'],this.dlmData.frame);
@@ -442,6 +442,14 @@ classdef CellTracksXp < Loader
             frame.timeStamp=temp{1};
             frame.frameNr=temp{4};
             frame.timeStamp=strrep(frame.timeStamp,'"','');
+            fclose(fileId);
+        end
+        
+        function channel_names=read_frames_dlm(~,path)
+            fileId=fopen(path);
+%             temp=textscan(fileId,'%s%s%s%f%s','delimiter','?');
+            temp=textscan(fileId,'%s%s%s%f%s','delimiter','¦');
+            channel_names = temp{3}(1:2:end-1);
             fclose(fileId);
         end
 
