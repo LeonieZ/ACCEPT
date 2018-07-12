@@ -38,8 +38,13 @@ classdef ExtractFeatures < DataframeProcessorObject
                         imTemp = inputFrame.rawImage(:,:,ch);
                         % extract features (subtract background median for
                         % intensity measures)
-                        MsrTemp = regionprops(inputFrame.labelImage(:,:,ch), imTemp - median(imTemp(inputFrame.labelImage(:,:,ch) == 0)),...
+                        if inputFrame.frameHasEdge && ~isempty(inputFrame.mask)
+                            MsrTemp = regionprops(inputFrame.labelImage(:,:,ch), imTemp - median(imTemp(inputFrame.labelImage(:,:,ch) == 0 & inputFrame.mask ~= 1)),...
+                                    'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
+                        else
+                            MsrTemp = regionprops(inputFrame.labelImage(:,:,ch), imTemp - median(imTemp(inputFrame.labelImage(:,:,ch) == 0 )),...
                                 'MaxIntensity', 'PixelValues', 'MeanIntensity', 'Area', 'Perimeter', 'Eccentricity');
+                        end
 
                         %fill structure so tables can be concatenated.
                         MsrTemp=fillStruct(this, MsrTemp);
@@ -48,7 +53,7 @@ classdef ExtractFeatures < DataframeProcessorObject
                         %mean intensity
                         MeanIntensity = arrayfun(@(x) max(0,(x.MeanIntensity)), MsrTemp);
                         %max intensity
-                        MaxIntensity = arrayfun(@(x) max(0,(x.MeanIntensity)), MsrTemp);
+                        MaxIntensity = arrayfun(@(x) max(0,(x.MaxIntensity)), MsrTemp);
                         %standard deviation
                         StandardDeviation = arrayfun(@(x) std2(x.PixelValues), MsrTemp);
                         %median intensity
@@ -92,16 +97,18 @@ classdef ExtractFeatures < DataframeProcessorObject
                     %% smaller variant
                     %compute overlay of nucleus marker channel to all
                     %other ones
-                    for ch_two = 1:inputFrame.nrChannels
-                        if ch_two ~= 2
-                            tmpTbl = table();
-                            for i = 1:this.nrObjects
-                                tmpImg = returnFrame.labelImage == i;
-                                tmpTbl = [tmpTbl; array2table(sum(sum(tmpImg(:,:,2) & tmpImg(:,:,ch_two)))/sum(sum(tmpImg(:,:,2))),...
-                                    'VariableNames',{strcat('ch_', num2str(2),'_Overlay_ch_',num2str(ch_two))})]; 
+                    if inputFrame.nrChannels > 1
+                        for ch_two = 1:inputFrame.nrChannels
+                            if ch_two ~= 2
+                                tmpTbl = table();
+                                for i = 1:this.nrObjects
+                                    tmpImg = returnFrame.labelImage == i;
+                                    tmpTbl = [tmpTbl; array2table(sum(sum(tmpImg(:,:,2) & tmpImg(:,:,ch_two)))/sum(sum(tmpImg(:,:,2))),...
+                                        'VariableNames',{strcat('ch_', num2str(2),'_Overlay_ch_',num2str(ch_two))})]; 
+                                end
+                                %add to features
+                                returnFrame.features = [returnFrame.features tmpTbl];
                             end
-                            %add to features
-                            returnFrame.features = [returnFrame.features tmpTbl];
                         end
                     end
                 end
