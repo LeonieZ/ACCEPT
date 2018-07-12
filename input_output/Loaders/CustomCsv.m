@@ -28,7 +28,7 @@ classdef CustomCsv < handle
             channelsUsed=[];
             [sample.priorPath,bool]=this.find_dir(samplePath,'csv',1);
             if bool==1 
-                try t=readtable([sample.priorPath filesep 'customChannels.csv'],'delimiter',';');
+                try t=readtable([sample.priorPath filesep 'customChannels.csv'],'delimiter',';','Format', ['%s','%s']);
                     channelsUsed=t.channelUsed;
                 catch
                     %add logging
