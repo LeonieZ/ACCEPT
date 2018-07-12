@@ -161,16 +161,23 @@ classdef Default < Loader & IcyPluginData & CustomCsv
             if bool
                 for j=1:numel(this.sample.channelNames)
                     tempImageFileNames = dir([this.sample.imagePath filesep '*' this.sample.channelNames{j} '*.tif']);
+                    index_to_delete = [];
                     for i=1:numel(tempImageFileNames)
-                        this.sample.imageFileNames{i,j} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
-                        this.sample.tiffHeaders{i,j}=imfinfo(this.sample.imageFileNames{i,j});
+                        if ~contains(tempImageFileNames(i).name,this.sample.channelNames{j})
+                            index_to_delete = [index_to_delete, i];
+                        end
+                    end
+                    tempImageFileNames(index_to_delete) = [];
+                    for i=1:numel(tempImageFileNames)                        
+                            this.sample.imageFileNames{i,j} = [this.sample.imagePath filesep tempImageFileNames(i).name];  
+                            this.sample.tiffHeaders{i,j}=imfinfo(this.sample.imageFileNames{i,j});
                     end
 
                     %function to fill the dataP.temp.imageinfos variable
                 end
          %Have to add a check for the 2^15 offset.
                 %dataP.temp.imagesHaveOffset=false;
-                this.sample.imageSize=[this.sample.tiffHeaders{1,2}(1).Height this.sample.tiffHeaders{1,2}(1).Width  numel(this.sample.channelNames)];
+                this.sample.imageSize=[this.sample.tiffHeaders{1,1}(1).Height this.sample.tiffHeaders{1,1}(1).Width  numel(this.sample.channelNames)];
                 this.sample.nrOfFrames=numel(tempImageFileNames);
                 this.sample.nrOfChannels=numel(this.sample.channelNames);
             else
@@ -195,7 +202,7 @@ classdef Default < Loader & IcyPluginData & CustomCsv
                 x = max(x,1);
                 y = min(y,this.sample.imageSize(1));
                 y = max(y,1);
-                boundingBox = {y,x};
+                boundingBox = {x,y};
                 sizex = boundingBox{2}(2)-boundingBox{2}(1)+1;
                 sizey = boundingBox{1}(2)-boundingBox{1}(1)+1;
                 rawImage = zeros(sizey,sizex,this.sample.imageSize(3));
@@ -212,7 +219,7 @@ classdef Default < Loader & IcyPluginData & CustomCsv
                         return
                     end
                 end
-                if max(imagetemp) > 32767
+                if ~strcmp(this.sample.dataTypeOriginalImage,'uint16') && max(imagetemp(:)) > 32767
                     imagetemp = imagetemp - 32768;
                 end
                 rawImage(:,:,i)=imagetemp(boundingBox{1}(1):boundingBox{1}(2),boundingBox{2}(1):boundingBox{2}(2));
