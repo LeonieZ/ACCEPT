@@ -36,7 +36,15 @@ else
     if isempty(currentSample.histogram)
         max_true = 4095;
     else
-        max_true = find(currentSample.histogram(:,2),1,'last');
+        max_true_per_channel = zeros(1,currentSample.nrOfChannels);
+        for c = 1:currentSample.nrOfChannels
+            if max(currentSample.histogram(:,c)) > 0
+                max_true_per_channel(c) = find(currentSample.histogram(:,c),1,'last');
+            else
+                max_true_per_channel(c) = 4095;
+            end
+        end
+        max_true = max(max_true_per_channel);
     end
     if max_true > 4095
         maxi = 65535;
@@ -124,7 +132,7 @@ if ~isempty(thumbContainer.overviewImage)
      GuiSampleHandle.axesOverview = axes('Parent',GuiSampleHandle.uiPanelOverview,...
                                     'Units','characters','Position',[tabPosition(1)+tabPosition(3)+1.5 1 151.6-(tabPosition(1)+tabPosition(3)+3) 12.7]);
     %                            
-     defCh = 2; % default channel for overview when starting the sample visualizer
+     defCh = min(2,currentSample.nrOfChannels); % default channel for overview when starting the sample visualizer
 
      blank=zeros(size(thumbContainer.overviewImage(:,:,defCh)));
      GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
@@ -268,9 +276,14 @@ GuiSampleHandle.axesTop = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','
 GuiSampleHandle.axesTop.YAxis.Exponent = 0;
 GuiSampleHandle.axesTop.XAxis.Exponent = 0;
 
-topFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
-topFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_2_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
-
+topFeatureIndex1 = find(cellfun(@(s) contains('ch_3_MeanIntensity', s), sampleFeatures.Properties.VariableNames));
+topFeatureIndex2 = find(cellfun(@(s) contains('ch_2_MeanIntensity', s), sampleFeatures.Properties.VariableNames));
+if isempty(topFeatureIndex1)
+    topFeatureIndex1 = find(cellfun(@(s) contains('ch_1_Size', s), sampleFeatures.Properties.VariableNames));
+end
+if isempty(topFeatureIndex2)
+    topFeatureIndex2 = find(cellfun(@(s) contains('ch_1_MeanIntensity', s), sampleFeatures.Properties.VariableNames));
+end
 XData = sampleFeatures.(topFeatureIndex1);
 YData = sampleFeatures.(topFeatureIndex2);    
     
@@ -294,7 +307,13 @@ set(GuiSampleHandle.uiPanelScatter,'Title',...
 
 set(gca,'TickDir','out');
 feature_names = cell(size(sampleFeatures.Properties.VariableNames));
-feature_names(2:end) = strrep(strrep(strrep(strrep(sampleFeatures.Properties.VariableNames(2:end),'_',' '),'ch 1',currentSample.channelNames(1)),'ch 2',currentSample.channelNames(2)),'ch 3',currentSample.channelNames(3));
+feature_names(2:end) = strrep(strrep(sampleFeatures.Properties.VariableNames(2:end),'_',' '),'ch 1',currentSample.channelNames(1));
+if size(currentSample.channelNames,2) > 1
+    feature_names(2:end) = strrep(feature_names(2:end),'ch 2',currentSample.channelNames(2));
+end
+if size(currentSample.channelNames,2) > 2
+    feature_names(2:end) = strrep(feature_names(2:end),'ch 3',currentSample.channelNames(3));
+end
 if size(currentSample.channelNames,2) > 3
     feature_names(2:end) = strrep(feature_names(2:end),'ch 4',currentSample.channelNames(4));
 end
@@ -340,8 +359,11 @@ GuiSampleHandle.zoomOut1_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 
 GuiSampleHandle.axesMiddle = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[11.2 23 40.4 13.1]); %[left bottom width height]
 GuiSampleHandle.axesMiddle.YAxis.Exponent = 0;
 GuiSampleHandle.axesMiddle.XAxis.Exponent = 0;
-middleFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
-middleFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_1_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
+middleFeatureIndex1 = find(cellfun(@(s) contains('ch_3_MeanIntensity', s), sampleFeatures.Properties.VariableNames));
+middleFeatureIndex2 = find(cellfun(@(s) contains('ch_1_MeanIntensity', s), sampleFeatures.Properties.VariableNames));
+if isempty(middleFeatureIndex1)
+    middleFeatureIndex1 = find(cellfun(@(s) contains('ch_1_Size', s), sampleFeatures.Properties.VariableNames));
+end
 
 XData = sampleFeatures.(middleFeatureIndex1);
 YData = sampleFeatures.(middleFeatureIndex2);    
@@ -396,10 +418,16 @@ GuiSampleHandle.zoomOut2_y = uicontrol('Parent',GuiSampleHandle.uiPanelScatter, 
 GuiSampleHandle.axesBottom = axes('Parent',GuiSampleHandle.uiPanelScatter,'Units','characters','Position',[11.2 3.7 40.4 13.1]); %[left bottom width height]
 GuiSampleHandle.axesBottom.YAxis.Exponent = 0;
 GuiSampleHandle.axesBottom.XAxis.Exponent = 0;
-bottomFeatureIndex1 = find(cellfun(@(s) ~isempty(strfind('ch_3_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
-bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_4_MeanIntensity', s)), sampleFeatures.Properties.VariableNames));
+bottomFeatureIndex1 = find(cellfun(@(s) contains('ch_3_MeanIntensity', s), sampleFeatures.Properties.VariableNames));
+bottomFeatureIndex2 = find(cellfun(@(s) contains('ch_4_MeanIntensity', s), sampleFeatures.Properties.VariableNames));
 if isempty(bottomFeatureIndex2)
-    bottomFeatureIndex2 = find(cellfun(@(s) ~isempty(strfind('ch_3_Size', s)), sampleFeatures.Properties.VariableNames));
+    bottomFeatureIndex2 = find(cellfun(@(s) contains('ch_3_Size', s), sampleFeatures.Properties.VariableNames));
+end
+if isempty(bottomFeatureIndex1)
+    bottomFeatureIndex1 = find(cellfun(@(s) contains('ch_1_Size', s), sampleFeatures.Properties.VariableNames));
+end
+if isempty(bottomFeatureIndex2)
+    bottomFeatureIndex2 = find(cellfun(@(s) contains('ch_1_MeanIntensity', s), sampleFeatures.Properties.VariableNames));
 end
 
 XData = sampleFeatures.(bottomFeatureIndex1);
@@ -621,7 +649,11 @@ function plot_thumbnails(val)
             end
             k = (j-1)*cols + 1; % k indicates indices 1,6,11,...
             % plot overlay image in first column
-            plotImInAxis(rawImage,segmentedImage,hAxes(k),hImages(k));
+            if size(rawImage,3) > 1
+                plotImInAxis(rawImage,segmentedImage,hAxes(k),hImages(k));
+            else
+                plotImInAxis(repmat(rawImage,[1 1 3]),repmat(segmentedImage,[1 1 3]),hAxes(k),hImages(k));
+            end
             
             % update visual selection dependent on selectedFrames array
 %             if selectedFrames(thumbInd) == 1
@@ -654,13 +686,13 @@ function plotImInAxis(im,segm,hAx,hIm)
         else 
             max_ch2 = maxi;
         end
-
-        if sum(sum(segm(:,:,3))) > 1
-            max_ch3 = max(max(im(:,:,3)));
-        else 
-            max_ch3 = maxi;
+        if size(im,3) > 2
+            if sum(sum(segm(:,:,3))) > 1
+                max_ch3 = max(max(im(:,:,3)));
+            else 
+                max_ch3 = maxi;
+            end
         end
-        
         if sum(sum(segm(:,:,1))) > 1
             max_ch1 = max(max(im(:,:,1)));
         else 
@@ -668,10 +700,16 @@ function plotImInAxis(im,segm,hAx,hIm)
         end
         % create overlay image here
         if three_channel_overlay == false
-            overlay(:,:,1) = im(:,:,2)/max_ch2; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
+            overlay(:,:,1) = im(:,:,2)/max_ch2; overlay(:,:,3) = im(:,:,2)/max_ch2; 
+            if size(im,3) > 2
+                overlay(:,:,2) = im(:,:,3)/max_ch3;
+            end
             overlay(end-1,2:min(11,end),:) = 1;
         else
-            overlay(:,:,1) = im(:,:,1)/max_ch1; overlay(:,:,3) = im(:,:,2)/max_ch2; overlay(:,:,2) = im(:,:,3)/max_ch3;
+            overlay(:,:,1) = im(:,:,1)/max_ch1; overlay(:,:,3) = im(:,:,2)/max_ch2; 
+            if size(im,3) > 2
+                overlay(:,:,2) = im(:,:,3)/max_ch3;
+            end
             overlay(end-1,2:min(11,end),:) = 1;
         end            
         set(hIm,'CData',overlay);
@@ -718,7 +756,7 @@ function openSpecificImage(~,~,row,column)
             im = get(gcbo,'cdata');
             true_max_int = max(im(im~=1));
             im_new = (im / true_max_int) .* double(im~=1) + 1.002 * double(im==1);
-            new_fig = figure; imagesc(im_new,[0,1.002]); axis equal; axis off;
+            figure; imagesc(im_new,[0,1.002]); axis equal; axis off;
             %determine features
             channel = column - 1 - (row-1)*(nbrColorChannels+1);
             if channel ~=0
@@ -752,7 +790,7 @@ function openSpecificImage(~,~,row,column)
     end
 end
 
-function key_Pressed_Callback(handle,event,~)
+function key_Pressed_Callback(~,event,~)
     if(strcmp(event.Key, 'space'))
         newPos = max(3,min(-round(GuiSampleHandle.slider.Value)+5,nrUsedThumbs-2));
         plot_thumbnails(newPos);
