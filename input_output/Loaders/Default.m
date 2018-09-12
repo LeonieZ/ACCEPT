@@ -268,7 +268,7 @@ classdef Default < Loader & IcyPluginData & CustomCsv
             %if the current sample can be loaded by this class. 
             
             [txtDir,cvsdirFound]=Loader.find_dir(path,'csv',1);
-            [tifDir,tifdirFound]=Loader.find_dir(path,'tif',100);
+            [tifDir,tifdirFound]=Loader.find_dir(path,'tif',10);
             if cvsdirFound
                 tempTxtFileNames = dir([txtDir filesep '*.csv']);
                 for i=1:numel(tempTxtFileNames)

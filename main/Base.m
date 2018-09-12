@@ -77,7 +77,7 @@ classdef Base < handle
             IO.check_save_path(this.sampleList.save_path())
             nbrSamples = size(this.sampleList.toBeProcessed,2);
             this.nrProcessed = 0;
-            if isa(this.sampleProcessor,'Full_Detection_Mask')
+            if isa(this.sampleProcessor,'Full_Detection_Mask') || isa(this.sampleProcessor,'Marker_Characterization_Mask')
                 gui_mask_handle = gui_mask();
                 waitfor(gui_mask_handle.fig_main,'UserData')
                 try
