@@ -224,8 +224,13 @@ classdef IO < handle
         
         function save_results_as_xls(currentSample)
              IO.check_save_path(currentSample.savePath);
-            %export results to a xls/csv file. 
-             tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
+            %export results to a xls/csv file.
+             if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames)
+                 tempTable=horzcat(currentSample.results.classification,currentSample.results.thumbnails(:,'CellSearchIDs'),...
+                     currentSample.results.features);
+             else
+                 tempTable=horzcat(currentSample.results.classification,currentSample.results.features);
+             end
              if size(tempTable,1) > 0
                  writetable(tempTable,[currentSample.savePath,'output',filesep,currentSample.id,'.xlsx']);
              end

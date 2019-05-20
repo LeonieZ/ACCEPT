@@ -91,6 +91,10 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                     this.maskForChannels = this.maskForChannels(1) * ones(1,inputFrame.nrChannels);
                 end
                 
+                if size(this.thresholds,2) == 1
+                    this.thresholds = this.thresholds(1) * ones(1,inputFrame.nrChannels);
+                end
+                
                 %initialize histogram
                 if isempty(this.histogram)
                     this.histogram = zeros(1,bins,inputFrame.nrChannels);
@@ -122,7 +126,7 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                 returnFrame.segmentedImage = returnFrame.segmentedImage(:,:,this.maskForChannels);
                 %create label image (overlapping object have one label)
                 sumImage = sum(returnFrame.segmentedImage,3); 
-                labels = repmat(bwlabel(sumImage,8),1,1,returnFrame.nrChannels);
+                labels = repmat(bwlabel(sumImage,4),1,1,returnFrame.nrChannels);
                 returnFrame.labelImage = labels.*returnFrame.segmentedImage; 
 
 
@@ -143,6 +147,10 @@ classdef ThresholdingSegmentation < DataframeProcessorObject
                 
                 if isempty(this.histogram)
                     this.histogram = zeros(bins,size(inputFrame,3));
+                end
+                
+                if size(this.thresholds,2) == 1
+                    this.thresholds = this.thresholds(1) * ones(1,size(inputFrame,3));
                 end
 
                 %create histogram if thresholding is local otherwise we assume

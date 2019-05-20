@@ -247,21 +247,26 @@ classdef CellTracks < Loader
             end
         end
         
-        function locations=prior_locations_in_sample(this)
+        function locations = prior_locations_in_sample(this)
             if isempty(this.xmlData)
                 this.processXML();
             end
             index=[];
             %index=[1:this.xmlData.num_events];
             if ~isempty(this.xmlData)
-                index=find(this.xmlData.score==1|this.xmlData.score==2|this.xmlData.score==3);
+                index = find(strcmp({this.xmlData.events.record.assigned},'true'))';
+                CellSearchIDs = {this.xmlData.events.record.rid};
             end
             if isempty(index)
                 locations=[];
             else
+                locations = table();
+                ids = cell(numel(index),1);
                 for i=1:numel(index)
                     locations(i,:)=this.event_to_pixels_and_frame(index(i));
+                    ids{i} = CellSearchIDs{index(i)};
                 end
+                 locations = [locations, cell2table(ids,'VariableNames',{'CellSearchIDs'})];
             end
         end           
         
@@ -315,7 +320,7 @@ classdef CellTracks < Loader
                 this.xmlData.score=zeros(this.xmlData.num_events,1);
                 this.xmlData.frameNr=zeros(this.xmlData.num_events,1);
                 for i=1:this.xmlData.num_events
-                    this.xmlData.CellSearchIds(i)=str2num(this.xmlData.events.record(i).eventnum); %#ok<*ST2NM>
+                    this.xmlData.CellSearchIds(i)=str2num(this.xmlData.events.record(i).rid); %#ok<*ST2NM>
                     this.xmlData.score(i)=str2num(this.xmlData.events.record(i).numselected);                    
                     this.xmlData.frameNr(i)=str2num(this.xmlData.events.record(i).framenum);
                     tempstr=this.xmlData.events.record(i).location;

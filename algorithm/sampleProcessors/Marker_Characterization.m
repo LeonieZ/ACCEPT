@@ -43,8 +43,10 @@ classdef Marker_Characterization < SampleProcessor
             %run overview loading
             this.pipeline{1}.run(inputSample);
             %create segmentation object
-            ac = ActiveContourSegmentation({'adaptive',0.001,0.005}, 200, 1,{'triangle','global', inputSample.histogram});
-            ac.clear_border = 1;
+%             ac = ActiveContourSegmentation({'adaptive',0.001,0.005}, 200, 1,{'triangle','global', inputSample.histogram});
+%             ac.clear_border = 1;
+            ac = ActiveContourSegmentation(0.0005, 200, 1,{'triangle','global', inputSample.histogram});
+            ac.clear_border = 0;
             this.dataframeProcessor.pipeline{1} = ac;
             
             %start processing
@@ -61,7 +63,7 @@ classdef Marker_Characterization < SampleProcessor
                 noCK = inputSample.results.features.ch_3_Size==0;
                 %if double listed, event without CK signal can be removed
                 notNec = noCK & multiThumbs_loc;
-                %make sure so thumb is removed completely
+                %make sure no thumb is removed completely
                 thumbsQuantity_new = hist(inputSample.results.features.ThumbNr(~notNec),linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)));
                 removedCompl = find(thumbsQuantity_new == 0 & thumbsQuantity ~= 0);
                 if ~isempty(removedCompl)
@@ -71,7 +73,28 @@ classdef Marker_Characterization < SampleProcessor
                 %delete events not needed
                 inputSample.results.features(notNec,:) = [];
                 inputSample.results.thumbnails(notNec,:) = [];
-                inputSample.results.segmentation(:,notNec) = [];      
+                inputSample.results.segmentation(:,notNec) = [];
+                
+                %check if thumbs are listed double
+                thumbsQuantity = hist(inputSample.results.features{:,1},linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)));
+                multiThumbs = find(thumbsQuantity>1)';
+                multiThumbs_loc = ismember(inputSample.results.features.ThumbNr,multiThumbs);
+                %check which events have no DAPI signal
+                noDAPI = inputSample.results.features.ch_2_Size==0;
+                %if double listed, event without DAPI signal can be removed
+                notNec = noDAPI & multiThumbs_loc;
+                %make sure no thumb is removed completely
+                thumbsQuantity_new = hist(inputSample.results.features.ThumbNr(~notNec),linspace(1,size(inputSample.priorLocations,1),size(inputSample.priorLocations,1)));
+                removedCompl = find(thumbsQuantity_new == 0 & thumbsQuantity ~= 0);
+                if ~isempty(removedCompl)
+                    remain = ismember(inputSample.results.features.ThumbNr,removedCompl);
+                    notNec(remain) = 0;
+                end
+                %delete events not needed
+                inputSample.results.features(notNec,:) = [];
+                inputSample.results.thumbnails(notNec,:) = [];
+                inputSample.results.segmentation(:,notNec) = [];
+                
             end
             %clear pipeline
             this.dataframeProcessor =[];

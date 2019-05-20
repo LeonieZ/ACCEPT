@@ -55,7 +55,10 @@ end
 
 
 nrUsedThumbs = thumbContainer.nrOfEvents;
-
+if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames)
+    thumbsQuantity = hist(currentSample.results.features{:,1},linspace(1,size(currentSample.priorLocations,1),size(currentSample.priorLocations,1)));
+    multiThumbs = find(thumbsQuantity>1)';
+end
 %replace NaN values with zeros
 sampleFeatures = currentSample.results.features;
 sampleFeatures_noNaN = sampleFeatures{:,:};
@@ -138,10 +141,11 @@ if ~isempty(thumbContainer.overviewImage)
      GuiSampleHandle.imageOverview = imshow(blank,'parent',GuiSampleHandle.axesOverview,'InitialMagnification','fit');
      
      colormap(GuiSampleHandle.axesOverview,parula(maxi+1));
-     low=prctile(reshape(thumbContainer.overviewImage(:,:,defCh),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),1);
-     high=prctile(reshape(thumbContainer.overviewImage(:,:,defCh)-low,[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),95);
+     overviewImg = single(thumbContainer.overviewImage(:,:,defCh));
+     low=prctile(reshape(overviewImg,[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),1);
+     high=prctile(reshape(overviewImg-low,[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),95);
      
-     plotImInAxis((thumbContainer.overviewImage(:,:,defCh)-low).*(maxi/(high)),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+     plotImInAxis((overviewImg-low)/high*maxi,[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
 
 
     % % create choose button to switch color channel
@@ -205,6 +209,7 @@ axWidth = 132.3/cols;
 %-----
 hAxes   = zeros(nbrImages,1);
 hImages = zeros(nbrImages,1);
+CSIDs = cell(nbrImages,1);
 % define common properties and values for all axes
 axesProp = {'dataaspectratio' ,...
             'Parent',...
@@ -228,6 +233,11 @@ for i=1:rows
     x = 0;
     ind = (i-1)*(cols) + 1; % 5,10,15... index for first column element
     hAxes(ind) = axes(axesProp,axesVal,'Units','characters','Position',[x y axWidth axHeight]);
+    if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames)
+        CSIDs{i} = uicontrol('Style','text','Parent',GuiSampleHandle.uiPanelThumbsOuter,...
+                                  'Units','characters','Position',[x+0.35*axWidth y-0.05*axHeight 0.5*axWidth 0.2*axHeight],...
+                                  'String','','FontUnits','normalized', 'FontSize',0.70,'BackgroundColor',[1 1 0],'HorizontalAlignment','center','FontName','FixedWidth');
+    end
 %     hImages(ind)= imshow([],'parent',hAxes(ind),'InitialMagnification','fit');
     hImages(ind)= imshow([],'InitialMagnification','fit');
     set(hImages(ind),'ButtonDownFcn',{@openSpecificImage,i,ind});
@@ -297,7 +307,7 @@ end
 index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterTop = mesh(GuiSampleHandle.axesTop,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0.65 0.65 0.65]);
+view(2); colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
 % xlim([0,max(ceil(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2))),1)]);
 xlim([0,max(zoom_factor_x(1)*max(sampleFeatures.(topFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(1)*max(sampleFeatures.(topFeatureIndex2)),1)]);
                                   
@@ -378,7 +388,7 @@ end
 index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterMiddle = mesh(GuiSampleHandle.axesMiddle,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0.65 0.65 0.65]);
+view(2); colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
 % xlim([0,max(ceil(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2))),1)]);
 xlim([0,max(zoom_factor_x(2)*max(sampleFeatures.(middleFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(2)*max(sampleFeatures.(middleFeatureIndex2)),1)]);
 
@@ -443,7 +453,7 @@ end
 index = reshape(index,2,[]);
 
 GuiSampleHandle.axesScatterBottom = mesh(GuiSampleHandle.axesBottom,XData(index),YData(index),zeros(size(index)),'CData',selectedCells(index),'Marker','.','EdgeColor','none','MarkerEdgeColor','flat','FaceColor','none','MarkerSize', marker_size);
-view(2); colormap([0.65 0.65 0.65]); %colormap([0 0 1]); 
+view(2); colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]); %colormap([0 0 1]); 
 % xlim([0,max(ceil(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1))),1)]); ylim([0,max(ceil(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2))),1)]);
 xlim([0,max(zoom_factor_x(3)*max(sampleFeatures.(bottomFeatureIndex1)),1)]); ylim([0,max(zoom_factor_y(3)*max(sampleFeatures.(bottomFeatureIndex2)),1)]);
 
@@ -505,9 +515,11 @@ set(GuiSampleHandle.fig_main, 'KeyPressFcn', @key_Pressed_Callback);
 function popupChannel_callback(hObject,~,~)
     selectedChannel = get(hObject,'Value');
     if selectedChannel <= nbrColorChannels
-        low=prctile(reshape(thumbContainer.overviewImage(:,:,selectedChannel),[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),1);
-        high=prctile(reshape(thumbContainer.overviewImage(:,:,selectedChannel)-low,[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),95);   
-        plotImInAxis((thumbContainer.overviewImage(:,:,selectedChannel)-low).*(maxi/(high)),[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
+         overviewImg = single(thumbContainer.overviewImage(:,:,selectedChannel));
+         low=prctile(reshape(overviewImg,[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),1);
+         high=prctile(reshape(overviewImg-low,[1,size(thumbContainer.overviewImage,1)*size(thumbContainer.overviewImage,2)]),95);
+
+         plotImInAxis((overviewImg-low)/high*maxi,[],GuiSampleHandle.axesOverview,GuiSampleHandle.imageOverview);
     end
 end
 
@@ -634,7 +646,7 @@ end
 % --- Plot thumbnails around index i
 function plot_thumbnails(val)
     %numberOfThumbs=size(currentSample.priorLocations,1);
-    thumbIndex=[val-2:1:val+2];
+    thumbIndex=val-2:1:val+2;
     thumbIndex(thumbIndex<1)=[];
     thumbIndex(thumbIndex>nrUsedThumbs)=[];
     if ~isempty(thumbIndex)
@@ -654,6 +666,10 @@ function plot_thumbnails(val)
             else
                 plotImInAxis(repmat(rawImage,[1 1 3]),repmat(segmentedImage,[1 1 3]),hAxes(k),hImages(k));
             end
+            if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames)
+                CSIDs{j}.String = currentSample.results.thumbnails.CellSearchIDs((currPos(thumbInd)));
+            end
+                
             
             % update visual selection dependent on selectedFrames array
 %             if selectedFrames(thumbInd) == 1
@@ -669,6 +685,21 @@ function plot_thumbnails(val)
 %                 set(hImages(k),'Selected','off');
                 set(hAxes(k),'Visible','off');
             end
+            if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames) && ismember(currentSample.results.features{currPos(thumbInd),1},multiThumbs)
+                for n = 1:currentSample.nrOfChannels
+                    set(hAxes(k+n),'XTick',[]);
+                    set(hAxes(k+n),'yTick',[]);
+                    set(hAxes(k+n),'XColor',[1 0.8 0.64]);
+                    set(hAxes(k+n),'YColor',[1 0.8 0.64]);
+                    set(hAxes(k+n),'LineWidth',3);
+                    set(hAxes(k+n),'Visible','on');
+                end
+            else
+                for n = 1:currentSample.nrOfChannels
+                    set(hAxes(k+n),'Visible','off');
+                end       
+            end
+
             % plot image for each color channel in column 2 till nbrChannels
             for chan = 1:cols-1
                 l = ((j-1)*cols + chan + 1);
@@ -808,9 +839,13 @@ function updateScatterPlots(pos,booleanOnOff)
     set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
     if sum(selectedCells) > 0
-        colormap([0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65; 0 0 1]);
     else
-        colormap([0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]);
     end
     % update title for scatter panel showing clustering summary
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -849,9 +884,13 @@ function gate_scatter(handle,~,plotnr)
     delete(h);
     
     if sum(selectedCells) > 0
-        colormap([0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65; 0 0 1]);
     else
-        colormap([0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]);
     end
     
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -877,8 +916,9 @@ end
 function clear_selection(~,~)
     gate = struct('gates',cell(0),'name','');
     selectedCells = zeros(size(selectedCells));
-%     selectedFrames = false(size(selectedFrames));
-    colormap([0.65 0.65 0.65]);
+    colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
+    colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
+    colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]);
     set(GuiSampleHandle.axesScatterTop,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterMiddle,'CData',selectedCells(index));
     set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
@@ -926,9 +966,13 @@ function select_event(handle,~,plotnr)
         delete(h);
         
         if sum(selectedCells) > 0
-            colormap([0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65; 0 0 1]);
         else
-            colormap([0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]);
         end
     
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -950,9 +994,13 @@ function select_event(handle,~,plotnr)
         delete(h);
         
         if sum(selectedCells) > 0
-            colormap([0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65; 0 0 1]);
         else
-            colormap([0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]);
         end
         
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -1049,7 +1097,6 @@ function export_selection(handle,~)
     color = get(handle,'backg');
     set(handle,'backgroundcolor',[1 .5 .5])
     drawnow;
-    %set(0,'defaultUicontrolFontSize', 14)
     exist = true;
     if isempty(gate)
         default_name = '';
@@ -1079,7 +1126,6 @@ function export_selection(handle,~)
         IO.save_sample(currentSample);
 %         IO.save_results_as_xls(currentSample)
     end
-    %set(0,'defaultUicontrolFontSize', 12)
     set(handle,'backg',color)
 end
 
@@ -1100,9 +1146,13 @@ function load_selection(handle,~)
         set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
         
         if sum(selectedCells) > 0
-            colormap([0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65; 0 0 1]);
+            colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65; 0 0 1]);
         else
-            colormap([0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
+            colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]);
         end
         
         set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -1123,9 +1173,13 @@ function load_selection(handle,~)
             set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
                     
             if sum(selectedCells) > 0
-                colormap([0.65 0.65 0.65; 0 0 1]);
+                colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65; 0 0 1]);
+                colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65; 0 0 1]);
+                colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65; 0 0 1]);
             else
-                colormap([0.65 0.65 0.65]);
+                colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
+                colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
+                colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]);
             end
             
             set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -1202,9 +1256,13 @@ function design_manual_classifier(handle,~)
     set(GuiSampleHandle.axesScatterBottom,'CData',selectedCells(index));
 
     if sum(selectedCells) > 0
-        colormap([0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65; 0 0 1]);
+        colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65; 0 0 1]);
     else
-        colormap([0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesTop,[0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesMiddle,[0.65 0.65 0.65]);
+        colormap(GuiSampleHandle.axesBottom,[0.65 0.65 0.65]);
     end
 
     set(GuiSampleHandle.uiPanelScatter,'Title',['Selected Events '...
@@ -1225,6 +1283,7 @@ function export_thumbs(handle,~)
     uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'FontUnits','normalized','FontSize',0.28,'String','All Thumbnails.','Callback',@btn1_callback);
     uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'FontUnits','normalized','FontSize',0.28,'String','Selected Thumbnails.','Callback',@btn2_callback);
     waitfor(d);
+    name = '';
     
     function btn1_callback(~,~)
         choice = 0;

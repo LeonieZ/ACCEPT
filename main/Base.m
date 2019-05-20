@@ -93,10 +93,8 @@ classdef Base < handle
             
             if ~isa(this.sampleProcessor,'Rescore_Using_Gate')
                 if ~isempty(find(this.sampleList.isProcessed(find(this.sampleList.toBeProcessed))))  
-                    set(0,'defaultUicontrolFontSize', 14)
-                    choice = questdlg('Some selected samples are already processed. Do you want to process them again?', ...
+                    choice = questdlg('Some of the selected samples are already processed. Do you want to process them again?', ...
                                     'Processed Sample', 'Yes','No','No');
-                    set(0,'defaultUicontrolFontSize', 12)
                 else
                     choice = 'No';
                 end

@@ -113,7 +113,7 @@ classdef ThumbnailLoader_adapted < Loader
             if exist([strjoin(name(1:end-1),'.') '_segm.tif'], 'file') == 2
                 dataFrame.segmentedImage = logical(this.read_segm(frameNr));
                 sumImage = sum(dataFrame.segmentedImage,3); 
-                labels = repmat(bwlabel(sumImage,8),1,1,size(dataFrame.segmentedImage,3));
+                labels = repmat(bwlabel(sumImage,4),1,1,size(dataFrame.segmentedImage,3));
                 dataFrame.labelImage = labels.*dataFrame.segmentedImage;
             end
             if ~isempty(dataFrame.segmentedImage) && size(dataFrame.segmentedImage,3) < this.sample.nrOfChannels

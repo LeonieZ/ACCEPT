@@ -101,7 +101,7 @@ classdef FeatureCollection < SampleProcessorObject
                 if strcmp(inputSample.type,'ThumbnailLoader')
                     nPriorLoc = inputSample.nrOfFrames;
                 else 
-                    nPriorLoc = size(inputSample.priorLocations,1);
+                    nPriorLoc = size(inputSample.priorLocations,1)
                 end
                 featureTables = cell(nPriorLoc,1);
                 thumbnails = cell(nPriorLoc,1);
@@ -131,7 +131,12 @@ classdef FeatureCollection < SampleProcessorObject
                             yBottomLeft = inputSample.priorLocations.yBottomLeft(i)* ones(objectsfound,1);
                             xTopRight = inputSample.priorLocations.xTopRight(i) * ones(objectsfound,1);
                             yTopRight = inputSample.priorLocations.yTopRight(i)* ones(objectsfound,1);
-                            thumbnails{i}= table(frameNr ,label, xBottomLeft, yBottomLeft, xTopRight, yTopRight); 
+                            thumbnails{i}= table(frameNr ,label, xBottomLeft, yBottomLeft, xTopRight, yTopRight);
+                            if ismember('CellSearchIDs', inputSample.priorLocations.Properties.VariableNames)
+                                CellSearchIDs = cell(objectsfound,1);
+                                CellSearchIDs(:) =  inputSample.priorLocations.CellSearchIDs(i);
+                                thumbnails{i} = [thumbnails{i} cell2table(CellSearchIDs)];
+                            end
                             segmentation{i}=thumbFrame.segmentedImage;
                         end
                        

@@ -171,10 +171,8 @@ function process(handle,~,base)
                 msgbox('no dirs selected');
             end
         else
-            set(0,'defaultUicontrolFontSize', 14)
             choice = questdlg('All samples are processed. Do you want to process them again?', ...
                                 'Processed Sample', 'Yes','No','No');
-            set(0,'defaultUicontrolFontSize', 12)
             switch choice
                 case 'Yes'
                     base.sampleList.toBeProcessed = base.sampleList.isProcessed;
