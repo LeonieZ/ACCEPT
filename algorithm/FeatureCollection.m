@@ -62,28 +62,36 @@ classdef FeatureCollection < SampleProcessorObject
                         thumbNr = array2table(linspace(objectsfoundearlier+1,objectsfoundearlier+size(dataFrame.features,1),...
                             size(dataFrame.features,1))','VariableNames',{'ThumbNr'});
                         %add a unique thumbNr
-                        featureTables{i} = [thumbNr dataFrame.features]; %maybe change like below?!
+                        featureTable = [thumbNr dataFrame.features]; %maybe change like below?!
                         %determine box surrounding event found
                         bb = struct2cell(regionprops(dataFrame.labelImage,'BoundingBox'));
                         yBottomLeft = cellfun(@(x) min(max(floor(x(2)) - round(0.2*x(0.5*size(bb{1},2)+2)),1),size(dataFrame.rawImage,1)),bb);
                         xBottomLeft = cellfun(@(x) min(max(floor(x(1)) - round(0.2*x(0.5*size(bb{1},2)+1)),1),size(dataFrame.rawImage,2)),bb);
                         yTopRight = cellfun(@(x) min(floor(x(2)) + round(1.2*x(0.5*size(bb{1},2)+2)),size(dataFrame.rawImage,1)),bb);
-                        yTopRight = max(yTopRight,yBottomLeft+2);
+                        yTopRight = max(yTopRight,yBottomLeft+4);
                         xTopRight = cellfun(@(x) min(floor(x(1)) + round(1.2*x(0.5*size(bb{1},2)+1)),size(dataFrame.rawImage,2)),bb);
-                        xTopRight = max(xTopRight,xBottomLeft+2);
+                        xTopRight = max(xTopRight,xBottomLeft+4);
+                        label = [1:1:objectsfound]';
                         ind1 = find(xTopRight>size(dataFrame.rawImage,2));
                         ind2 = find(yTopRight>size(dataFrame.rawImage,1));
                         if ~isempty(ind1)|| ~isempty(ind2)
-                            ind = [ind1, ind2];
+                            ind = unique([ind1, ind2]);
                             xBottomLeft(ind) = [];
                             yBottomLeft(ind) = [];
                             xTopRight(ind) = [];
                             yTopRight(ind) = [];
-                        end  
-                        label = [1:1:objectsfound]';
+                            featureTable(ind,:) = [];
+                            label(ind) = [];
+                        end 
+                        featureTables{i} = featureTable;
                         % store coordinates for thumbnail
-                        thumbnails{i} = table(dataFrame.frameNr * ones(size(xBottomLeft,2),1),...
-                            label,xBottomLeft',yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'label' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'});
+                        try
+                            thumbnails{i} = table(dataFrame.frameNr * ones(size(xBottomLeft,2),1),...
+                                    label,xBottomLeft',yBottomLeft',xTopRight',yTopRight','VariableNames',{'frameNr' 'label' 'xBottomLeft' 'yBottomLeft' 'xTopRight' 'yTopRight'});
+                        catch
+                            disp('error in thumbnail coordinates assignment');
+                        end
+                        
                     end
                 end
                     
