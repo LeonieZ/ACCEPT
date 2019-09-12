@@ -65,7 +65,9 @@ classdef IO < handle
             n = size(selectedCellsInTable,1);
             classifications = cell(1,n);
             id = cell(1,n);
-            names={'sampleID'};
+            totalCount = zeros(n,1);
+            CS_CTC = zeros(n,1);
+            names={'sampleID','totalCount','CS_CTC'};
             tiff_headers = false;
             for j=1:n
                 i = selectedCellsInTable(j);
@@ -73,6 +75,10 @@ classdef IO < handle
                     try
                         currentSample = IO.load_sample(sampleList,i,tiff_headers);
                         id{j} = currentSample.id;
+                        totalCount(i) = size(currentSample.results.thumbnails,1);
+                        if ~isempty(currentSample.priorLocations)
+                            CS_CTC(i) = size(currentSample.priorLocations,1);
+                        end
                         classifications{j} = currentSample.results.classification;
                         classifiers = classifications{j}.Properties.VariableNames;
                         if ~isempty(classifiers)
@@ -82,15 +88,19 @@ classdef IO < handle
                     end
                 end
             end
-            empty = cellfun(@isempty, classifications);
-            classifications = classifications(~empty);
-            id = id(~empty);
+%             empty = cellfun(@isempty, classifications);
+%             classifications = classifications(~empty);
+%             totalCount = totalCount(~empty);
+%             CS_CTC = CS_CTC(~empty);
+%             id = id(~empty);
             n = size(classifications,2);
             names = unique(names,'stable');
             t = id';
             for i = 1:n
-                for j = 2:numel(names)
-                    if any(strcmp(classifications{i}.Properties.VariableNames,names(j)))
+                t{i,2} = totalCount(i);
+                t{i,3} = CS_CTC(i);
+                for j = 4:numel(names)
+                    if ~isempty(classifications{i}) && any(strcmp(classifications{i}.Properties.VariableNames,names(j)))
                         t{i,j}=sum(eval(['classifications{i}.', names{j}]));
                     else
                         t{i,j}=NaN;
@@ -370,7 +380,7 @@ classdef IO < handle
            IO.check_save_path(currentSample.savePath); 
            id = currentSample.id;
            
-           if ~exist('name','var')
+           if ~exist('name','var') || isempty(name)
                name = 'selected_Thumbs';
            else 
                name = name{1};
@@ -713,15 +723,15 @@ classdef IO < handle
         end
         
         function convert_thumbnails_in_sample(inputSample)
-            if strcmp(inputSample.results.sampleProcessorUsed,'Marker Characterization')
+            if strcmp(inputSample.results.sampleProcessorUsed,'Marker Characterization') || strcmp(inputSample.results.sampleProcessorUsed,'CS Thumbnail_Detection')
                 frames=unique(inputSample.results.thumbnails.frameNr);
                 for i=1:numel(frames)
                     currentDataFrame=IO.load_data_frame(inputSample,frames(i));
                     currentDataFrame.segmentedImage=zeros(size(currentDataFrame.rawImage));
                     thumbsInFrame=find(inputSample.results.thumbnails.frameNr==frames(i));
                     for j=1:numel(thumbsInFrame)
-                        locations=[inputSample.results.thumbnails.yBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.yTopRight(thumbsInFrame(j)),...
-                            inputSample.results.thumbnails.xBottomLeft(thumbsInFrame(j)),inputSample.results.thumbnails.xTopRight(thumbsInFrame(j))];
+                        locations=[max(1,inputSample.results.thumbnails.yBottomLeft(thumbsInFrame(j))),min(inputSample.imageSize(1),inputSample.results.thumbnails.yTopRight(thumbsInFrame(j))),...
+                            max(1,inputSample.results.thumbnails.xBottomLeft(thumbsInFrame(j))),min(inputSample.imageSize(2),inputSample.results.thumbnails.xTopRight(thumbsInFrame(j)))];
                         currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:)=inputSample.results.segmentation{thumbsInFrame(j)}...
                             + currentDataFrame.segmentedImage(locations(1):locations(2),locations(3):locations(4),:);
                     end
