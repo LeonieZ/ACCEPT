@@ -209,7 +209,8 @@ axWidth = 132.3/cols;
 %-----
 hAxes   = zeros(nbrImages,1);
 hImages = zeros(nbrImages,1);
-CSIDs = cell(nbrImages,1);
+CSIDs = cell(nbrAvailableRows,1);
+
 % define common properties and values for all axes
 axesProp = {'dataaspectratio' ,...
             'Parent',...
@@ -268,7 +269,14 @@ GuiSampleHandle.resortButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Sty
 GuiSampleHandle.OverlayButtonTxT = uicontrol('Parent',GuiSampleHandle.fig_main,'Style','text','Units','characters','FontUnits', 'normalized',...
             'FontSize',0.55,'Position',[5.1 43.35 22 1.65],'BackgroundColor',[ 1 1 1],'String','3 Channel Overlay');
 GuiSampleHandle.changeOverlayButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'checkbox', 'Units','characters',...
-            'Value',1,'Position', [27.4 43.35 5 1.65],'BackgroundColor',[ 1 1 1],'Callback', @change_overlay); 
+            'Value',1,'Position', [27.4 43.55 5 1.65],'BackgroundColor',[ 1 1 1],'Callback', @change_overlay); 
+        
+if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames)
+    GuiSampleHandle.CSIDsTxT = uicontrol('Parent',GuiSampleHandle.fig_main,'Style','text','Units','characters','FontUnits', 'normalized',...
+            'FontSize',0.55,'Position',[31 43.35 27 1.65],'BackgroundColor',[ 1 1 1],'String','Show CellSearch IDs');
+    GuiSampleHandle.changeCSIDsButton = uicontrol('Parent',GuiSampleHandle.fig_main, 'Style', 'checkbox', 'Units','characters',...
+            'Value',1,'Position', [58.3 43.55 5 1.65],'BackgroundColor',[ 1 1 1],'Callback', @disable_CSIDs);
+end
 
 % go through all thumbnails (resp. dataframes)
 plot_thumbnails(3);
@@ -648,6 +656,15 @@ function plot_thumbnails(val)
     %numberOfThumbs=size(currentSample.priorLocations,1);
     thumbIndex=val-2:1:val+2;
     thumbIndex(thumbIndex<1)=[];
+    if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames) && GuiSampleHandle.changeCSIDsButton.Value == 1
+        for k = 1:numel(thumbIndex)
+            if thumbIndex(k) > nrUsedThumbs
+                CSIDs{k}.Visible = 'off';
+            else
+                CSIDs{k}.Visible = 'on';
+            end
+        end
+    end
     thumbIndex(thumbIndex>nrUsedThumbs)=[];
     if ~isempty(thumbIndex)
         for j=1:numel(thumbIndex)
@@ -666,7 +683,7 @@ function plot_thumbnails(val)
             else
                 plotImInAxis(repmat(rawImage,[1 1 3]),repmat(segmentedImage,[1 1 3]),hAxes(k),hImages(k));
             end
-            if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames)
+            if ismember('CellSearchIDs', currentSample.results.thumbnails.Properties.VariableNames) && GuiSampleHandle.changeCSIDsButton.Value == 1
                 CSIDs{j}.String = currentSample.results.thumbnails.CellSearchIDs((currPos(thumbInd)));
             end
                 
@@ -1283,7 +1300,7 @@ function export_thumbs(handle,~)
     uicontrol('Parent',d,'Units','characters','Position',[4 1 25 3],'FontUnits','normalized','FontSize',0.28,'String','All Thumbnails.','Callback',@btn1_callback);
     uicontrol('Parent',d,'Units','characters','Position',[31 1 25 3],'FontUnits','normalized','FontSize',0.28,'String','Selected Thumbnails.','Callback',@btn2_callback);
     waitfor(d);
-    name = '';
+    name = [];
     
     function btn1_callback(~,~)
         choice = 0;
@@ -1302,6 +1319,22 @@ function export_thumbs(handle,~)
         end
     end
     set(handle,'backg',color)
+end
+
+function disable_CSIDs(~,~)
+    if GuiSampleHandle.changeCSIDsButton.Value == 1 
+        for k = 1:nbrAvailableRows
+            if isempty(get(hImages((k-1)*(cols) + 1),'cdata'))
+                CSIDs{k}.Visible = 'off';
+            else
+                CSIDs{k}.Visible = 'on';
+            end
+        end
+    elseif  GuiSampleHandle.changeCSIDsButton.Value == 0
+        for k = 1:nbrAvailableRows
+            CSIDs{k}.Visible = 'off';
+        end
+    end
 end
 
 function close_fcn(~,~) 
